@@ -1,0 +1,69 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    container_name: proto_pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-proto_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-proto_password}
+      POSTGRES_DB: ${POSTGRES_DB:-proto_db}
+    ports:
+      - "${HOST_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: proto_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      PORT: 8080
+      POSTGRES_USER: ${POSTGRES_USER:-proto_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-proto_password}
+      POSTGRES_DB: ${POSTGRES_DB:-proto_db}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      BASE_URL: http://localhost:${HOST_APP_PORT:-8080}
+      SITE_NAME: ${SITE_NAME:-Proto}
+      SITE_DESCRIPTION: ${SITE_DESCRIPTION:-Gin + SSR + SQLC prototype}
+    ports:
+      - "${HOST_APP_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  flyway:
+    image: flyway/flyway:9.22.3
+    container_name: proto_flyway
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/flyway/flyway"]
+    command: [
+      "-url=jdbc:postgresql://db:5432/${POSTGRES_DB:-proto_db}",
+      "-user=${POSTGRES_USER:-proto_user}",
+      "-password=${POSTGRES_PASSWORD:-proto_password}",
+      "-connectRetries=60",
+      "-baselineOnMigrate=true",
+      "-locations=filesystem:/flyway/sql",
+      "migrate"
+    ]
+    volumes:
+      - ./db/migrations:/flyway/sql:ro
+    # Run only when invoked (not always in background)
+    restart: "no"
+
+volumes:
+  pgdata:
+    driver: local
+

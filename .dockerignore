@@ -1,0 +1,12 @@
+.git
+.gitignore
+.idea
+.vscode
+bin
+db/migrations
+db/queries
+.env
+node_modules
+tmp
+*.log
+
