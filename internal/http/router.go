@@ -10,7 +10,6 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/auth"
-	"proto-gin-web/internal/data"
 	"proto-gin-web/internal/platform"
 	appdb "proto-gin-web/internal/repo/pg"
 )
@@ -60,7 +59,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 			return
 		}
 		defer pool.Close()
-		q := data.New(pool)
+		q := appdb.New(pool)
 		rows, err := q.ListPublishedPosts(c, 100, 0)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
@@ -84,7 +83,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 			return
 		}
 		defer pool.Close()
-		q := data.New(pool)
+		q := appdb.New(pool)
 		rows, err := q.ListPublishedPosts(c, 20, 0)
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
@@ -120,7 +119,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 		}
 		defer pool.Close()
 
-		q := data.New(pool)
+		q := appdb.New(pool)
 		rows, err := q.ListArticles(c, int32(limit), int32(offset))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -146,8 +145,8 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 		}
 		defer pool.Close()
 
-		q := data.New(pool)
-		var rows []data.Post
+		q := appdb.New(pool)
+		var rows []appdb.Post
 		if category != "" {
 			rows, err = q.ListPublishedPostsByCategorySorted(c, category, sort, int32(limit), int32(offset))
 		} else if tag != "" {
@@ -183,11 +182,11 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 		}
 		defer pool.Close()
 
-		q := data.New(pool)
+		q := appdb.New(pool)
 		category := c.Query("category")
 		tag := c.Query("tag")
 		sort := c.DefaultQuery("sort", "created_at_desc")
-		var rows []data.Post
+		var rows []appdb.Post
 		if category != "" {
 			rows, err = q.ListPublishedPostsByCategorySorted(c, category, sort, int32(size), int32(offset))
 		} else if tag != "" {
@@ -222,7 +221,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 		}
 		defer pool.Close()
 
-		q := data.New(pool)
+		q := appdb.New(pool)
 		p, err := q.GetPostBySlug(c, slug)
 		if err != nil {
 			c.String(http.StatusNotFound, "post not found")
@@ -292,13 +291,18 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
-			row, err := q.CreatePost(c, data.CreatePostParams{
+			q := appdb.New(pool)
+			cover := body.CoverURL
+			var coverPtr *string
+			if cover != "" {
+				coverPtr = &cover
+			}
+			row, err := q.CreatePost(c, appdb.CreatePostParams{
 				Title:       body.Title,
 				Slug:        body.Slug,
 				Summary:     body.Summary,
 				ContentMd:   body.ContentMD,
-				CoverUrl:    body.CoverURL,
+				CoverUrl:    coverPtr,
 				Status:      body.Status,
 				AuthorID:    body.AuthorID,
 				PublishedAt: nil,
@@ -329,13 +333,18 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
-			row, err := q.UpdatePostBySlug(c, data.UpdatePostBySlugParams{
+			q := appdb.New(pool)
+			cover := body.CoverURL
+			var coverPtr *string
+			if cover != "" {
+				coverPtr = &cover
+			}
+			row, err := q.UpdatePostBySlug(c, appdb.UpdatePostBySlugParams{
 				Slug:      slug,
 				Title:     body.Title,
 				Summary:   body.Summary,
 				ContentMd: body.ContentMD,
-				CoverUrl:  body.CoverURL,
+				CoverUrl:  coverPtr,
 				Status:    body.Status,
 			})
 			if err != nil {
@@ -353,7 +362,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.DeletePostBySlug(c, slug); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -369,7 +378,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.AddCategoryToPost(c, c.Param("slug"), c.Param("cat")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -383,7 +392,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.RemoveCategoryFromPost(c, c.Param("slug"), c.Param("cat")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -399,7 +408,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.AddTagToPost(c, c.Param("slug"), c.Param("tag")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -413,7 +422,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.RemoveTagFromPost(c, c.Param("slug"), c.Param("tag")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -434,8 +443,8 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
-			row, err := q.CreateCategory(c, data.CreateCategoryParams{Name: body.Name, Slug: body.Slug})
+			q := appdb.New(pool)
+			row, err := q.CreateCategory(c, appdb.CreateCategoryParams{Name: body.Name, Slug: body.Slug})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -449,7 +458,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.DeleteCategoryBySlug(c, c.Param("slug")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -470,8 +479,8 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
-			row, err := q.CreateTag(c, data.CreateTagParams{Name: body.Name, Slug: body.Slug})
+			q := appdb.New(pool)
+			row, err := q.CreateTag(c, appdb.CreateTagParams{Name: body.Name, Slug: body.Slug})
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -485,7 +494,7 @@ func NewRouter(cfg platform.Config) *gin.Engine {
 				return
 			}
 			defer pool.Close()
-			q := data.New(pool)
+			q := appdb.New(pool)
 			if err := q.DeleteTagBySlug(c, c.Param("slug")); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
