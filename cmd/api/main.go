@@ -14,6 +14,8 @@ import (
 
 	httpapp "proto-gin-web/internal/http"
 	"proto-gin-web/internal/platform"
+	appdb "proto-gin-web/internal/repo/pg"
+	postusecase "proto-gin-web/internal/usecase/post"
 )
 
 func main() {
@@ -24,7 +26,18 @@ func main() {
 	log := platform.NewLogger(cfg.Env)
 	slog.SetDefault(log)
 
-	r := httpapp.NewRouter(cfg)
+	pool, err := appdb.NewPool(context.Background(), cfg)
+	if err != nil {
+		log.Error("failed to initialise database pool", slog.Any("err", err))
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	postRepo := appdb.NewPostRepository(pool)
+	postSvc := postusecase.NewService(postRepo)
+	queries := appdb.New(pool)
+
+	r := httpapp.NewRouter(cfg, postSvc, queries)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
