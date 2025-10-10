@@ -1,6 +1,6 @@
 # Proto Gin Web（企業用部落格原型）
 
-以 Go + Gin 打造的輕量「企業用部落格」原型，強調清晰分層（Clean-ish）、型別安全 SQL（sqlc + pgx）、SSR 與 SEO 基礎。適合學習、面試與快速起手。
+以 Go + Gin 打造的輕量「企業用部落格」原型，強調清晰分層（Clean-ish）、型別安全 SQL（sqlc + pgx）、SSR 與 SEO 基礎。
 
 ## 技術棧
 - Go 1.24（toolchain go1.25）、Gin（router/middleware/SSR templates）
