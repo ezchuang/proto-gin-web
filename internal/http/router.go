@@ -15,8 +15,9 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 	}
 
 	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(gin.Logger())
+	r.Use(RequestID())
+	r.Use(RecoveryWithRequestID())
+	r.Use(RequestLogger())
 
 	// Templates & static assets
 	r.LoadHTMLGlob("internal/http/views/**/*")
