@@ -1,19 +1,18 @@
-# Proto Gin Web（企業用部落格原型）
+# Proto Gin Web (Blog Starter Template)
 
-以 Go + Gin 打造的輕量「企業用部落格」原型，強調清晰分層（Clean-ish）、型別安全 SQL（sqlc + pgx）、SSR 與 SEO 基礎。
+Go + Gin blog starter prototypes. It highlights clean layering (Clean-ish), sqlc + pgx typed queries, SSR + SEO hooks, modular usecases and routing, connection pooling, structured logging, and readiness checks.
 
-## 技術棧
-- Go 1.24（toolchain go1.25）、Gin（router/middleware/SSR templates）
-- PostgreSQL 16（Docker）、pgx v5、sqlc
-- Flyway（migrations）
-- SEO：Robots.txt / Sitemap.xml / RSS.xml、Open Graph、JSON-LD（stub）
-- slog（JSON log）、godotenv（本機載入 .env）
-- Docker Compose（db/api/flyway）
+## Core Features
+- Go 1.24 (toolchain go1.25) with Gin router and middleware (Request-ID, structured logging, cache-control)
+- PostgreSQL 16 (Docker), pgx v5 + sqlc typed query package, Flyway migrations
+- SSR pages: home, post list, post detail with template helper timefmt
+- SEO endpoints: robots.txt, sitemap.xml, rss.xml plus extendable SEO stubs
+- Health probes: `/livez` for liveness, `/readyz` hits DB through usecase
+- Admin sample: login/logout, post CRUD, category/tag management and relations
 
-## 目錄重點
-proto-gin-web/
+## Project Layout
 ```plaintext
-.
+proto-gin-web/
 ├── cmd/
 │   └── api/
 │       └── main.go
@@ -22,7 +21,7 @@ proto-gin-web/
 │   │   ├── V1init.sql
 │   │   ├── V2blog.sql
 │   │   └── V3indexes.sql
-│   └── queries/ # sqlc SQL 檔
+│   └── queries/
 │       ├── article.sql
 │       ├── category.sql
 │       ├── post_relation.sql
@@ -32,98 +31,102 @@ proto-gin-web/
 │   ├── auth/
 │   │   └── session.go # admin cookie stub
 │   ├── core/ # entities & usecases (thin)
-│   │   ├── post.go
-│   │   └── post_service.go
-│   ├── http/ # router, handlers, templates
+│   │   ├── post_repository.go
+│   │   ├── post_service.go
+│   │   └── post.go
+│   ├── http/ # router, middleware, handlers, templates
 │   │   └── views/
 │   │   │   ├── index.tmpl
 │   │   │   ├── layout.tmpl
 │   │   │   └── post.tmpl
-│   │   ├── handlers.go
+│   │   ├── admin_routes.go
+│   │   ├── api_routes.go
+│   │   ├── middleware.go
+│   │   ├── public_routes.go
 │   │   └── router.go
 │   ├── platform/ # config, logger
 │   │   ├── config.go
 │   │   └── logger.go
-│   ├── repo/
-│   │   └── pg/
-│   │       └── db.go # pgx pool
+│   ├── repo/pg/
+│   │   ├── db.go # pgx pool
+│   │   ├── post_repository.go
+│   │   └── queries.go
 │   └── seo/ # seo utils (stubs)
 │       └── meta.go
 │       ├── rss.go
 │       └── sitemap.go
-├── web/
-│   └── static/
-│       └── app.css
-├── sqlc.yaml
-├── Dockerfile
+├── internal/usecase/post/
+│   └── service.go
+├── web/static/
+│   └── app.css
 ├── docker-compose.yml
+├── Dockerfile
+├── .env.example
 ├── Makefile
-└── .env.example
+└── sqlc.yaml
 ```
 
-## 快速開始
-1) 啟 DB 並套用遷移
+## Getting Started
+1. Start database & run migrations
 ```bash
 make db-up
 make migrate
 ```
-2) 產生 sqlc 程式碼（擇一）
+2. Generate sqlc code
 ```bash
-make sqlc          # 需本機安裝 sqlc
-# 或
-make sqlc-docker   # 容器產生
+make sqlc-docker         # or use `make sqlc`
 ```
-3) 下載依賴與啟動
+3. Install dependencies & run app
 ```bash
 make deps
 make run           # http://localhost:8080
 ```
 
-### 容器化
+### Docker Workflow
 ```bash
-make up            # 啟動 API + DB（先 make migrate 一次）
+make up
 make logs
 make down
 ```
 
-## Makefile 常用
-- db：`db-up`、`db-psql`、`migrate`、`migrate-info`、`migrate-repair`
-- 產碼：`sqlc`、`sqlc-docker`
-- 應用：`deps`、`run`、`build`、`up`、`logs`、`down`
+## Useful Make Targets
+- db: `db-up`、`db-psql`、`migrate`、`migrate-info`、`migrate-repair`
+- codegen: `sqlc`、`sqlc-docker`
+- app lifecycle: `deps`、`run`、`build`、`up`、`logs`、`down`
 
-## 環境變數
-- DB：`POSTGRES_USER`、`POSTGRES_PASSWORD`、`POSTGRES_DB`、`POSTGRES_HOST`、`POSTGRES_PORT`
-- App：`APP_ENV`（development/production）、`PORT`（預設 8080）
-- SEO：`BASE_URL`、`SITE_NAME`、`SITE_DESCRIPTION`
-- Admin：`ADMIN_USER`、`ADMIN_PASS`
-- Compose：`HOST_POSTGRES_PORT`、`HOST_APP_PORT`
+## Environment Variables
+- DB: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`
+- App: `APP_ENV` (development/production), `PORT` (default 8080)
+- SEO: `BASE_URL`, `SITE_NAME`, `SITE_DESCRIPTION`
+- Admin: `ADMIN_USER`, `ADMIN_PASS`
+- Compose: `HOST_POSTGRES_PORT`, `HOST_APP_PORT`
 
-## 功能總覽
-- SSR：首頁 `/`、列表 `/posts?page=1&size=10&category=&tag=&sort=`、單篇 `/posts/:slug`（Markdown 安全渲染）
-- SEO：`/robots.txt`、`/sitemap.xml`（DB 生成）、`/rss.xml`（DB 生成）
-- API：
+## Feature Summary
+- SSR templates:`/`, `/posts` (pagination/filter/sort), `/posts/:slug`
+- SEO: `/robots.txt`, `/sitemap.xml`, `/rss.xml`
+- API endpoints:
   - `GET /api/articles?limit=10&offset=0`
   - `GET /api/posts?category=...&tag=...&sort=created_at_desc|created_at_asc|published_at_desc|published_at_asc&limit=&offset=`
-- Admin（最小可用）
-  - 登入/登出：`POST /admin/login`、`POST /admin/logout`
-  - 貼文：`POST /admin/posts`、`PUT /admin/posts/:slug`、`DELETE /admin/posts/:slug`
-  - 類別：`POST /admin/categories`、`DELETE /admin/categories/:slug`
-  - 標籤：`POST /admin/tags`、`DELETE /admin/tags/:slug`
-  - 關聯：
-    - `POST /admin/posts/:slug/categories/:cat`、`DELETE /admin/posts/:slug/categories/:cat`
-    - `POST /admin/posts/:slug/tags/:tag`、`DELETE /admin/posts/:slug/tags/:tag`
+- Admin sample:
+  - Auth: POST `/admin/login`, POST `/admin/logout`
+  - Posts: POST `/admin/posts`, PUT `/admin/posts/:slug`, DELETE `/admin/posts/:slug`
+  - Categories: POST `/admin/categories`, DELETE `/admin/categories/:slug`
+  - Tags: POST `/admin/tags`, DELETE `/admin/tags/:slug`
+  - Relations: POST/DELETE `/admin/posts/:slug/categories/:cat`, POST/DELETE `/admin/posts/:slug/tags/:tag`
 
-## 開發說明（Clean-ish）
-- `http`：HTTP concern（router/middleware/SSR），商業邏輯盡量往 `core` 下沉
-- `repo/pg`：連線管理；SQL 由 `sqlc` 產出於 `internal/data`
-- `platform`：設定與日誌
-- SQL：修改 `db/queries/*.sql` 後執行 `make sqlc`
-- 遷移：新增 `db/migrations/V*.sql` 後 `make migrate`
+## Architecture Notes
+- `internal/http`: separates public/API/admin routes and middleware
+- `internal/core`: core entities, usecase interfaces, repository contracts
+- `internal/usecase/post`: validation, normalization, taxonomy orchestration
+- `internal/repo/pg`: `pgx/sqlc` persistence implementation
+- `internal/platform`: configuration & logging bootstrap
+- `db/queries` + `sqlc`: SQL -> typed accessors
+- Observability: Request-ID middleware, structured slog logging, cache-control helper, readiness probe
 
-## Roadmap 建議
-- 後台頁面與完整 session（JWT 或 server-side session）
-- 內容審核/版本（`post_revision`）、草稿工作流
-- 列表過濾/排序更完整、全文搜尋（tsvector）
-- 靜態資源優化與快取策略（ETag/Last-Modified）
-- 可觀測性（metrics/tracing/error tracking）
-- GORM 可替換層示範
+## Roadmap Ideas
+- Production-ready auth/session (JWT or server-side sessions)
+- Editorial workflow & versioning (post revision workflow)
+- Full-text search (tsvector)
+- Asset pipeline: fingerprint + minify static files, tighten CDN/Nginx caching
+- Observability: metrics, tracing, error tracking
+- Alternative persistence (e.g. GORM layer) for comparison
