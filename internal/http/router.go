@@ -1,6 +1,9 @@
 package http
 
 import (
+	"html/template"
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/core"
@@ -19,7 +22,17 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 	r.Use(RecoveryWithRequestID())
 	r.Use(RequestLogger())
 
-	// Templates & static assets
+	// Go template funcs
+	r.SetFuncMap(template.FuncMap{
+		"timefmt": func(t time.Time, layout ...string) string {
+			if len(layout) > 0 && layout[0] != "" {
+				return t.Format(layout[0])
+			}
+			// default ISO 8601-like format
+			return t.UTC().Format("2006-01-02T15:04:05Z")
+		},
+	})
+
 	r.LoadHTMLGlob("internal/http/views/**/*")
 	r.Static("/static", "web/static")
 
