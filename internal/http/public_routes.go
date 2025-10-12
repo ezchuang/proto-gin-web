@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
@@ -15,8 +17,21 @@ import (
 
 // registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
 func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostService) {
-	r.GET("/healthz", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	r.GET("/livez", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "alive"})
+	})
+
+	r.GET("/readyz", func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+		defer cancel()
+		if _, err := postSvc.ListPublished(ctx, core.ListPostsOptions{Limit: 1}); err != nil {
+			c.JSON(http.StatusServiceUnavailable, gin.H{
+				"status": "not ready",
+				"error":  err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "ready"})
 	})
 
 	r.GET("/", func(c *gin.Context) {
