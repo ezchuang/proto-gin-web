@@ -22,7 +22,7 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 	r.Use(RecoveryWithRequestID())
 	r.Use(RequestLogger())
 
-	// Go template funcs
+	// Gin template funcs
 	r.SetFuncMap(template.FuncMap{
 		"timefmt": func(t time.Time, layout ...string) string {
 			if len(layout) > 0 && layout[0] != "" {
