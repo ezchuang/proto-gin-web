@@ -1,0 +1,33 @@
+{{ template "layout" . }}
+
+{{ define "title" }}{{ .Title }} — {{ .SiteName }}{{ end }}
+
+{{ define "content" }}
+<article>
+  <h1>{{ .Title }}</h1>
+  {{ if .CoverURL }}
+  <p><img src="{{ .CoverURL }}" alt="cover" style="max-width:100%;height:auto;"/></p>
+  {{ end }}
+  <p><em>{{ .Summary }}</em></p>
+  {{ if or .Categories .Tags }}
+  <p>
+    {{ if .Categories }}分類：
+      {{ range $i, $c := .Categories }}
+        {{ if $i }}, {{ end }}<a href="/posts?category={{ $c.Slug }}">{{ $c.Name }}</a>
+      {{ end }}
+    {{ end }}
+    {{ if .Tags }}
+      {{ if .Categories }} · {{ end }}標籤：
+      {{ range $j, $t := .Tags }}
+        {{ if $j }}, {{ end }}<a href="/posts?tag={{ $t.Slug }}">{{ $t.Name }}</a>
+      {{ end }}
+    {{ end }}
+  </p>
+  {{ end }}
+  <div>
+    {{ .ContentHTML }}
+  </div>
+</article>
+{{ end }}
+
+
