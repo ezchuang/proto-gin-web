@@ -35,7 +35,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 	})
 
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index", gin.H{
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -119,7 +119,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.HTML(http.StatusOK, "posts", gin.H{
+		c.HTML(http.StatusOK, "posts.tmpl", gin.H{
 			"Title":           "Posts · " + cfg.SiteName,
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
@@ -144,7 +144,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 		unsafe := bf.Run([]byte(result.Post.ContentMD))
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
-		c.HTML(http.StatusOK, "post", gin.H{
+		c.HTML(http.StatusOK, "post.tmpl", gin.H{
 			"Title":           result.Post.Title + " · " + cfg.SiteName,
 			"Summary":         result.Post.Summary,
 			"CoverURL":        result.Post.CoverURL,

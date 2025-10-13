@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/core"
+	helper "proto-gin-web/internal/http/templates"
 	"proto-gin-web/internal/platform"
 	appdb "proto-gin-web/internal/repo/pg"
 )
@@ -33,7 +34,8 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 		},
 	})
 
-	r.LoadHTMLGlob("internal/http/views/*.tmpl")
+	r.HTMLRender = helper.LoadTemplates("internal/http/views")
+	// r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
 	registerPublicRoutes(r, cfg, postSvc)
