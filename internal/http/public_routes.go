@@ -36,12 +36,14 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"Title":           "Proto ??Gin + SSR",
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
+			"Env":             cfg.Env,
+			"BaseURL":         cfg.BaseURL,
 			"DocsURL":         "https://gin-gonic.com/docs/",
+			"PostsURL":        "/posts",
+			"APIPostsURL":     "/api/posts?limit=10&offset=0",
+			"ContentTemplate": "home_content",
 		})
 	})
 
@@ -118,8 +120,8 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"Title":           "Posts ??" + cfg.SiteName,
+		c.HTML(http.StatusOK, "posts.tmpl", gin.H{
+			"Title":           "Posts · " + cfg.SiteName,
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
 			"SiteName":        cfg.SiteName,
@@ -127,6 +129,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 			"Posts":           rows,
 			"Page":            page,
 			"Size":            size,
+			"ContentTemplate": "posts_list_content",
 		})
 	})
 
@@ -144,7 +147,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
 		c.HTML(http.StatusOK, "post.tmpl", gin.H{
-			"Title":           result.Post.Title,
+			"Title":           result.Post.Title + " · " + cfg.SiteName,
 			"Summary":         result.Post.Summary,
 			"CoverURL":        result.Post.CoverURL,
 			"ContentHTML":     template.HTML(string(safe)),
@@ -154,6 +157,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 			"BaseURL":         cfg.BaseURL,
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
+			"ContentTemplate": "post_content",
 		})
 	})
 }
