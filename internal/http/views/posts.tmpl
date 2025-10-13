@@ -1,6 +1,4 @@
-﻿{{ define "title" }}Posts · {{ .SiteName }}{{ end }}
-
-{{ define "posts" }}
+﻿{{ define "content" }}
 <section>
   <h2>Posts</h2>
   {{ if .Posts }}
@@ -14,5 +12,3 @@
   {{ end }}
 </section>
 {{ end }}
-
-{{ template "layout" . }}

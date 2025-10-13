@@ -1,6 +1,4 @@
-﻿{{ define "title" }}{{ .Title }} · {{ .SiteName }}{{ end }}
-
-{{ define "post" }}
+﻿{{ define "content" }}
 <article>
   <h2>{{ .Title }}</h2>
   {{ if .CoverURL }}
@@ -27,5 +25,3 @@
   </div>
 </article>
 {{ end }}
-
-{{ template "layout" . }}
