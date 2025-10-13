@@ -1,4 +1,6 @@
-﻿{{ define "content" }}
+﻿{{ template "layout" . }}
+
+{{ define "content" }}
 <section>
   <h2>{{ .SiteName }}</h2>
   <p>Welcome{{if .User}}, {{ .User }} {{end}}</p>

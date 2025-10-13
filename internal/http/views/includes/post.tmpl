@@ -1,4 +1,6 @@
-﻿{{ define "content" }}
+﻿{{ template "layout" . }}
+
+{{ define "content" }}
 <article>
   <h2>{{ .Title }}</h2>
   {{ if .CoverURL }}

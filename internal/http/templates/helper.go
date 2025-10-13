@@ -1,11 +1,13 @@
-package templates
+﻿package templates
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"path/filepath"
 
 	"github.com/gin-contrib/multitemplate"
+	"github.com/gin-gonic/gin"
 )
 
 // MustLoad combines the provided template files (layout first) into a single *template.Template.
@@ -51,26 +53,29 @@ func ParseGlob(pattern string) (*template.Template, error) {
 	return template.ParseGlob(filepath.Clean(pattern))
 }
 
-func LoadTemplates(templatesDir string) multitemplate.Renderer {
-	// logger := slog.Default()
+// LoadTemplates builds a Gin multitemplate renderer using layout & include folders.
+func LoadTemplates(templatesDir string, layoutPattern string, includePattern string) multitemplate.Renderer {
 	r := multitemplate.NewRenderer()
-	// logger.Info("loading templates",
-	// 	"layouts", templatesDir+"/layouts/*.tmpl",
-	// 	"includes", templatesDir+"/includes/*.tmpl",
-	// )
-	layouts, err := filepath.Glob(templatesDir + "/layouts/*. tmpl")
+
+	layouts, err := filepath.Glob(filepath.Join(templatesDir, layoutPattern))
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-	includes, err := filepath.Glob(templatesDir + "/includes/*. tmpl")
+	includes, err := filepath.Glob(filepath.Join(templatesDir, includePattern))
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
+
+	fmt.Printf("DefaultWriter = %T\n", gin.DefaultWriter)
+	fmt.Println(layouts)
+	fmt.Println(includes)
+
 	for _, include := range includes {
-		layoutCopy := make([]string, len(layouts))
-		copy(layoutCopy, layouts)
-		files := append(layoutCopy, include)
+		files := append([]string{}, layouts...)
+		files = append(files, include)
+		fmt.Println(files)
 		r.AddFromFiles(filepath.Base(include), files...)
 	}
+
 	return r
 }

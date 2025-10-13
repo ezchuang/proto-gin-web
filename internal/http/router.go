@@ -34,7 +34,7 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 		},
 	})
 
-	r.HTMLRender = helper.LoadTemplates("internal/http/views")
+	r.HTMLRender = helper.LoadTemplates("internal/http/views", "/layouts/*.tmpl", "/includes/*.tmpl")
 	// r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
