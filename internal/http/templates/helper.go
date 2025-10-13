@@ -73,7 +73,7 @@ func LoadTemplates(templatesDir string, layoutPattern string, includePattern str
 	for _, include := range includes {
 		files := append([]string{}, layouts...)
 		files = append(files, include)
-		fmt.Println(files)
+		fmt.Println(filepath.Base(include), files)
 		r.AddFromFiles(filepath.Base(include), files...)
 	}
 

@@ -1,17 +1,16 @@
-﻿{{ define "layout" }}
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ if .Title }}{{ .Title }} · {{ .SiteName }}{{ else }}{{ .SiteName }}{{ end }}</title>
+    <title>{{ if .Title }}{{ .Title }}{{ .SiteName }}{{ else }}{{ .SiteName }}{{ end }}</title>
     <link rel="stylesheet" href="/static/app.css" />
     <meta name="description" content="{{ .SiteDescription }}" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="{{ if .Title }}{{ .Title }} · {{ .SiteName }}{{ else }}{{ .SiteName }}{{ end }}" />
+    <meta property="og:title" content="{{ if .Title }}{{ .Title }}{{ .SiteName }}{{ else }}{{ .SiteName }}{{ end }}" />
     <meta property="og:description" content="{{ .SiteDescription }}" />
     <meta property="og:url" content="{{ .BaseURL }}" />
-    <meta property="og:site_name" content="{{ .SiteName }}"/>
+    <meta property="og:site_name" content="{{ .SiteName }}" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -33,4 +32,3 @@
     </footer>
   </body>
 </html>
-{{ end }}

@@ -36,6 +36,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+			"Title":           "Proto",
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
