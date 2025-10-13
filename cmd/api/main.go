@@ -28,7 +28,7 @@ func main() {
 
 	pool, err := appdb.NewPool(context.Background(), cfg)
 	if err != nil {
-		log.Error("failed to initialise database pool", slog.Any("err", err))
+		log.Error("failed to initialize database pool", slog.Any("err", err))
 		os.Exit(1)
 	}
 	defer pool.Close()
