@@ -33,7 +33,7 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 		},
 	})
 
-	r.LoadHTMLGlob("internal/http/views/**/*")
+	r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
 	registerPublicRoutes(r, cfg, postSvc)
