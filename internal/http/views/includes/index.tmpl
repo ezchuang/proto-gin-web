@@ -1,0 +1,19 @@
+﻿{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>{{ .SiteName }}</h2>
+  <p>Welcome{{if .User}}, {{ .User }} {{end}}</p>
+  <p>{{ .SiteDescription }}</p>
+  <ul>
+    <li>Environment: <code>{{ .Env }}</code></li>
+    <li>Base URL: <code>{{ .BaseURL }}</code></li>
+  </ul>
+  <p>
+    <a href="{{ .DocsURL }}" target="_blank" rel="noreferrer noopener">Gin Documentation</a> ·
+    <a href="{{ .PostsURL }}">View Posts</a> ·
+    <a href="{{ .APIPostsURL }}">Posts API</a>
+  </p>
+  <p>Health probe: <code>/livez</code> · Readiness: <code>/readyz</code></p>
+</section>
+{{ end }}

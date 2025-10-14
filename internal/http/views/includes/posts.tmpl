@@ -1,0 +1,16 @@
+﻿{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Posts</h2>
+  {{ if .Posts }}
+    <ul>
+      {{ range .Posts }}
+        <li><a href="/posts/{{ .Slug }}">{{ .Title }}</a> · <small>{{ .Summary }}</small></li>
+      {{ end }}
+    </ul>
+  {{ else }}
+    <p>No posts yet.</p>
+  {{ end }}
+</section>
+{{ end }}
