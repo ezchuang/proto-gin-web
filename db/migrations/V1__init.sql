@@ -1,5 +1,4 @@
--- Flyway versioned migration: initial schema
--- Keep it minimal for bring-up and examples.
+-- Init
 
 CREATE TABLE IF NOT EXISTS app_user (
     id            BIGSERIAL PRIMARY KEY,

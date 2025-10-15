@@ -1,4 +1,4 @@
--- Enterprise blog schema (posts, categories, tags, users, roles)
+-- Blog schema (posts, categories, tags, users, roles)
 
 CREATE TABLE IF NOT EXISTS role (
     id          BIGSERIAL PRIMARY KEY,
@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS app_user (
     role_id       BIGINT REFERENCES role(id),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE app_user
+    ADD COLUMN IF NOT EXISTS role_id BIGINT REFERENCES role(id);
 
 CREATE TABLE IF NOT EXISTS post (
     id            BIGSERIAL PRIMARY KEY,
@@ -56,10 +59,14 @@ INSERT INTO role (name) VALUES ('admin') ON CONFLICT (name) DO NOTHING;
 INSERT INTO app_user (email, display_name, role_id)
 SELECT 'admin@example.com', 'Admin', r.id FROM role r WHERE r.name = 'admin'
 ON CONFLICT (email) DO NOTHING;
+UPDATE app_user
+SET role_id = r.id
+FROM role r
+WHERE r.name = 'admin' AND app_user.role_id IS NULL;
 
 -- Seed a sample published post
 INSERT INTO post (title, slug, summary, content_md, status, author_id, published_at)
-SELECT 'Welcome to Proto Blog', 'welcome', 'First enterprise blog post', '# Hello World', 'published', u.id, NOW()
+SELECT 'Welcome to Proto Blog', 'welcome', 'First blog post', '# Hello World', 'published', u.id, NOW()
 FROM app_user u WHERE u.email = 'admin@example.com'
 ON CONFLICT (slug) DO NOTHING;
 
