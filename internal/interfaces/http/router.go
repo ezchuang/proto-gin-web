@@ -6,14 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/core"
-	helper "proto-gin-web/internal/http/templates"
-	"proto-gin-web/internal/platform"
-	appdb "proto-gin-web/internal/repo/pg"
+	"proto-gin-web/internal/domain"
+	appdb "proto-gin-web/internal/infrastructure/pg"
+	"proto-gin-web/internal/infrastructure/platform"
+	helper "proto-gin-web/internal/interfaces/http/templates"
 )
 
 // NewRouter wires middleware, views, and routes.
-func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Queries) *gin.Engine {
+func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Queries) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -34,12 +34,12 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 		},
 	})
 
-	r.HTMLRender = helper.LoadTemplates("internal/http/views", "/layouts/*.tmpl", "/includes/*.tmpl")
+	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/views", "layouts/*.tmpl", "includes/*.tmpl")
 	// r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
 	registerPublicRoutes(r, cfg, postSvc)
-	registerAPIRoutes(r, postSvc, queries)
+	registerAPIRoutes(r, postSvc)
 	registerAdminRoutes(r, cfg, postSvc, queries)
 
 	return r

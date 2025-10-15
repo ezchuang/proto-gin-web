@@ -24,7 +24,7 @@ ENV APP_ENV=production
 
 COPY --from=builder /out/server /app/server
 COPY web /app/web
-COPY internal/http/views /app/internal/http/views
+COPY internal/interfaces/http/views /app/internal/interfaces/http/views
 
 EXPOSE 8080
 

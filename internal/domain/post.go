@@ -1,8 +1,8 @@
-package core
+package domain
 
 import "time"
 
-// Post is the enterprise blog core entity.
+// Post is the blog domain entity.
 type Post struct {
 	ID          int64      `json:"id"`
 	Title       string     `json:"title"`

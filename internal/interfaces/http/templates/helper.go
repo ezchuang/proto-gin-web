@@ -1,13 +1,11 @@
-﻿package templates
+package templates
 
 import (
 	"errors"
-	"fmt"
 	"html/template"
 	"path/filepath"
 
 	"github.com/gin-contrib/multitemplate"
-	"github.com/gin-gonic/gin"
 )
 
 // MustLoad combines the provided template files (layout first) into a single *template.Template.
@@ -66,14 +64,9 @@ func LoadTemplates(templatesDir string, layoutPattern string, includePattern str
 		panic(err)
 	}
 
-	fmt.Printf("DefaultWriter = %T\n", gin.DefaultWriter)
-	fmt.Println(layouts)
-	fmt.Println(includes)
-
 	for _, include := range includes {
 		files := append([]string{}, layouts...)
 		files = append(files, include)
-		fmt.Println(filepath.Base(include), files)
 		r.AddFromFiles(filepath.Base(include), files...)
 	}
 

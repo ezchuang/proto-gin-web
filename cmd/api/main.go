@@ -12,10 +12,10 @@ import (
 
 	"github.com/joho/godotenv"
 
-	httpapp "proto-gin-web/internal/http"
-	"proto-gin-web/internal/platform"
-	appdb "proto-gin-web/internal/repo/pg"
-	postusecase "proto-gin-web/internal/usecase/post"
+	postusecase "proto-gin-web/internal/application/post"
+	appdb "proto-gin-web/internal/infrastructure/pg"
+	"proto-gin-web/internal/infrastructure/platform"
+	httpapp "proto-gin-web/internal/interfaces/http"
 )
 
 func main() {
