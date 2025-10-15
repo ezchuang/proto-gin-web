@@ -6,11 +6,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/core"
+	"proto-gin-web/internal/domain"
 )
 
 // registerAPIRoutes attaches JSON endpoints for posts.
-func registerAPIRoutes(r *gin.Engine, postSvc core.PostService) {
+func registerAPIRoutes(r *gin.Engine, postSvc domain.PostService) {
 	r.GET("/api/posts", func(c *gin.Context) {
 		limitStr := c.DefaultQuery("limit", "10")
 		offsetStr := c.DefaultQuery("offset", "0")
@@ -21,7 +21,7 @@ func registerAPIRoutes(r *gin.Engine, postSvc core.PostService) {
 		sort := c.DefaultQuery("sort", "created_at_desc")
 
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, core.ListPostsOptions{
+		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{
 			Category: category,
 			Tag:      tag,
 			Sort:     sort,

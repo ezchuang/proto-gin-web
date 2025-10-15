@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"proto-gin-web/internal/platform"
+	"proto-gin-web/internal/infrastructure/platform"
 )
 
 // NewPool creates a pgx connection pool with sane defaults.

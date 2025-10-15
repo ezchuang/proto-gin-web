@@ -5,10 +5,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"proto-gin-web/internal/core"
+	"proto-gin-web/internal/domain"
 )
 
-// PostRepository provides a core.PostRepository backed by pgx queries.
+// PostRepository provides a domain.PostRepository backed by pgx queries.
 type PostRepository struct {
 	queries *Queries
 }
@@ -18,9 +18,9 @@ func NewPostRepository(pool *pgxpool.Pool) *PostRepository {
 	return &PostRepository{queries: New(pool)}
 }
 
-var _ core.PostRepository = (*PostRepository)(nil)
+var _ domain.PostRepository = (*PostRepository)(nil)
 
-func (r *PostRepository) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]core.Post, error) {
+func (r *PostRepository) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]domain.Post, error) {
 	posts, err := r.queries.ListPublishedPosts(ctx, limit, offset)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func (r *PostRepository) ListPublishedPosts(ctx context.Context, limit, offset i
 	return mapPosts(posts), nil
 }
 
-func (r *PostRepository) ListPublishedPostsSorted(ctx context.Context, sort string, limit, offset int32) ([]core.Post, error) {
+func (r *PostRepository) ListPublishedPostsSorted(ctx context.Context, sort string, limit, offset int32) ([]domain.Post, error) {
 	posts, err := r.queries.ListPublishedPostsSorted(ctx, sort, limit, offset)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func (r *PostRepository) ListPublishedPostsSorted(ctx context.Context, sort stri
 	return mapPosts(posts), nil
 }
 
-func (r *PostRepository) ListPublishedPostsByCategorySorted(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]core.Post, error) {
+func (r *PostRepository) ListPublishedPostsByCategorySorted(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]domain.Post, error) {
 	posts, err := r.queries.ListPublishedPostsByCategorySorted(ctx, categorySlug, sort, limit, offset)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (r *PostRepository) ListPublishedPostsByCategorySorted(ctx context.Context,
 	return mapPosts(posts), nil
 }
 
-func (r *PostRepository) ListPublishedPostsByTagSorted(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]core.Post, error) {
+func (r *PostRepository) ListPublishedPostsByTagSorted(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]domain.Post, error) {
 	posts, err := r.queries.ListPublishedPostsByTagSorted(ctx, tagSlug, sort, limit, offset)
 	if err != nil {
 		return nil, err
@@ -52,15 +52,15 @@ func (r *PostRepository) ListPublishedPostsByTagSorted(ctx context.Context, tagS
 	return mapPosts(posts), nil
 }
 
-func (r *PostRepository) GetPostBySlug(ctx context.Context, slug string) (core.Post, error) {
+func (r *PostRepository) GetPostBySlug(ctx context.Context, slug string) (domain.Post, error) {
 	post, err := r.queries.GetPostBySlug(ctx, slug)
 	if err != nil {
-		return core.Post{}, err
+		return domain.Post{}, err
 	}
 	return mapPost(post), nil
 }
 
-func (r *PostRepository) CreatePost(ctx context.Context, input core.CreatePostInput) (core.Post, error) {
+func (r *PostRepository) CreatePost(ctx context.Context, input domain.CreatePostInput) (domain.Post, error) {
 	params := CreatePostParams{
 		Title:       input.Title,
 		Slug:        input.Slug,
@@ -75,12 +75,12 @@ func (r *PostRepository) CreatePost(ctx context.Context, input core.CreatePostIn
 	}
 	post, err := r.queries.CreatePost(ctx, params)
 	if err != nil {
-		return core.Post{}, err
+		return domain.Post{}, err
 	}
 	return mapPost(post), nil
 }
 
-func (r *PostRepository) UpdatePostBySlug(ctx context.Context, input core.UpdatePostInput) (core.Post, error) {
+func (r *PostRepository) UpdatePostBySlug(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error) {
 	params := UpdatePostBySlugParams{
 		Slug:      input.Slug,
 		Title:     input.Title,
@@ -93,7 +93,7 @@ func (r *PostRepository) UpdatePostBySlug(ctx context.Context, input core.Update
 	}
 	post, err := r.queries.UpdatePostBySlug(ctx, params)
 	if err != nil {
-		return core.Post{}, err
+		return domain.Post{}, err
 	}
 	return mapPost(post), nil
 }
@@ -118,7 +118,7 @@ func (r *PostRepository) RemoveTagFromPost(ctx context.Context, slug, tagSlug st
 	return r.queries.RemoveTagFromPost(ctx, slug, tagSlug)
 }
 
-func (r *PostRepository) ListCategoriesByPostSlug(ctx context.Context, slug string) ([]core.Category, error) {
+func (r *PostRepository) ListCategoriesByPostSlug(ctx context.Context, slug string) ([]domain.Category, error) {
 	cats, err := r.queries.ListCategoriesByPostSlug(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (r *PostRepository) ListCategoriesByPostSlug(ctx context.Context, slug stri
 	return mapCategories(cats), nil
 }
 
-func (r *PostRepository) ListTagsByPostSlug(ctx context.Context, slug string) ([]core.Tag, error) {
+func (r *PostRepository) ListTagsByPostSlug(ctx context.Context, slug string) ([]domain.Tag, error) {
 	tags, err := r.queries.ListTagsByPostSlug(ctx, slug)
 	if err != nil {
 		return nil, err
@@ -134,16 +134,16 @@ func (r *PostRepository) ListTagsByPostSlug(ctx context.Context, slug string) ([
 	return mapTags(tags), nil
 }
 
-func mapPosts(posts []Post) []core.Post {
-	out := make([]core.Post, len(posts))
+func mapPosts(posts []Post) []domain.Post {
+	out := make([]domain.Post, len(posts))
 	for i, p := range posts {
 		out[i] = mapPost(p)
 	}
 	return out
 }
 
-func mapPost(p Post) core.Post {
-	return core.Post{
+func mapPost(p Post) domain.Post {
+	return domain.Post{
 		ID:          p.ID,
 		Title:       p.Title,
 		Slug:        p.Slug,
@@ -158,18 +158,18 @@ func mapPost(p Post) core.Post {
 	}
 }
 
-func mapCategories(categories []Category) []core.Category {
-	out := make([]core.Category, len(categories))
+func mapCategories(categories []Category) []domain.Category {
+	out := make([]domain.Category, len(categories))
 	for i, c := range categories {
-		out[i] = core.Category{ID: c.ID, Name: c.Name, Slug: c.Slug}
+		out[i] = domain.Category{ID: c.ID, Name: c.Name, Slug: c.Slug}
 	}
 	return out
 }
 
-func mapTags(tags []Tag) []core.Tag {
-	out := make([]core.Tag, len(tags))
+func mapTags(tags []Tag) []domain.Tag {
+	out := make([]domain.Tag, len(tags))
 	for i, t := range tags {
-		out[i] = core.Tag{ID: t.ID, Name: t.Name, Slug: t.Slug}
+		out[i] = domain.Tag{ID: t.ID, Name: t.Name, Slug: t.Slug}
 	}
 	return out
 }

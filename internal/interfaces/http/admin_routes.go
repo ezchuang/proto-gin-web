@@ -5,14 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/auth"
-	"proto-gin-web/internal/core"
-	"proto-gin-web/internal/platform"
-	appdb "proto-gin-web/internal/repo/pg"
+	"proto-gin-web/internal/domain"
+	appdb "proto-gin-web/internal/infrastructure/pg"
+	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/interfaces/auth"
 )
 
 // registerAdminRoutes wires admin authentication and CRUD handlers.
-func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostService, queries *appdb.Queries) {
+func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService, queries *appdb.Queries) {
 	r.GET("/admin/login", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "login with ?u=&p="})
 	})
@@ -50,7 +50,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostSe
 
 			ctx := c.Request.Context()
 			cover := body.CoverURL
-			input := core.CreatePostInput{
+			input := domain.CreatePostInput{
 				Title:       body.Title,
 				Slug:        body.Slug,
 				Summary:     body.Summary,
@@ -83,7 +83,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostSe
 				return
 			}
 			cover := body.CoverURL
-			input := core.UpdatePostInput{
+			input := domain.UpdatePostInput{
 				Slug:      slug,
 				Title:     body.Title,
 				Summary:   body.Summary,

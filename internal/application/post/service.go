@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"proto-gin-web/internal/core"
+	"proto-gin-web/internal/domain"
 )
 
 const (
@@ -26,19 +26,19 @@ var allowedSorts = map[string]struct{}{
 	"":                  {},
 }
 
-// Service implements core.PostService using a repository abstraction.
+// Service implements domain.PostService using a repository abstraction.
 type Service struct {
-	repo core.PostRepository
+	repo domain.PostRepository
 }
 
-var _ core.PostService = (*Service)(nil)
+var _ domain.PostService = (*Service)(nil)
 
 // NewService wires a post repository into a use case implementation.
-func NewService(repo core.PostRepository) *Service {
+func NewService(repo domain.PostRepository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) ListPublished(ctx context.Context, opts core.ListPostsOptions) ([]core.Post, error) {
+func (s *Service) ListPublished(ctx context.Context, opts domain.ListPostsOptions) ([]domain.Post, error) {
 	limit := clampLimit(opts.Limit)
 	offset := opts.Offset
 	if offset < 0 {
@@ -56,38 +56,38 @@ func (s *Service) ListPublished(ctx context.Context, opts core.ListPostsOptions)
 	}
 }
 
-func (s *Service) GetBySlug(ctx context.Context, slug string) (core.PostWithRelations, error) {
+func (s *Service) GetBySlug(ctx context.Context, slug string) (domain.PostWithRelations, error) {
 	if strings.TrimSpace(slug) == "" {
-		return core.PostWithRelations{}, errSlugRequired
+		return domain.PostWithRelations{}, errSlugRequired
 	}
 
 	post, err := s.repo.GetPostBySlug(ctx, slug)
 	if err != nil {
-		return core.PostWithRelations{}, err
+		return domain.PostWithRelations{}, err
 	}
 
 	cats, err := s.repo.ListCategoriesByPostSlug(ctx, slug)
 	if err != nil {
-		return core.PostWithRelations{}, err
+		return domain.PostWithRelations{}, err
 	}
 	tags, err := s.repo.ListTagsByPostSlug(ctx, slug)
 	if err != nil {
-		return core.PostWithRelations{}, err
+		return domain.PostWithRelations{}, err
 	}
 
-	return core.PostWithRelations{Post: post, Categories: cats, Tags: tags}, nil
+	return domain.PostWithRelations{Post: post, Categories: cats, Tags: tags}, nil
 }
 
-func (s *Service) Create(ctx context.Context, input core.CreatePostInput) (core.Post, error) {
+func (s *Service) Create(ctx context.Context, input domain.CreatePostInput) (domain.Post, error) {
 	if err := validateCreateInput(input); err != nil {
-		return core.Post{}, err
+		return domain.Post{}, err
 	}
 	return s.repo.CreatePost(ctx, normalizeCreateInput(input))
 }
 
-func (s *Service) Update(ctx context.Context, input core.UpdatePostInput) (core.Post, error) {
+func (s *Service) Update(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error) {
 	if err := validateUpdateInput(input); err != nil {
-		return core.Post{}, err
+		return domain.Post{}, err
 	}
 	return s.repo.UpdatePostBySlug(ctx, normalizeUpdateInput(input))
 }
@@ -157,7 +157,7 @@ func normalizeSort(sort string) string {
 	return "created_at_desc"
 }
 
-func validateCreateInput(input core.CreatePostInput) error {
+func validateCreateInput(input domain.CreatePostInput) error {
 	if strings.TrimSpace(input.Title) == "" {
 		return errTitleRequired
 	}
@@ -167,7 +167,7 @@ func validateCreateInput(input core.CreatePostInput) error {
 	return nil
 }
 
-func validateUpdateInput(input core.UpdatePostInput) error {
+func validateUpdateInput(input domain.UpdatePostInput) error {
 	if strings.TrimSpace(input.Slug) == "" {
 		return errSlugRequired
 	}
@@ -177,7 +177,7 @@ func validateUpdateInput(input core.UpdatePostInput) error {
 	return nil
 }
 
-func normalizeCreateInput(input core.CreatePostInput) core.CreatePostInput {
+func normalizeCreateInput(input domain.CreatePostInput) domain.CreatePostInput {
 	input.Title = strings.TrimSpace(input.Title)
 	input.Slug = strings.TrimSpace(input.Slug)
 	input.Status = strings.TrimSpace(input.Status)
@@ -193,7 +193,7 @@ func normalizeCreateInput(input core.CreatePostInput) core.CreatePostInput {
 	return input
 }
 
-func normalizeUpdateInput(input core.UpdatePostInput) core.UpdatePostInput {
+func normalizeUpdateInput(input domain.UpdatePostInput) domain.UpdatePostInput {
 	input.Slug = strings.TrimSpace(input.Slug)
 	input.Title = strings.TrimSpace(input.Title)
 	input.Summary = strings.TrimSpace(input.Summary)

@@ -27,21 +27,13 @@ proto-gin-web/
 │       ├── post_relation.sql
 │       └── tag.sql
 ├── internal/
-│   ├── auth/
-│   ├── core/
-│   ├── http/
-│   │   ├── api_routes.go
-│   │   ├── admin_routes.go
-│   │   ├── middleware.go
-│   │   ├── public_routes.go
-│   │   ├── router.go
-│   │   └── views/
-│   │       ├── layouts/layout.tmpl
-│   │       └── includes/{index,posts,post}.tmpl
-│   ├── platform/
-│   ├── repo/pg/
-│   ├── seo/
-│   └── usecase/post/
+│   ├── application/post/
+│   ├── domain/
+│   ├── infrastructure/
+│   │   ├── pg/
+│   │   ├── platform/
+│   │   └── seo/
+│   └── interfaces/http/
 ├── web/static/
 ├── Dockerfile
 ├── docker-compose.yml
@@ -96,11 +88,11 @@ make down
   - Relations: POST/DELETE `/admin/posts/:slug/categories/:cat`, POST/DELETE `/admin/posts/:slug/tags/:tag`
 
 ## Architecture Notes
-- `internal/http`: separates public/API/admin routes and middleware
-- `internal/core`: core entities, usecase interfaces, repository contracts
-- `internal/usecase/post`: validation, normalization, taxonomy orchestration
-- `internal/repo/pg`: `pgx/sqlc` persistence implementation
-- `internal/platform`: configuration & logging bootstrap
+- `internal/interfaces/http`: separates public/API/admin routes and middleware
+- `internal/domain`: core entities and aggregate contracts
+- `internal/application/post`: validation, normalization, taxonomy orchestration
+- `internal/infrastructure/pg`: `pgx/sqlc` persistence implementation
+- `internal/infrastructure/platform`: configuration & logging bootstrap
 - `db/queries` + `sqlc`: SQL -> typed accessors
 - Observability: Request-ID middleware, structured slog logging, cache-control helper, readiness probe
 

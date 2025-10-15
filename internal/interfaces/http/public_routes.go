@@ -11,12 +11,12 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	bf "github.com/russross/blackfriday/v2"
 
-	"proto-gin-web/internal/core"
-	"proto-gin-web/internal/platform"
+	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/infrastructure/platform"
 )
 
 // registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
-func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostService) {
+func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
 	r.GET("/livez", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "alive"})
 	})
@@ -24,7 +24,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 	r.GET("/readyz", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
-		if _, err := postSvc.ListPublished(ctx, core.ListPostsOptions{Limit: 1}); err != nil {
+		if _, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 1}); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{
 				"status": "not ready",
 				"error":  err.Error(),
@@ -54,7 +54,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 
 	r.GET("/sitemap.xml", func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, core.ListPostsOptions{Limit: 100})
+		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 100})
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
@@ -71,7 +71,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 
 	r.GET("/rss.xml", func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, core.ListPostsOptions{Limit: 20})
+		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 20})
 		if err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
@@ -109,7 +109,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc core.PostS
 		tag := c.Query("tag")
 		sort := c.DefaultQuery("sort", "created_at_desc")
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, core.ListPostsOptions{
+		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{
 			Category: category,
 			Tag:      tag,
 			Sort:     sort,
