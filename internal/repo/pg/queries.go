@@ -20,15 +20,6 @@ func New(pool *pgxpool.Pool) *Queries {
 	return &Queries{pool: pool}
 }
 
-type Article struct {
-	ID          int64
-	Title       string
-	Body        string
-	PublishedAt *time.Time
-	AuthorID    int64
-	CreatedAt   time.Time
-}
-
 type Post struct {
 	ID          int64
 	Title       string
@@ -83,33 +74,6 @@ type CreateCategoryParams struct {
 type CreateTagParams struct {
 	Name string
 	Slug string
-}
-
-func (q *Queries) ListArticles(ctx context.Context, limit, offset int32) ([]Article, error) {
-	const stmt = `SELECT id, title, body, published_at, author_id, created_at FROM article ORDER BY id DESC LIMIT $1 OFFSET $2`
-	rows, err := q.pool.Query(ctx, stmt, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var out []Article
-	for rows.Next() {
-		var a Article
-		var published pgtype.Timestamptz
-		if err := rows.Scan(&a.ID, &a.Title, &a.Body, &published, &a.AuthorID, &a.CreatedAt); err != nil {
-			return nil, err
-		}
-		if published.Valid {
-			t := published.Time
-			a.PublishedAt = &t
-		}
-		out = append(out, a)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (q *Queries) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]Post, error) {

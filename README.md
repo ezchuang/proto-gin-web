@@ -1,86 +1,69 @@
-# Proto Gin Web (Blog Starter Template)
+﻿# Proto Gin Web (Blog Starter Template)
 
-Go + Gin blog starter prototypes. It highlights clean layering (Clean-ish), sqlc + pgx typed queries, SSR + SEO hooks, modular usecases and routing, connection pooling, structured logging, and readiness checks.
+Go + Gin blog starter prototypes. It showcases clean layering (Clean-ish), sqlc + pgx typed queries, SSR + SEO hooks, modular usecases and routing, connection pooling, structured logging, and readiness checks.
 
 ## Core Features
 - Go 1.24 (toolchain go1.25) with Gin router and middleware (Request-ID, structured logging, cache-control)
 - PostgreSQL 16 (Docker), pgx v5 + sqlc typed query package, Flyway migrations
-- SSR pages: home, post list, post detail with template helper timefmt
-- SEO endpoints: robots.txt, sitemap.xml, rss.xml plus extendable SEO stubs
-- Health probes: `/livez` for liveness, `/readyz` hits DB through usecase
+- SSR pages: home, post list, post detail with template helper `timefmt`
+- SEO endpoints: `robots.txt`, `sitemap.xml`, `rss.xml` plus extendable SEO stubs
+- Health probes: `/livez` for liveness, `/readyz` to verify DB connectivity
 - Admin sample: login/logout, post CRUD, category/tag management and relations
 
 ## Project Layout
 ```plaintext
 proto-gin-web/
 ├── cmd/
-│   └── api/
-│       └── main.go
+│   └── api/main.go
 ├── db/
 │   ├── migrations/
-│   │   ├── V1init.sql
-│   │   ├── V2blog.sql
-│   │   └── V3indexes.sql
+│   │   ├── V1__init.sql
+│   │   ├── V2__blog.sql
+│   │   ├── V3__indexes.sql
+│   │   └── V4__drop_article.sql
 │   └── queries/
-│       ├── article.sql
 │       ├── category.sql
-│       ├── post_relation.sql
 │       ├── post.sql
+│       ├── post_relation.sql
 │       └── tag.sql
 ├── internal/
 │   ├── auth/
-│   │   └── session.go # admin cookie stub
-│   ├── core/ # entities & usecases (thin)
-│   │   ├── post_repository.go
-│   │   ├── post_service.go
-│   │   └── post.go
-│   ├── http/ # router, middleware, handlers, templates
-│   │   └── views/
-│   │   │   ├── index.tmpl
-│   │   │   ├── layout.tmpl
-│   │   │   └── post.tmpl
-│   │   ├── admin_routes.go
+│   ├── core/
+│   ├── http/
 │   │   ├── api_routes.go
+│   │   ├── admin_routes.go
 │   │   ├── middleware.go
 │   │   ├── public_routes.go
-│   │   └── router.go
-│   ├── platform/ # config, logger
-│   │   ├── config.go
-│   │   └── logger.go
+│   │   ├── router.go
+│   │   └── views/
+│   │       ├── layouts/layout.tmpl
+│   │       └── includes/{index,posts,post}.tmpl
+│   ├── platform/
 │   ├── repo/pg/
-│   │   ├── db.go # pgx pool
-│   │   ├── post_repository.go
-│   │   └── queries.go
-│   └── seo/ # seo utils (stubs)
-│       └── meta.go
-│       ├── rss.go
-│       └── sitemap.go
-├── internal/usecase/post/
-│   └── service.go
+│   ├── seo/
+│   └── usecase/post/
 ├── web/static/
-│   └── app.css
-├── docker-compose.yml
 ├── Dockerfile
-├── .env.example
+├── docker-compose.yml
 ├── Makefile
 └── sqlc.yaml
 ```
 
 ## Getting Started
 1. Start database & run migrations
-```bash
-make db-up
-make migrate
-```
+   ```bash
+   make db-up
+   make migrate
+   ```
 2. Generate sqlc code
-```bash
-make sqlc-docker         # or use `make sqlc`
-```
-3. Install dependencies & run app
-```bash
-make deps
-make run           # http://localhost:8080
-```
+   ```bash
+   make sqlc-docker    # or `make sqlc`
+   ```
+3. Install dependencies & run the app
+   ```bash
+   make deps
+   make run            # http://localhost:8080
+   ```
 
 ### Docker Workflow
 ```bash
@@ -90,9 +73,9 @@ make down
 ```
 
 ## Useful Make Targets
-- db: `db-up`、`db-psql`、`migrate`、`migrate-info`、`migrate-repair`
-- codegen: `sqlc`、`sqlc-docker`
-- app lifecycle: `deps`、`run`、`build`、`up`、`logs`、`down`
+- db: `db-up`, `db-psql`, `migrate`, `migrate-info`, `migrate-repair`
+- codegen: `sqlc`, `sqlc-docker`
+- app lifecycle: `deps`, `run`, `build`, `up`, `logs`, `down`
 
 ## Environment Variables
 - DB: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`
@@ -102,11 +85,9 @@ make down
 - Compose: `HOST_POSTGRES_PORT`, `HOST_APP_PORT`
 
 ## Feature Summary
-- SSR templates:`/`, `/posts` (pagination/filter/sort), `/posts/:slug`
+- SSR templates: `/`, `/posts` (pagination/filter/sort), `/posts/:slug`
 - SEO: `/robots.txt`, `/sitemap.xml`, `/rss.xml`
-- API endpoints:
-  - `GET /api/articles?limit=10&offset=0`
-  - `GET /api/posts?category=...&tag=...&sort=created_at_desc|created_at_asc|published_at_desc|published_at_asc&limit=&offset=`
+- API: `GET /api/posts?category=&tag=&sort=&limit=&offset=`
 - Admin sample:
   - Auth: POST `/admin/login`, POST `/admin/logout`
   - Posts: POST `/admin/posts`, PUT `/admin/posts/:slug`, DELETE `/admin/posts/:slug`

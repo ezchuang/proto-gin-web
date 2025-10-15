@@ -1,4 +1,4 @@
--- Init
+﻿-- Init
 
 CREATE TABLE IF NOT EXISTS app_user (
     id            BIGSERIAL PRIMARY KEY,

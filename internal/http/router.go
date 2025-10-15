@@ -39,7 +39,7 @@ func NewRouter(cfg platform.Config, postSvc core.PostService, queries *appdb.Que
 	r.Static("/static", "web/static")
 
 	registerPublicRoutes(r, cfg, postSvc)
-	registerAPIRoutes(r, postSvc, queries)
+	registerAPIRoutes(r, postSvc)
 	registerAdminRoutes(r, cfg, postSvc, queries)
 
 	return r
