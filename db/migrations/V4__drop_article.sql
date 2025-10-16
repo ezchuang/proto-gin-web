@@ -2,4 +2,4 @@
 
 DROP TABLE IF EXISTS article;
 
-DELETE FROM app_user WHERE email = ''demo@example.com'';
+DELETE FROM app_user WHERE email = 'demo@example.com';
