@@ -12,6 +12,7 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/infrastructure/seo"
 	"proto-gin-web/internal/infrastructure/platform"
 )
 
@@ -59,14 +60,17 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.Header("Content-Type", "application/xml; charset=utf-8")
-		c.Writer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-		c.Writer.WriteString("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n")
-		c.Writer.WriteString("  <url><loc>" + cfg.BaseURL + "/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>\n")
+		paths := []string{"/"}
 		for _, p := range rows {
-			c.Writer.WriteString("  <url><loc>" + cfg.BaseURL + "/posts/" + p.Slug + "</loc></url>\n")
+			paths = append(paths, "/posts/"+p.Slug)
 		}
-		c.Writer.WriteString("</urlset>")
+		xmlBytes, err := seo.BuildFromPaths(cfg.BaseURL, paths)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Header("Content-Type", "application/xml; charset=utf-8")
+		c.Writer.Write(xmlBytes)
 	})
 
 	r.GET("/rss.xml", func(c *gin.Context) {
