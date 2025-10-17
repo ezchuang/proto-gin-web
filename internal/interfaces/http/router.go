@@ -38,9 +38,10 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Q
 	// r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
-	registerPublicRoutes(r, cfg, postSvc)
-	registerAPIRoutes(r, postSvc)
-	registerAdminRoutes(r, cfg, postSvc, queries)
+    registerPublicRoutes(r, cfg, postSvc)
+    registerAPIRoutes(r, postSvc)
+    registerAdminRoutes(r, cfg, postSvc, queries)
+    registerAdminUIRoutes(r, cfg, postSvc)
 
-	return r
+    return r
 }
