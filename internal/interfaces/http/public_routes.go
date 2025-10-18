@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,8 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/domain"
-	"proto-gin-web/internal/infrastructure/seo"
 	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/infrastructure/seo"
 )
 
 // registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
@@ -36,8 +37,9 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 	})
 
 	r.GET("/", func(c *gin.Context) {
+		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"Title":           "Proto",
+			"Title":           "Proto · ",
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -45,6 +47,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"DocsURL":         "https://gin-gonic.com/docs/",
 			"PostsURL":        "/posts",
 			"APIPostsURL":     "/api/posts?limit=10&offset=0",
+			"MetaTags":        template.HTML(m.Tags()),
 		})
 	})
 
@@ -124,6 +127,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
+		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
 		c.HTML(http.StatusOK, "posts.tmpl", gin.H{
 			"Title":           "Posts · " + cfg.SiteName,
 			"Env":             cfg.Env,
@@ -133,6 +137,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"Posts":           rows,
 			"Page":            page,
 			"Size":            size,
+			"MetaTags":        template.HTML(m.Tags()),
 		})
 	})
 
@@ -146,9 +151,16 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			return
 		}
 
-		unsafe := bf.Run([]byte(result.Post.ContentMD))
+		md := result.Post.ContentMD
+		md = strings.ReplaceAll(md, "\r\n", "\n")
+		md = strings.ReplaceAll(md, "\\r\\n", "\n")
+		md = strings.ReplaceAll(md, "\\n", "\n")
+		unsafe := bf.Run([]byte(md))
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
+		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage(result.Post.Title, result.Post.Summary, cfg.BaseURL+"/posts/"+slug, result.Post.CoverURL)
+		// Mark as article for richer previews
+		m.Type = "article"
 		c.HTML(http.StatusOK, "post.tmpl", gin.H{
 			"Title":           result.Post.Title + " · " + cfg.SiteName,
 			"Summary":         result.Post.Summary,
@@ -160,6 +172,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"BaseURL":         cfg.BaseURL,
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
+			"MetaTags":        template.HTML(m.Tags()),
 		})
 	})
 }

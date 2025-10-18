@@ -1,0 +1,22 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Admin · Posts</h2>
+  <p><a href="/admin/ui/posts/new">New Post</a></p>
+  {{ if .Posts }}
+  <ul>
+    {{ range .Posts }}
+      <li>
+        <a href="/admin/ui/posts/{{ .Slug }}/edit">{{ .Title }}</a>
+        · <small>{{ .Slug }}</small>
+        · <em>{{ .Status }}</em>
+      </li>
+    {{ end }}
+  </ul>
+  {{ else }}
+  <p>No posts yet.</p>
+  {{ end }}
+</section>
+{{ end }}
+
