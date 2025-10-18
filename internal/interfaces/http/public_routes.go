@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,8 +13,8 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/domain"
-	"proto-gin-web/internal/infrastructure/seo"
 	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/infrastructure/seo"
 )
 
 // registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
@@ -150,7 +151,11 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			return
 		}
 
-		unsafe := bf.Run([]byte(result.Post.ContentMD))
+		md := result.Post.ContentMD
+		md = strings.ReplaceAll(md, "\r\n", "\n")
+		md = strings.ReplaceAll(md, "\\r\\n", "\n")
+		md = strings.ReplaceAll(md, "\\n", "\n")
+		unsafe := bf.Run([]byte(md))
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage(result.Post.Title, result.Post.Summary, cfg.BaseURL+"/posts/"+slug, result.Post.CoverURL)
