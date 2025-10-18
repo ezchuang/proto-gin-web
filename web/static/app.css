@@ -24,6 +24,9 @@ body {
   color: var(--color-text);
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -46,13 +49,18 @@ footer {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 footer {
+  position: static;
   border-top: 1px solid var(--color-border);
   border-bottom: none;
   color: var(--color-muted);
   text-align: center;
+  margin-top: auto;
 }
 
 header h1 {
@@ -66,6 +74,7 @@ main {
   margin: 0 auto;
   padding: clamp(1.5rem, 3.5vw, 3rem) clamp(1rem, 3vw, 2rem) clamp(4rem, 6vw, 6rem);
   display: block;
+  flex: 1 0 auto;
 }
 
 main > section,
