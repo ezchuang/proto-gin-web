@@ -6,6 +6,6 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="600" fill="url(#g6)"/>
-  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="66" fill="#ffffff">SEO: Sitemap & RSS</text>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Roboto, sans-serif" font-size="66" fill="#ffffff">SEO: Sitemap &amp; RSS</text>
 </svg>
 
