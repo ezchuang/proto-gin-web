@@ -13,6 +13,7 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/infrastructure/feed"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/infrastructure/seo"
 )
@@ -83,20 +84,28 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.Header("Content-Type", "application/rss+xml; charset=utf-8")
-		c.Writer.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
-		c.Writer.WriteString("<rss version=\"2.0\">\n  <channel>\n")
-		c.Writer.WriteString("    <title>" + cfg.SiteName + "</title>\n")
-		c.Writer.WriteString("    <link>" + cfg.BaseURL + "</link>\n")
-		c.Writer.WriteString("    <description>" + cfg.SiteDescription + "</description>\n")
+		base := strings.TrimRight(cfg.BaseURL, "/")
+		var items []feed.Item
 		for _, p := range rows {
-			c.Writer.WriteString("    <item>\n")
-			c.Writer.WriteString("      <title>" + p.Title + "</title>\n")
-			c.Writer.WriteString("      <link>" + cfg.BaseURL + "/posts/" + p.Slug + "</link>\n")
-			c.Writer.WriteString("      <description>" + p.Summary + "</description>\n")
-			c.Writer.WriteString("    </item>\n")
+			link := base + "/posts/" + p.Slug
+			items = append(items, feed.Item{
+				Title:       p.Title,
+				Link:        link,
+				Description: p.Summary,
+				PubDate:     p.PublishedAt,
+			})
 		}
-		c.Writer.WriteString("  </channel>\n</rss>")
+		xmlBytes, err := feed.BuildRSS(feed.Channel{
+			Title:       cfg.SiteName,
+			Link:        cfg.BaseURL,
+			Description: cfg.SiteDescription,
+		}, items)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		c.Header("Content-Type", "application/rss+xml; charset=utf-8")
+		c.Writer.Write(xmlBytes)
 	})
 
 	r.GET("/posts", func(c *gin.Context) {
