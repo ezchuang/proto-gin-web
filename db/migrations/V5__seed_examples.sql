@@ -26,77 +26,95 @@ INSERT INTO tag (name, slug) VALUES
 ON CONFLICT (slug) DO NOTHING;
 
 -- Posts (use different publish times)
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Getting Started with Gin', 'getting-started-gin',
        'Quickstart guide to building APIs with Gin.',
        '# Getting Started\n\nThis post walks through setting up a minimal Gin app, routing, and middleware.\n\n## Steps\n- Install Go and Gin\n- Create a new module\n- Add a simple route\n\n```go\nr := gin.Default()\nr.GET("/ping", func(c *gin.Context){ c.JSON(200, gin.H{""message"": ""pong""}) })\n```',
        'https://picsum.photos/seed/gin/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '10 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '10 days',
+       NOW() - INTERVAL '10 days' - INTERVAL '12 hours',
+       NOW() - INTERVAL '10 days' + INTERVAL '6 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Server-Side Rendering with Gin', 'ssr-with-gin',
        'Render server-side HTML templates safely with Gin.',
        '# SSR with Gin\n\nUse Go templates to render pages. Sanitize any user content before rendering.\n\n- Layouts and partials\n- Template functions\n- Safe HTML',
        'https://picsum.photos/seed/ssr/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '9 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '9 days',
+       NOW() - INTERVAL '9 days' - INTERVAL '10 hours',
+       NOW() - INTERVAL '9 days' + INTERVAL '4 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Typed Postgres with pgx + sqlc', 'pgx-sqlc-typed-queries',
        'Compile-time safe queries using pgx and sqlc.',
        '# pgx + sqlc\n\nLeverage `sqlc` to generate type-safe accessors over `pgx`.\n\n- Define queries in `db/queries`\n- Generate code\n- Use in repositories',
        'https://picsum.photos/seed/sqlc/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '8 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '8 days',
+       NOW() - INTERVAL '8 days' - INTERVAL '8 hours',
+       NOW() - INTERVAL '8 days' + INTERVAL '3 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Dockerizing Your Gin App', 'dockerizing-gin-app',
        'Containerize your app and wire migrations.',
        '# Docker + Compose\n\nUse Docker Compose for Postgres and your API. Run Flyway for migrations.',
        'https://picsum.photos/seed/docker/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '7 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '7 days',
+       NOW() - INTERVAL '7 days' - INTERVAL '6 hours',
+       NOW() - INTERVAL '7 days' + INTERVAL '3 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Pagination, Sorting, and Filtering', 'pagination-sorting-filtering',
        'Build a clean list view with paging, sort, and filters.',
        '# Lists that scale\n\nSupport `page`, `size`, and taxonomy filters with proper indexes.',
        'https://picsum.photos/seed/paging/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '6 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '6 days',
+       NOW() - INTERVAL '6 days' - INTERVAL '5 hours',
+       NOW() - INTERVAL '6 days' + INTERVAL '2 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'SEO Basics: Sitemap and RSS', 'seo-sitemap-rss',
        'Expose sitemap.xml and rss.xml for better discovery.',
        '# SEO hooks\n\nAdd `/sitemap.xml` and `/rss.xml` endpoints sourcing from published posts.',
        'https://picsum.photos/seed/seo/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '5 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '5 days',
+       NOW() - INTERVAL '5 days' - INTERVAL '4 hours',
+       NOW() - INTERVAL '5 days' + INTERVAL '2 hours'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Testing Handlers and Services', 'testing-handlers-services',
        'Unit and integration tests for confidence.',
        '# Testing strategy\n\nUse table-driven tests and lightweight integration tests against Postgres.',
        NULL,
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '4 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '4 days',
+       NOW() - INTERVAL '4 days' - INTERVAL '6 hours',
+       NOW() - INTERVAL '4 days' + INTERVAL '1 hour'
 ON CONFLICT (slug) DO NOTHING;
 
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at)
 SELECT 'Release Notes: v0.1 Demo', 'release-notes-v0-1',
        'Highlights of the initial demo release.',
        '# v0.1\n\nInitial public demo with SSR, sqlc, and basic SEO.',
        'https://picsum.photos/seed/release/1200/600',
-       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '3 days'
+       'published', (SELECT id FROM app_user WHERE email = 'admin@example.com'), NOW() - INTERVAL '3 days',
+       NOW() - INTERVAL '3 days' - INTERVAL '4 hours',
+       NOW() - INTERVAL '3 days' + INTERVAL '2 hours'
 ON CONFLICT (slug) DO NOTHING;
 
 -- A draft that should not appear on /posts
-INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id)
+INSERT INTO post (title, slug, summary, content_md, cover_url, status, author_id, created_at, updated_at)
 SELECT 'Work In Progress', 'work-in-progress',
        'Draft content not yet published.',
        '# WIP\n\nThis is a draft and should not show up in listings.',
        NULL,
-       'draft', (SELECT id FROM app_user WHERE email = 'admin@example.com')
+       'draft', (SELECT id FROM app_user WHERE email = 'admin@example.com'),
+       NOW() - INTERVAL '2 days',
+       NOW() - INTERVAL '2 days' + INTERVAL '2 hours'
 ON CONFLICT (slug) DO NOTHING;
 
 -- Relations: categories and tags per post
