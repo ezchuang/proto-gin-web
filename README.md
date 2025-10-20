@@ -17,15 +17,7 @@ proto-gin-web/
 │   └── api/main.go
 ├── db/
 │   ├── migrations/
-│   │   ├── V1__init.sql
-│   │   ├── V2__blog.sql
-│   │   ├── V3__indexes.sql
-│   │   └── V4__drop_article.sql
 │   └── queries/
-│       ├── category.sql
-│       ├── post.sql
-│       ├── post_relation.sql
-│       └── tag.sql
 ├── internal/
 │   ├── application/post/
 │   ├── domain/

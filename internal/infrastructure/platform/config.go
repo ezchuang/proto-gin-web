@@ -31,7 +31,7 @@ func Load() Config {
 		DBHost:          getEnv("POSTGRES_HOST", "localhost"),
 		DBPort:          getEnv("POSTGRES_PORT", "5432"),
 		BaseURL:         getEnv("BASE_URL", "http://localhost:8080"),
-		SiteName:        getEnv("SITE_NAME", "Proto"),
+		SiteName:        getEnv("SITE_NAME", "Prototype"),
 		SiteDescription: getEnv("SITE_DESCRIPTION", "Gin + SSR + SQLC prototype"),
 		AdminUser:       getEnv("ADMIN_USER", "admin"),
 		AdminPass:       getEnv("ADMIN_PASS", "changeme"),
