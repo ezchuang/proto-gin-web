@@ -138,7 +138,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		}
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
 		c.HTML(http.StatusOK, "posts.tmpl", gin.H{
-			"Title":           "Posts · " + cfg.SiteName,
+			"Title":           "Posts · ",
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
 			"SiteName":        cfg.SiteName,
@@ -171,7 +171,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		// Mark as article for richer previews
 		m.Type = "article"
 		c.HTML(http.StatusOK, "post.tmpl", gin.H{
-			"Title":           result.Post.Title + " · " + cfg.SiteName,
+			"Title":           result.Post.Title + " · ",
 			"Summary":         result.Post.Summary,
 			"CoverURL":        result.Post.CoverURL,
 			"ContentHTML":     template.HTML(string(safe)),
