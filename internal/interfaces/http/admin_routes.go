@@ -20,14 +20,18 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		u := c.PostForm("u")
 		p := c.PostForm("p")
 		if u == cfg.AdminUser && p == cfg.AdminPass {
-			c.SetCookie("admin", "1", 3600, "/", "", false, true)
+			secureCookie := cfg.Env == "production"
+			c.SetSameSite(http.SameSiteStrictMode)
+			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
 		c.JSON(http.StatusUnauthorized, gin.H{"ok": false})
 	})
 	r.POST("/admin/logout", func(c *gin.Context) {
-		c.SetCookie("admin", "", -1, "/", "", false, true)
+		secureCookie := cfg.Env == "production"
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
 
