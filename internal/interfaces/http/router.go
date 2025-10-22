@@ -19,6 +19,7 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Q
 	}
 
 	r := gin.New()
+	r.Use(SecurityHeaders())
 	r.Use(RequestID())
 	r.Use(RecoveryWithRequestID())
 	r.Use(RequestLogger())
@@ -35,13 +36,11 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Q
 	})
 
 	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/views", "layouts/*.tmpl", "includes/*.tmpl")
-	// r.LoadHTMLGlob("internal/http/views/*.tmpl")
 	r.Static("/static", "web/static")
 
-    registerPublicRoutes(r, cfg, postSvc)
-    registerAPIRoutes(r, postSvc)
-    registerAdminRoutes(r, cfg, postSvc, queries)
-    registerAdminUIRoutes(r, cfg, postSvc)
+	registerPublicRoutes(r, cfg, postSvc)
+	registerAPIRoutes(r, postSvc)
+	registerAdminRoutes(r, cfg, postSvc, queries)
 
-    return r
+	return r
 }
