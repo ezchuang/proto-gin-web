@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -13,10 +14,12 @@ import (
 
 // registerAdminRoutes wires admin authentication and CRUD handlers.
 func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService, queries *appdb.Queries) {
+	loginLimiter := NewIPRateLimiter(5, time.Minute)
+
 	r.GET("/admin/login", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "login with ?u=&p="})
 	})
-	r.POST("/admin/login", func(c *gin.Context) {
+	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
 		u := c.PostForm("u")
 		p := c.PostForm("p")
 		if u == cfg.AdminUser && p == cfg.AdminPass {
