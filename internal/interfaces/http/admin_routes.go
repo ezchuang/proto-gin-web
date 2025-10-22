@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -26,9 +27,15 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 			secureCookie := cfg.Env == "production"
 			c.SetSameSite(http.SameSiteStrictMode)
 			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
+			slog.Info("admin login succeeded",
+				slog.String("user", u),
+				slog.String("ip", c.ClientIP()))
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
+		slog.Warn("admin login failed",
+			slog.String("user", u),
+			slog.String("ip", c.ClientIP()))
 		c.JSON(http.StatusUnauthorized, gin.H{"ok": false})
 	})
 	r.POST("/admin/logout", func(c *gin.Context) {
