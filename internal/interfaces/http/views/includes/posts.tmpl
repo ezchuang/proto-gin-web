@@ -1,4 +1,4 @@
-﻿{{ template "layout" . }}
+{{ template "layout" . }}
 
 {{ define "content" }}
 <section>
@@ -6,7 +6,7 @@
   {{ if .Posts }}
     <ul>
       {{ range .Posts }}
-        <li><a href="/posts/{{ .Slug }}">{{ .Title }}</a> · <small>{{ .Summary }}</small></li>
+        <li><a href="/posts/{{ .Slug | html }}">{{ .Title | html }}</a> · <small>{{ .Summary | html }}</small></li>
       {{ end }}
     </ul>
   {{ else }}

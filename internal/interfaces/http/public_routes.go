@@ -45,7 +45,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
-			"DocsURL":         "https://gin-gonic.com/docs/",
+			"DocsURL":         "https://gin-gonic.com/en/docs/",
 			"PostsURL":        "/posts",
 			"APIPostsURL":     "/api/posts?limit=10&offset=0",
 			"MetaTags":        template.HTML(m.Tags()),
