@@ -1,12 +1,15 @@
 package http
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
+	"golang.org/x/crypto/bcrypt"
 
 	"proto-gin-web/internal/domain"
 	appdb "proto-gin-web/internal/infrastructure/pg"
@@ -32,7 +35,27 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		u := c.PostForm("u")
 		p := c.PostForm("p")
 		isForm := wantsHTMLResponse(c)
-		if u == cfg.AdminUser && p == cfg.AdminPass {
+
+		ctx := c.Request.Context()
+		userRecord, err := queries.GetUserByEmail(ctx, u)
+		authenticated := false
+		if err == nil {
+			if err := bcrypt.CompareHashAndPassword([]byte(userRecord.PasswordHash), []byte(p)); err == nil {
+				authenticated = true
+			}
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("admin login lookup failed",
+				slog.String("user", u),
+				slog.String("ip", c.ClientIP()),
+				slog.Any("err", err))
+		}
+
+		// Fallback to legacy config credentials if DB lookup failed
+		if !authenticated && u == cfg.AdminUser && p == cfg.AdminPass {
+			authenticated = true
+		}
+
+		if authenticated {
 			secureCookie := cfg.Env == "production"
 			c.SetSameSite(http.SameSiteStrictMode)
 			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
@@ -46,6 +69,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 			c.JSON(http.StatusOK, gin.H{"ok": true})
 			return
 		}
+
 		slog.Warn("admin login failed",
 			slog.String("user", u),
 			slog.String("ip", c.ClientIP()))
