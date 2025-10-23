@@ -1,0 +1,26 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Administrator Registration</h2>
+  {{ if .Error }}
+  <p class="error">{{ .Error | html }}</p>
+  {{ end }}
+  <form method="post" action="/admin/register" class="form">
+    <label>
+      Username
+      <input type="text" name="u" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="p" required autocomplete="new-password" />
+    </label>
+    <label>
+      Confirm Password
+      <input type="password" name="confirm" required autocomplete="new-password" />
+    </label>
+    <button type="submit">Create Account</button>
+  </form>
+  <p><a href="/admin/login">Already registered?</a></p>
+</section>
+{{ end }}
