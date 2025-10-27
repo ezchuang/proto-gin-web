@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -97,3 +98,58 @@ func generateRequestID() string {
 	_, _ = rand.Read(b[:])
 	return hex.EncodeToString(b[:])
 }
+
+// SecurityHeaders adds common security-focused headers to every response.
+func SecurityHeaders() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		h := c.Writer.Header()
+		if _, ok := h["Content-Security-Policy"]; !ok {
+			h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
+		}
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("Referrer-Policy", "same-origin")
+		h.Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		c.Next()
+	}
+}
+
+// NewIPRateLimiter limits requests per client IP within the provided window.
+func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
+	type entry struct {
+		count  int
+		expiry time.Time
+	}
+	var (
+		mu    sync.Mutex
+		store = make(map[string]entry)
+	)
+
+	return func(c *gin.Context) {
+		ip := c.ClientIP()
+		now := time.Now()
+
+		mu.Lock()
+		e := store[ip]
+		if now.After(e.expiry) {
+			e = entry{count: 0, expiry: now.Add(window)}
+		}
+		e.count++
+		store[ip] = e
+		mu.Unlock()
+
+		if e.count > maxRequests {
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
+				"error":       "too many requests, try again later",
+				"retry_after": int(e.expiry.Sub(now).Seconds()),
+				"request_id":  GetRequestID(c),
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// NOTE: For high-traffic endpoints, consider replacing this mutex-backed map with a sharded map,
+// atomic counters, or a dedicated rate-limiting backend (e.g., Redis) to avoid contention.

@@ -1,9 +1,15 @@
 package http
 
 import (
+	"errors"
+	"log/slog"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
+	"golang.org/x/crypto/bcrypt"
 
 	"proto-gin-web/internal/domain"
 	appdb "proto-gin-web/internal/infrastructure/pg"
@@ -13,26 +19,107 @@ import (
 
 // registerAdminRoutes wires admin authentication and CRUD handlers.
 func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService, queries *appdb.Queries) {
+	loginLimiter := NewIPRateLimiter(5, time.Minute)
+	registerLimiter := NewIPRateLimiter(3, time.Minute)
+
 	r.GET("/admin/login", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "login with ?u=&p="})
+		c.HTML(http.StatusOK, "admin_login.tmpl", gin.H{
+			"SiteName":        cfg.SiteName,
+			"SiteDescription": cfg.SiteDescription,
+			"Env":             cfg.Env,
+			"BaseURL":         cfg.BaseURL,
+			"Error":           c.Query("error"),
+		})
 	})
-	r.POST("/admin/login", func(c *gin.Context) {
+	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
 		u := c.PostForm("u")
 		p := c.PostForm("p")
-		if u == cfg.AdminUser && p == cfg.AdminPass {
-			c.SetCookie("admin", "1", 3600, "/", "", false, true)
+		isForm := wantsHTMLResponse(c)
+
+		ctx := c.Request.Context()
+		userRecord, err := queries.GetUserByEmail(ctx, u)
+		authenticated := false
+		if err == nil {
+			if err := bcrypt.CompareHashAndPassword([]byte(userRecord.PasswordHash), []byte(p)); err == nil {
+				authenticated = true
+			}
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("admin login lookup failed",
+				slog.String("user", u),
+				slog.String("ip", c.ClientIP()),
+				slog.Any("err", err))
+		}
+
+		// Fallback to legacy config credentials if DB lookup failed
+		if !authenticated && u == cfg.AdminUser && p == cfg.AdminPass {
+			authenticated = true
+		}
+
+		if authenticated {
+			secureCookie := cfg.Env == "production"
+			c.SetSameSite(http.SameSiteStrictMode)
+			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
+			slog.Info("admin login succeeded",
+				slog.String("user", u),
+				slog.String("ip", c.ClientIP()))
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin")
+				return
+			}
 			c.JSON(http.StatusOK, gin.H{"ok": true})
+			return
+		}
+
+		slog.Warn("admin login failed",
+			slog.String("user", u),
+			slog.String("ip", c.ClientIP()))
+		if isForm {
+			c.Redirect(http.StatusFound, "/admin/login?error=Invalid+credentials")
 			return
 		}
 		c.JSON(http.StatusUnauthorized, gin.H{"ok": false})
 	})
 	r.POST("/admin/logout", func(c *gin.Context) {
-		c.SetCookie("admin", "", -1, "/", "", false, true)
+		secureCookie := cfg.Env == "production"
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
+		if wantsHTMLResponse(c) {
+			c.Redirect(http.StatusFound, "/admin/login")
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	r.GET("/admin/register", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_register.tmpl", gin.H{
+			"SiteName":        cfg.SiteName,
+			"SiteDescription": cfg.SiteDescription,
+			"Env":             cfg.Env,
+			"BaseURL":         cfg.BaseURL,
+			"Error":           c.Query("error"),
+		})
+	})
+	r.POST("/admin/register", registerLimiter, func(c *gin.Context) {
+		msg := "self-service admin registration is disabled"
+		if wantsHTMLResponse(c) {
+			c.Redirect(http.StatusFound, "/admin/register?error="+msg)
+			return
+		}
+		c.JSON(http.StatusNotImplemented, gin.H{"ok": false, "error": msg})
 	})
 
 	admin := r.Group("/admin", auth.AdminRequired())
 	{
+		admin.GET("", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin_dashboard.tmpl", gin.H{
+				"SiteName":        cfg.SiteName,
+				"SiteDescription": cfg.SiteDescription,
+				"Env":             cfg.Env,
+				"BaseURL":         cfg.BaseURL,
+				"User":            cfg.AdminUser,
+			})
+		})
+
 		admin.POST("/posts", func(c *gin.Context) {
 			var body struct {
 				Title     string `json:"title" binding:"required"`
@@ -191,4 +278,13 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 			c.Status(http.StatusNoContent)
 		})
 	}
+}
+
+func wantsHTMLResponse(c *gin.Context) bool {
+	ct := c.GetHeader("Content-Type")
+	if strings.Contains(ct, "application/x-www-form-urlencoded") || strings.Contains(ct, "multipart/form-data") {
+		return true
+	}
+	accept := c.GetHeader("Accept")
+	return strings.Contains(accept, "text/html")
 }

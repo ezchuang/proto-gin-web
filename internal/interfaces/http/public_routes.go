@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,6 +21,15 @@ import (
 
 // registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
 func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+	logger := slog.Default()
+	respondInternal := func(c *gin.Context, msg string, err error) {
+		logger.Error(msg,
+			slog.String("request_id", GetRequestID(c)),
+			slog.String("path", c.FullPath()),
+			slog.Any("error", err))
+		c.String(http.StatusInternalServerError, "internal server error")
+	}
+
 	r.GET("/livez", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "alive"})
 	})
@@ -28,10 +38,10 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
 		if _, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 1}); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"status": "not ready",
-				"error":  err.Error(),
-			})
+			logger.Warn("readiness probe failed",
+				slog.String("request_id", GetRequestID(c)),
+				slog.Any("error", err))
+			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready"})
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"status": "ready"})
@@ -45,7 +55,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
-			"DocsURL":         "https://gin-gonic.com/docs/",
+			"DocsURL":         "https://gin-gonic.com/en/docs/",
 			"PostsURL":        "/posts",
 			"APIPostsURL":     "/api/posts?limit=10&offset=0",
 			"MetaTags":        template.HTML(m.Tags()),
@@ -61,7 +71,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		ctx := c.Request.Context()
 		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 100})
 		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
+			respondInternal(c, "list published posts for sitemap failed", err)
 			return
 		}
 		paths := []string{"/"}
@@ -70,7 +80,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		}
 		xmlBytes, err := seo.BuildFromPaths(cfg.BaseURL, paths)
 		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
+			respondInternal(c, "build sitemap failed", err)
 			return
 		}
 		c.Header("Content-Type", "application/xml; charset=utf-8")
@@ -81,7 +91,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		ctx := c.Request.Context()
 		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 20})
 		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
+			respondInternal(c, "list published posts for rss failed", err)
 			return
 		}
 		base := strings.TrimRight(cfg.BaseURL, "/")
@@ -101,7 +111,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			Description: cfg.SiteDescription,
 		}, items)
 		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
+			respondInternal(c, "build rss feed failed", err)
 			return
 		}
 		c.Header("Content-Type", "application/rss+xml; charset=utf-8")
@@ -133,7 +143,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			Offset:   int32(offset),
 		})
 		if err != nil {
-			c.String(http.StatusInternalServerError, err.Error())
+			respondInternal(c, "list posts for index failed", err)
 			return
 		}
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")

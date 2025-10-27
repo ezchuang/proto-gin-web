@@ -46,6 +46,15 @@ type Tag struct {
 	Slug string
 }
 
+type User struct {
+	ID           int64
+	Email        string
+	DisplayName  string
+	PasswordHash string
+	CreatedAt    time.Time
+	RoleID       sql.NullInt64
+}
+
 type CreatePostParams struct {
 	Title       string
 	Slug        string
@@ -224,6 +233,16 @@ func (q *Queries) DeleteTagBySlug(ctx context.Context, slug string) error {
 	const stmt = `DELETE FROM tag WHERE slug = $1`
 	_, err := q.pool.Exec(ctx, stmt, slug)
 	return err
+}
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	const stmt = `SELECT id, email, display_name, password_hash, role_id, created_at FROM app_user WHERE email = $1`
+	row := q.pool.QueryRow(ctx, stmt, email)
+	var u User
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.RoleID, &u.CreatedAt); err != nil {
+		return User{}, err
+	}
+	return u, nil
 }
 
 func (q *Queries) listPosts(ctx context.Context, stmt string, args ...any) ([]Post, error) {
