@@ -14,7 +14,6 @@ import (
 	bf "github.com/russross/blackfriday/v2"
 
 	"proto-gin-web/internal/domain"
-	"proto-gin-web/internal/infrastructure/feed"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/infrastructure/seo"
 )
@@ -95,21 +94,38 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			return
 		}
 		base := strings.TrimRight(cfg.BaseURL, "/")
-		var items []feed.Item
+		var (
+			items     []seo.RSSItem
+			latestPub *time.Time
+		)
 		for _, p := range rows {
 			link := base + "/posts/" + p.Slug
-			items = append(items, feed.Item{
-				Title:       p.Title,
-				Link:        link,
-				Description: p.Summary,
-				PubDate:     p.PublishedAt,
+			items = append(items, seo.RSSItem{
+				Title:           p.Title,
+				Link:            link,
+				Description:     p.Summary,
+				PubDate:         p.PublishedAt,
+				GUID:            link,
+				GUIDIsPermaLink: true,
 			})
+			if p.PublishedAt != nil {
+				if latestPub == nil || p.PublishedAt.After(*latestPub) {
+					latestPub = p.PublishedAt
+				}
+			}
 		}
-		xmlBytes, err := feed.BuildRSS(feed.Channel{
-			Title:       cfg.SiteName,
-			Link:        cfg.BaseURL,
-			Description: cfg.SiteDescription,
-		}, items)
+		now := time.Now()
+		rss := seo.RSS{
+			Title:         cfg.SiteName,
+			Link:          cfg.BaseURL,
+			Description:   cfg.SiteDescription,
+			LastBuildDate: &now,
+			Items:         items,
+		}
+		if latestPub != nil {
+			rss.PubDate = latestPub
+		}
+		xmlBytes, err := rss.Build()
 		if err != nil {
 			respondInternal(c, "build rss feed failed", err)
 			return
