@@ -1,15 +1,19 @@
 package http
 
 import (
+	"crypto/subtle"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/argon2"
 
 	"proto-gin-web/internal/domain"
 	appdb "proto-gin-web/internal/infrastructure/pg"
@@ -40,8 +44,12 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		userRecord, err := queries.GetUserByEmail(ctx, u)
 		authenticated := false
 		if err == nil {
-			if err := bcrypt.CompareHashAndPassword([]byte(userRecord.PasswordHash), []byte(p)); err == nil {
+			if ok, verifyErr := verifyArgon2idHash(userRecord.PasswordHash, p); verifyErr == nil && ok {
 				authenticated = true
+			} else if verifyErr != nil {
+				slog.Error("argon2 verification failed",
+					slog.String("user", u),
+					slog.Any("err", verifyErr))
 			}
 		} else if !errors.Is(err, pgx.ErrNoRows) {
 			slog.Error("admin login lookup failed",
@@ -278,6 +286,62 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 			c.Status(http.StatusNoContent)
 		})
 	}
+}
+
+func verifyArgon2idHash(encoded, password string) (bool, error) {
+	parts := strings.Split(encoded, "$")
+	if len(parts) != 6 {
+		return false, fmt.Errorf("invalid argon2 hash format")
+	}
+	if parts[1] != "argon2id" {
+		return false, fmt.Errorf("unsupported argon2 variant: %s", parts[1])
+	}
+	if !strings.HasPrefix(parts[2], "v=") {
+		return false, fmt.Errorf("invalid argon2 version segment: %s", parts[2])
+	}
+	memory, iterations, parallelism, err := parseArgon2Params(parts[3])
+	if err != nil {
+		return false, err
+	}
+	salt, err := base64.RawStdEncoding.DecodeString(parts[4])
+	if err != nil {
+		return false, fmt.Errorf("decode salt: %w", err)
+	}
+	expected, err := base64.RawStdEncoding.DecodeString(parts[5])
+	if err != nil {
+		return false, fmt.Errorf("decode hash: %w", err)
+	}
+	computed := argon2.IDKey([]byte(password), salt, iterations, memory, parallelism, uint32(len(expected)))
+	if len(computed) != len(expected) {
+		return false, fmt.Errorf("argon2 hash length mismatch")
+	}
+	return subtle.ConstantTimeCompare(computed, expected) == 1, nil
+}
+
+func parseArgon2Params(segment string) (memory uint32, iterations uint32, parallelism uint8, err error) {
+	fields := strings.Split(segment, ",")
+	for _, field := range fields {
+		kv := strings.SplitN(field, "=", 2)
+		if len(kv) != 2 {
+			return 0, 0, 0, fmt.Errorf("invalid argon2 param: %s", field)
+		}
+		value, parseErr := strconv.ParseUint(kv[1], 10, 32)
+		if parseErr != nil {
+			return 0, 0, 0, fmt.Errorf("parse argon2 param %s: %w", kv[0], parseErr)
+		}
+		switch kv[0] {
+		case "m":
+			memory = uint32(value)
+		case "t":
+			iterations = uint32(value)
+		case "p":
+			parallelism = uint8(value)
+		}
+	}
+	if memory == 0 || iterations == 0 || parallelism == 0 {
+		return 0, 0, 0, fmt.Errorf("argon2 parameters incomplete")
+	}
+	return memory, iterations, parallelism, nil
 }
 
 func wantsHTMLResponse(c *gin.Context) bool {
