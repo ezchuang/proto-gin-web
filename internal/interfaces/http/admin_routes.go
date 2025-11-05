@@ -30,7 +30,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 
 	r.GET("/admin/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_login.tmpl", gin.H{
+		renderHTML(c, http.StatusOK, "admin_login.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -110,7 +110,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 	})
 
 	r.GET("/admin/register", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_register.tmpl", gin.H{
+		renderHTML(c, http.StatusOK, "admin_register.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -294,7 +294,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 			if v, err := c.Cookie("admin_user"); err == nil && v != "" {
 				userName = v
 			}
-			c.HTML(http.StatusOK, "admin_dashboard.tmpl", gin.H{
+			renderHTML(c, http.StatusOK, "admin_dashboard.tmpl", gin.H{
 				"SiteName":        cfg.SiteName,
 				"SiteDescription": cfg.SiteDescription,
 				"Env":             cfg.Env,

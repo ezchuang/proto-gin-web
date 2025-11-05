@@ -48,7 +48,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 
 	r.GET("/", func(c *gin.Context) {
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+		renderHTML(c, http.StatusOK, "index.tmpl", gin.H{
 			"Title":           "Index",
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
@@ -163,7 +163,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			return
 		}
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
-		c.HTML(http.StatusOK, "posts.tmpl", gin.H{
+		renderHTML(c, http.StatusOK, "posts.tmpl", gin.H{
 			"Title":           "Posts",
 			"Env":             cfg.Env,
 			"BaseURL":         cfg.BaseURL,
@@ -196,7 +196,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage(result.Post.Title, result.Post.Summary, cfg.BaseURL+"/posts/"+slug, result.Post.CoverURL)
 		// Mark as article for richer previews
 		m.Type = "article"
-		c.HTML(http.StatusOK, "post.tmpl", gin.H{
+		renderHTML(c, http.StatusOK, "post.tmpl", gin.H{
 			"Title":           result.Post.Title,
 			"Summary":         result.Post.Summary,
 			"CoverURL":        result.Post.CoverURL,
