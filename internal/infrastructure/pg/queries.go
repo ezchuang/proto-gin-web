@@ -101,6 +101,12 @@ type CreateUserParams struct {
 	RoleID       *int64
 }
 
+type UpdateUserProfileParams struct {
+	Email        string
+	DisplayName  string
+	PasswordHash *string
+}
+
 func (q *Queries) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]Post, error) {
 	const stmt = `SELECT id, title, slug, summary, content_md, cover_url, status, author_id, published_at, created_at, updated_at FROM post WHERE status = 'published' ORDER BY COALESCE(published_at, created_at) DESC LIMIT $1 OFFSET $2`
 	return q.listPosts(ctx, stmt, limit, offset)
@@ -274,6 +280,20 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "app_user_email_key" {
 			return User{}, ErrEmailAlreadyExists
 		}
+		return User{}, err
+	}
+	return u, nil
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	const stmt = `UPDATE app_user SET display_name = $2, password_hash = COALESCE($3, password_hash) WHERE email = $1 RETURNING id, email, display_name, password_hash, role_id, created_at`
+	var password any
+	if arg.PasswordHash != nil {
+		password = *arg.PasswordHash
+	}
+	row := q.pool.QueryRow(ctx, stmt, arg.Email, arg.DisplayName, password)
+	var u User
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.RoleID, &u.CreatedAt); err != nil {
 		return User{}, err
 	}
 	return u, nil

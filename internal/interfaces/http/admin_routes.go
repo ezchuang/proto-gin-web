@@ -39,7 +39,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		})
 	})
 	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
-		u := c.PostForm("u")
+		u := strings.ToLower(strings.TrimSpace(c.PostForm("u")))
 		p := c.PostForm("p")
 		isForm := wantsHTMLResponse(c)
 
@@ -47,10 +47,12 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		userRecord, err := queries.GetUserByEmail(ctx, u)
 		authenticated := false
 		accountLabel := ""
+		accountEmail := ""
 		if err == nil {
 			if ok, verifyErr := verifyArgon2idHash(userRecord.PasswordHash, p); verifyErr == nil && ok {
 				authenticated = true
 				accountLabel = userRecord.DisplayName
+				accountEmail = userRecord.Email
 			} else if verifyErr != nil {
 				slog.Error("argon2 verification failed",
 					slog.String("user", u),
@@ -64,19 +66,24 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		}
 
 		// Fallback to legacy config credentials if DB lookup failed
-		if !authenticated && u == cfg.AdminUser && p == cfg.AdminPass {
+		if !authenticated && strings.EqualFold(u, cfg.AdminUser) && p == cfg.AdminPass {
 			authenticated = true
 			accountLabel = cfg.AdminUser
+			accountEmail = strings.ToLower(cfg.AdminUser)
 		}
 
 		if authenticated {
 			if accountLabel == "" {
 				accountLabel = u
 			}
+			if accountEmail == "" {
+				accountEmail = u
+			}
 			secureCookie := cfg.Env == "production"
 			c.SetSameSite(http.SameSiteStrictMode)
 			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
 			c.SetCookie("admin_user", accountLabel, 3600, "/", "", secureCookie, true)
+			c.SetCookie("admin_email", accountEmail, 3600, "/", "", secureCookie, true)
 			slog.Info("admin login succeeded",
 				slog.String("user", u),
 				slog.String("ip", c.ClientIP()))
@@ -84,7 +91,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 				c.Redirect(http.StatusFound, "/admin")
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"ok": true, "user": accountLabel})
+			c.JSON(http.StatusOK, gin.H{"ok": true, "user": accountLabel, "email": accountEmail})
 			return
 		}
 
@@ -102,6 +109,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
 		c.SetCookie("admin_user", "", -1, "/", "", secureCookie, true)
+		c.SetCookie("admin_email", "", -1, "/", "", secureCookie, true)
 		if wantsHTMLResponse(c) {
 			c.Redirect(http.StatusFound, "/admin/login")
 			return
@@ -273,6 +281,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
 		c.SetCookie("admin_user", created.DisplayName, 3600, "/", "", secureCookie, true)
+		c.SetCookie("admin_email", created.Email, 3600, "/", "", secureCookie, true)
 
 		if isForm {
 			c.Redirect(http.StatusFound, "/admin?registered=1")
@@ -301,6 +310,190 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 				"BaseURL":         cfg.BaseURL,
 				"User":            userName,
 				"Registered":      c.Query("registered") == "1",
+			})
+		})
+
+		admin.GET("/profile", func(c *gin.Context) {
+			isForm := wantsHTMLResponse(c)
+			email, err := c.Cookie("admin_email")
+			if err != nil || email == "" {
+				if isForm {
+					c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("please login first"))
+				} else {
+					c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "unauthorized"})
+				}
+				return
+			}
+
+			ctx := c.Request.Context()
+			user, err := queries.GetUserByEmail(ctx, email)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					slog.Warn("admin profile not found",
+						slog.String("user", email),
+						slog.String("ip", c.ClientIP()))
+					if isForm {
+						c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("account not found"))
+					} else {
+						c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "account not found"})
+					}
+					return
+				}
+				slog.Error("admin profile lookup failed",
+					slog.String("user", email),
+					slog.Any("err", err))
+				if isForm {
+					c.Redirect(http.StatusFound, "/admin/profile?error="+url.QueryEscape("internal server error"))
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "internal server error"})
+				}
+				return
+			}
+
+			renderHTML(c, http.StatusOK, "admin_profile.tmpl", gin.H{
+				"Title":           "Account Settings",
+				"SiteName":        cfg.SiteName,
+				"SiteDescription": cfg.SiteDescription,
+				"Env":             cfg.Env,
+				"BaseURL":         cfg.BaseURL,
+				"Profile":         user,
+				"Updated":         c.Query("updated") == "1",
+				"Error":           c.Query("error"),
+			})
+		})
+
+		admin.POST("/profile", func(c *gin.Context) {
+			isForm := wantsHTMLResponse(c)
+			email, err := c.Cookie("admin_email")
+			if err != nil || email == "" {
+				if isForm {
+					c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("please login first"))
+				} else {
+					c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "unauthorized"})
+				}
+				return
+			}
+
+			ctx := c.Request.Context()
+			current, err := queries.GetUserByEmail(ctx, email)
+			if err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					if isForm {
+						c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("account not found"))
+					} else {
+						c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "account not found"})
+					}
+					return
+				}
+				slog.Error("admin profile lookup failed",
+					slog.String("user", email),
+					slog.Any("err", err))
+				if isForm {
+					c.Redirect(http.StatusFound, "/admin/profile?error="+url.QueryEscape("internal server error"))
+				} else {
+					c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "internal server error"})
+				}
+				return
+			}
+
+			type profileRequest struct {
+				DisplayName string `json:"display_name" form:"display_name"`
+				Password    string `json:"password" form:"password"`
+				Confirm     string `json:"confirm" form:"confirm"`
+			}
+			var req profileRequest
+			var bindErr error
+			if strings.Contains(c.GetHeader("Content-Type"), "application/json") {
+				bindErr = c.ShouldBindJSON(&req)
+			} else {
+				req.DisplayName = strings.TrimSpace(c.PostForm("display_name"))
+				req.Password = c.PostForm("password")
+				req.Confirm = c.PostForm("confirm")
+			}
+			req.DisplayName = strings.TrimSpace(req.DisplayName)
+
+			handleProfileError := func(status int, message string) {
+				if isForm {
+					renderHTML(c, status, "admin_profile.tmpl", gin.H{
+						"Title":           "Account Settings",
+						"SiteName":        cfg.SiteName,
+						"SiteDescription": cfg.SiteDescription,
+						"Env":             cfg.Env,
+						"BaseURL":         cfg.BaseURL,
+						"Profile": gin.H{
+							"Email":       current.Email,
+							"DisplayName": req.DisplayName,
+						},
+						"Error": message,
+					})
+				} else {
+					c.JSON(status, gin.H{"ok": false, "error": message})
+				}
+			}
+
+			if bindErr != nil {
+				handleProfileError(http.StatusBadRequest, bindErr.Error())
+				return
+			}
+			if req.DisplayName == "" {
+				handleProfileError(http.StatusBadRequest, "display name is required")
+				return
+			}
+
+			var passwordHash *string
+			if req.Password != "" || req.Confirm != "" {
+				if len(req.Password) < 8 {
+					handleProfileError(http.StatusBadRequest, "password must be at least 8 characters")
+					return
+				}
+				if req.Password != req.Confirm {
+					handleProfileError(http.StatusBadRequest, "passwords do not match")
+					return
+				}
+				hashed, hashErr := hashArgon2idPassword(req.Password)
+				if hashErr != nil {
+					slog.Error("argon2 hashing failed",
+						slog.String("user", current.Email),
+						slog.Any("err", hashErr))
+					handleProfileError(http.StatusInternalServerError, "failed to hash password")
+					return
+				}
+				passwordHash = &hashed
+			}
+
+			updated, err := queries.UpdateUserProfile(ctx, appdb.UpdateUserProfileParams{
+				Email:        current.Email,
+				DisplayName:  req.DisplayName,
+				PasswordHash: passwordHash,
+			})
+			if err != nil {
+				slog.Error("admin profile update failed",
+					slog.String("user", current.Email),
+					slog.Any("err", err))
+				handleProfileError(http.StatusInternalServerError, "failed to update profile")
+				return
+			}
+
+			secureCookie := cfg.Env == "production"
+			c.SetSameSite(http.SameSiteStrictMode)
+			c.SetCookie("admin_user", updated.DisplayName, 3600, "/", "", secureCookie, true)
+			c.SetCookie("admin_email", updated.Email, 3600, "/", "", secureCookie, true)
+
+			slog.Info("admin profile updated",
+				slog.String("user", updated.Email),
+				slog.String("ip", c.ClientIP()))
+
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/profile?updated=1")
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"ok": true,
+				"user": gin.H{
+					"email":        updated.Email,
+					"display_name": updated.DisplayName,
+				},
 			})
 		})
 
