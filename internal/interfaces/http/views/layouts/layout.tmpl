@@ -30,8 +30,9 @@
       <nav class="nav nav--right">
         {{ if .AdminUser }}
         <a href="/admin/profile" class="nav__link nav__link--profile">{{ .AdminUser | html }}</a>
-        <form method="post" action="/admin/logout" class="nav__logout">
-          <button type="submit" class="nav__link nav__logout-button">Log out</button>
+        <span> / </span>
+        <form method="post" action="/admin/logout" class="logout-form logout-form--inline">
+          <button type="submit" class="button button--link">Log out</button>
         </form>
         {{ else }}
         <a href="/admin/login" class="nav__link">Login</a>
