@@ -1,12 +1,15 @@
 package http
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -43,9 +46,11 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		ctx := c.Request.Context()
 		userRecord, err := queries.GetUserByEmail(ctx, u)
 		authenticated := false
+		accountLabel := ""
 		if err == nil {
 			if ok, verifyErr := verifyArgon2idHash(userRecord.PasswordHash, p); verifyErr == nil && ok {
 				authenticated = true
+				accountLabel = userRecord.DisplayName
 			} else if verifyErr != nil {
 				slog.Error("argon2 verification failed",
 					slog.String("user", u),
@@ -61,12 +66,17 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		// Fallback to legacy config credentials if DB lookup failed
 		if !authenticated && u == cfg.AdminUser && p == cfg.AdminPass {
 			authenticated = true
+			accountLabel = cfg.AdminUser
 		}
 
 		if authenticated {
+			if accountLabel == "" {
+				accountLabel = u
+			}
 			secureCookie := cfg.Env == "production"
 			c.SetSameSite(http.SameSiteStrictMode)
 			c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
+			c.SetCookie("admin_user", accountLabel, 3600, "/", "", secureCookie, true)
 			slog.Info("admin login succeeded",
 				slog.String("user", u),
 				slog.String("ip", c.ClientIP()))
@@ -74,7 +84,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 				c.Redirect(http.StatusFound, "/admin")
 				return
 			}
-			c.JSON(http.StatusOK, gin.H{"ok": true})
+			c.JSON(http.StatusOK, gin.H{"ok": true, "user": accountLabel})
 			return
 		}
 
@@ -91,6 +101,7 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		secureCookie := cfg.Env == "production"
 		c.SetSameSite(http.SameSiteStrictMode)
 		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
+		c.SetCookie("admin_user", "", -1, "/", "", secureCookie, true)
 		if wantsHTMLResponse(c) {
 			c.Redirect(http.StatusFound, "/admin/login")
 			return
@@ -108,23 +119,188 @@ func registerAdminRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Post
 		})
 	})
 	r.POST("/admin/register", registerLimiter, func(c *gin.Context) {
-		msg := "self-service admin registration is disabled"
-		if wantsHTMLResponse(c) {
-			c.Redirect(http.StatusFound, "/admin/register?error="+msg)
+		isForm := wantsHTMLResponse(c)
+
+		type registerRequest struct {
+			Email    string `json:"email" form:"u"`
+			Password string `json:"password" form:"p"`
+			Confirm  string `json:"confirm" form:"confirm"`
+		}
+		var req registerRequest
+		var bindErr error
+		if strings.Contains(c.GetHeader("Content-Type"), "application/json") {
+			bindErr = c.ShouldBindJSON(&req)
+		} else {
+			req.Email = strings.TrimSpace(c.PostForm("u"))
+			req.Password = c.PostForm("p")
+			req.Confirm = c.PostForm("confirm")
+		}
+		if bindErr != nil {
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(bindErr.Error()))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": bindErr.Error()})
 			return
 		}
-		c.JSON(http.StatusNotImplemented, gin.H{"ok": false, "error": msg})
+		req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+		if req.Email == "" || req.Password == "" || req.Confirm == "" {
+			msg := "all fields are required"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": msg})
+			return
+		}
+		if !isLikelyEmail(req.Email) {
+			msg := "invalid email address"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": msg})
+			return
+		}
+		if len(req.Password) < 8 {
+			msg := "password must be at least 8 characters"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": msg})
+			return
+		}
+		if req.Password != req.Confirm {
+			msg := "passwords do not match"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusBadRequest, gin.H{"ok": false, "error": msg})
+			return
+		}
+
+		ctx := c.Request.Context()
+		if _, err := queries.GetUserByEmail(ctx, req.Email); err == nil {
+			msg := "account already exists"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusConflict, gin.H{"ok": false, "error": msg})
+			return
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			slog.Error("admin registration lookup failed",
+				slog.String("user", req.Email),
+				slog.String("ip", c.ClientIP()),
+				slog.Any("err", err))
+			msg := "internal server error"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": msg})
+			return
+		}
+
+		hash, err := hashArgon2idPassword(req.Password)
+		if err != nil {
+			slog.Error("argon2 hashing failed",
+				slog.String("user", req.Email),
+				slog.Any("err", err))
+			msg := "internal server error"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": msg})
+			return
+		}
+
+		role, err := queries.GetRoleByName(ctx, "admin")
+		if err != nil {
+			slog.Error("admin role lookup failed",
+				slog.String("user", req.Email),
+				slog.Any("err", err))
+			msg := "internal server error"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": msg})
+			return
+		}
+
+		display := deriveDisplayName(req.Email)
+		created, err := queries.CreateUser(ctx, appdb.CreateUserParams{
+			Email:        req.Email,
+			DisplayName:  display,
+			PasswordHash: hash,
+			RoleID:       &role.ID,
+		})
+		if err != nil {
+			if errors.Is(err, appdb.ErrEmailAlreadyExists) {
+				msg := "email already exists"
+				slog.Warn("admin registration insert failed",
+					slog.String("user", req.Email),
+					slog.String("ip", c.ClientIP()),
+					slog.String("reason", msg))
+				if isForm {
+					c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+					return
+				}
+				c.JSON(http.StatusConflict, gin.H{"ok": false, "error": msg})
+				return
+			}
+			slog.Error("admin registration insert failed",
+				slog.String("user", req.Email),
+				slog.Any("err", err))
+			msg := "internal server error"
+			if isForm {
+				c.Redirect(http.StatusFound, "/admin/register?error="+url.QueryEscape(msg))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": msg})
+			return
+		}
+
+		slog.Info("admin registration succeeded",
+			slog.String("user", created.Email),
+			slog.String("ip", c.ClientIP()))
+
+		secureCookie := cfg.Env == "production"
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
+		c.SetCookie("admin_user", created.DisplayName, 3600, "/", "", secureCookie, true)
+
+		if isForm {
+			c.Redirect(http.StatusFound, "/admin?registered=1")
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"ok":     true,
+			"user":   gin.H{"email": created.Email, "display_name": created.DisplayName},
+			"role":   role.Name,
+			"status": "registered",
+		})
 	})
 
 	admin := r.Group("/admin", auth.AdminRequired())
 	{
 		admin.GET("", func(c *gin.Context) {
+			userName := cfg.AdminUser
+			if v, err := c.Cookie("admin_user"); err == nil && v != "" {
+				userName = v
+			}
 			c.HTML(http.StatusOK, "admin_dashboard.tmpl", gin.H{
 				"SiteName":        cfg.SiteName,
 				"SiteDescription": cfg.SiteDescription,
 				"Env":             cfg.Env,
 				"BaseURL":         cfg.BaseURL,
-				"User":            cfg.AdminUser,
+				"User":            userName,
+				"Registered":      c.Query("registered") == "1",
 			})
 		})
 
@@ -316,6 +492,61 @@ func verifyArgon2idHash(encoded, password string) (bool, error) {
 		return false, fmt.Errorf("argon2 hash length mismatch")
 	}
 	return subtle.ConstantTimeCompare(computed, expected) == 1, nil
+}
+
+func hashArgon2idPassword(password string) (string, error) {
+	const (
+		time    = 2
+		memory  = 64 * 1024
+		threads = 1
+		keyLen  = 32
+		saltLen = 16
+	)
+	salt := make([]byte, saltLen)
+	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
+		return "", fmt.Errorf("generate salt: %w", err)
+	}
+	hash := argon2.IDKey([]byte(password), salt, time, memory, threads, keyLen)
+	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
+		memory, time, threads,
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(hash))
+	return encoded, nil
+}
+
+func deriveDisplayName(email string) string {
+	at := strings.Index(email, "@")
+	if at <= 0 {
+		return email
+	}
+	local := email[:at]
+	parts := strings.FieldsFunc(local, func(r rune) bool {
+		return r == '.' || r == '_' || r == '-' || r == '+'
+	})
+	for i, p := range parts {
+		if len(p) == 0 {
+			continue
+		}
+		parts[i] = strings.ToUpper(p[:1]) + strings.ToLower(p[1:])
+	}
+	if len(parts) == 0 {
+		return email
+	}
+	return strings.Join(parts, " ")
+}
+
+func isLikelyEmail(input string) bool {
+	if input == "" || strings.Count(input, "@") != 1 {
+		return false
+	}
+	local, domain, ok := strings.Cut(input, "@")
+	if !ok || local == "" || domain == "" {
+		return false
+	}
+	if strings.HasPrefix(domain, ".") || strings.HasSuffix(domain, ".") || !strings.Contains(domain, ".") {
+		return false
+	}
+	return true
 }
 
 func parseArgon2Params(segment string) (memory uint32, iterations uint32, parallelism uint8, err error) {
