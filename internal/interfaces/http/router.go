@@ -13,7 +13,7 @@ import (
 )
 
 // NewRouter wires middleware, views, and routes.
-func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Queries) *gin.Engine {
+func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, queries *appdb.Queries) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -40,7 +40,7 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, queries *appdb.Q
 
 	registerPublicRoutes(r, cfg, postSvc)
 	registerAPIRoutes(r, postSvc)
-	registerAdminRoutes(r, cfg, postSvc, queries)
+	registerAdminRoutes(r, cfg, postSvc, adminSvc, queries)
 
 	return r
 }

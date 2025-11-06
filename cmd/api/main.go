@@ -12,6 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	adminusecase "proto-gin-web/internal/application/admin"
 	postusecase "proto-gin-web/internal/application/post"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
@@ -33,11 +34,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	queries := appdb.New(pool)
 	postRepo := appdb.NewPostRepository(pool)
 	postSvc := postusecase.NewService(postRepo)
-	queries := appdb.New(pool)
+	adminRepo := appdb.NewAdminAccountRepository(queries)
+	adminSvc := adminusecase.NewService(adminRepo, adminusecase.Config{
+		AdminRoleName:  "admin",
+		LegacyUser:     cfg.AdminUser,
+		LegacyPassword: cfg.AdminPass,
+	})
 
-	r := httpapp.NewRouter(cfg, postSvc, queries)
+	r := httpapp.NewRouter(cfg, postSvc, adminSvc, queries)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
