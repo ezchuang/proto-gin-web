@@ -14,6 +14,7 @@ import (
 
 	adminusecase "proto-gin-web/internal/application/admin"
 	postusecase "proto-gin-web/internal/application/post"
+	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
 	httpapp "proto-gin-web/internal/interfaces/http"
@@ -43,8 +44,10 @@ func main() {
 		LegacyUser:     cfg.AdminUser,
 		LegacyPassword: cfg.AdminPass,
 	})
+	taxonomyRepo := appdb.NewTaxonomyRepository(queries)
+	taxonomySvc := taxonomyusecase.NewService(taxonomyRepo)
 
-	r := httpapp.NewRouter(cfg, postSvc, adminSvc, queries)
+	r := httpapp.NewRouter(cfg, postSvc, adminSvc, taxonomySvc)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

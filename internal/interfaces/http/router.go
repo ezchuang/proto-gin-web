@@ -7,13 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/domain"
-	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
 	helper "proto-gin-web/internal/interfaces/http/templates"
 )
 
 // NewRouter wires middleware, views, and routes.
-func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, queries *appdb.Queries) *gin.Engine {
+func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, taxonomySvc domain.TaxonomyService) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -40,7 +39,7 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 
 	registerPublicRoutes(r, cfg, postSvc)
 	registerAPIRoutes(r, postSvc)
-	registerAdminRoutes(r, cfg, postSvc, adminSvc, queries)
+	registerAdminRoutes(r, cfg, postSvc, adminSvc, taxonomySvc)
 
 	return r
 }
