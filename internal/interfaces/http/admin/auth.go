@@ -1,4 +1,4 @@
-package http
+package admin
 
 import (
 	"errors"
@@ -11,11 +11,12 @@ import (
 
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/interfaces/http/view"
 )
 
-func registerAdminAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
+func registerAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
-		renderHTML(c, http.StatusOK, "admin_login.tmpl", gin.H{
+		view.RenderHTML(c, http.StatusOK, "admin_login.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -27,7 +28,7 @@ func registerAdminAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain
 	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
 		emailInput := c.PostForm("u")
 		password := c.PostForm("p")
-		isForm := wantsHTMLResponse(c)
+		isForm := view.WantsHTMLResponse(c)
 
 		ctx := c.Request.Context()
 		account, err := adminSvc.Login(ctx, domain.AdminLoginInput{
@@ -85,7 +86,7 @@ func registerAdminAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain
 		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
 		c.SetCookie("admin_user", "", -1, "/", "", secureCookie, true)
 		c.SetCookie("admin_email", "", -1, "/", "", secureCookie, true)
-		if wantsHTMLResponse(c) {
+		if view.WantsHTMLResponse(c) {
 			c.Redirect(http.StatusFound, "/admin/login")
 			return
 		}
@@ -93,7 +94,7 @@ func registerAdminAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain
 	})
 
 	r.GET("/admin/register", func(c *gin.Context) {
-		renderHTML(c, http.StatusOK, "admin_register.tmpl", gin.H{
+		view.RenderHTML(c, http.StatusOK, "admin_register.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,
@@ -103,7 +104,7 @@ func registerAdminAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain
 	})
 
 	r.POST("/admin/register", registerLimiter, func(c *gin.Context) {
-		isForm := wantsHTMLResponse(c)
+		isForm := view.WantsHTMLResponse(c)
 
 		type registerRequest struct {
 			Email    string `json:"email" form:"u"`

@@ -1,4 +1,4 @@
-package http
+package admin
 
 import (
 	"errors"
@@ -11,11 +11,12 @@ import (
 
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/interfaces/http/view"
 )
 
-func registerAdminProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc domain.AdminService) {
+func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc domain.AdminService) {
 	group.GET("/profile", func(c *gin.Context) {
-		isForm := wantsHTMLResponse(c)
+		isForm := view.WantsHTMLResponse(c)
 		email, err := c.Cookie("admin_email")
 		if err != nil || email == "" {
 			if isForm {
@@ -51,7 +52,7 @@ func registerAdminProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adm
 			return
 		}
 
-		renderHTML(c, http.StatusOK, "admin_profile.tmpl", gin.H{
+		view.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", gin.H{
 			"Title":           "Account Settings",
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
@@ -64,7 +65,7 @@ func registerAdminProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adm
 	})
 
 	group.POST("/profile", func(c *gin.Context) {
-		isForm := wantsHTMLResponse(c)
+		isForm := view.WantsHTMLResponse(c)
 		email, err := c.Cookie("admin_email")
 		if err != nil || email == "" {
 			if isForm {
@@ -116,7 +117,7 @@ func registerAdminProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adm
 
 		handleProfileError := func(status int, message string) {
 			if isForm {
-				renderHTML(c, status, "admin_profile.tmpl", gin.H{
+				view.RenderHTML(c, status, "admin_profile.tmpl", gin.H{
 					"Title":           "Account Settings",
 					"SiteName":        cfg.SiteName,
 					"SiteDescription": cfg.SiteDescription,

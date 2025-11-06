@@ -1,4 +1,4 @@
-package http
+package admin
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 	"proto-gin-web/internal/domain"
 )
 
-func registerAdminContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, taxonomySvc domain.TaxonomyService) {
+func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, taxonomySvc domain.TaxonomyService) {
 	group.POST("/posts", func(c *gin.Context) {
 		var body struct {
 			Title     string `json:"title" binding:"required"`

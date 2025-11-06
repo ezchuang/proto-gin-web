@@ -1,4 +1,4 @@
-package http
+package admin
 
 import (
 	"net/http"
@@ -6,15 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/interfaces/http/view"
 )
 
-func registerAdminDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
+func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
 	group.GET("", func(c *gin.Context) {
 		userName := cfg.AdminUser
 		if v, err := c.Cookie("admin_user"); err == nil && v != "" {
 			userName = v
 		}
-		renderHTML(c, http.StatusOK, "admin_dashboard.tmpl", gin.H{
+		view.RenderHTML(c, http.StatusOK, "admin_dashboard.tmpl", gin.H{
 			"SiteName":        cfg.SiteName,
 			"SiteDescription": cfg.SiteDescription,
 			"Env":             cfg.Env,

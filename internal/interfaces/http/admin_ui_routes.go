@@ -10,6 +10,7 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/auth"
+	"proto-gin-web/internal/interfaces/http/view"
 )
 
 // registerAdminUIRoutes mounts simple SSR pages for admin management (MVP).
@@ -28,7 +29,7 @@ func registerAdminUIRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Po
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			renderHTML(c, http.StatusOK, "admin_posts.tmpl", gin.H{
+			view.RenderHTML(c, http.StatusOK, "admin_posts.tmpl", gin.H{
 				"Title":           "Admin · Posts · " + cfg.SiteName,
 				"Env":             cfg.Env,
 				"BaseURL":         cfg.BaseURL,
@@ -39,7 +40,7 @@ func registerAdminUIRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Po
 		})
 
 		admin.GET("/posts/new", func(c *gin.Context) {
-			renderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
+			view.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
 				"Title":           "Admin · New Post · " + cfg.SiteName,
 				"Env":             cfg.Env,
 				"BaseURL":         cfg.BaseURL,
@@ -86,7 +87,7 @@ func registerAdminUIRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Po
 				c.String(http.StatusNotFound, "post not found")
 				return
 			}
-			renderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
+			view.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
 				"Title":           "Admin · Edit Post · " + result.Post.Title + " · " + cfg.SiteName,
 				"Env":             cfg.Env,
 				"BaseURL":         cfg.BaseURL,
