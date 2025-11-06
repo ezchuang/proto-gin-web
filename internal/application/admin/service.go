@@ -20,7 +20,7 @@ const (
 	defaultAdminRoleName     = "admin"
 )
 
-// Config defines optional service settings.
+// Config exposes optional knobs impacting admin behaviour.
 type Config struct {
 	AdminRoleName     string
 	LegacyUser        string
@@ -28,7 +28,7 @@ type Config struct {
 	PasswordMinLength int
 }
 
-// Service orchestrates admin account workflows with validation and hashing logic.
+// Service implements admin use cases.
 type Service struct {
 	repo domain.AdminRepository
 	cfg  Config
@@ -36,21 +36,18 @@ type Service struct {
 
 var _ domain.AdminService = (*Service)(nil)
 
-// NewService wires a repository and configuration into an admin service.
+// NewService creates an admin service backed by a repository.
 func NewService(repo domain.AdminRepository, cfg Config) *Service {
-	if cfg.PasswordMinLength <= 0 {
-		cfg.PasswordMinLength = defaultPasswordMinLength
-	}
 	if cfg.AdminRoleName == "" {
 		cfg.AdminRoleName = defaultAdminRoleName
 	}
-	return &Service{
-		repo: repo,
-		cfg:  cfg,
+	if cfg.PasswordMinLength <= 0 {
+		cfg.PasswordMinLength = defaultPasswordMinLength
 	}
+	return &Service{repo: repo, cfg: cfg}
 }
 
-// Login authenticates an administrator.
+// Login authenticates an admin account.
 func (s *Service) Login(ctx context.Context, input domain.AdminLoginInput) (domain.Admin, error) {
 	email := domain.NormalizeEmail(input.Email)
 	password := strings.TrimSpace(input.Password)
@@ -79,7 +76,7 @@ func (s *Service) Login(ctx context.Context, input domain.AdminLoginInput) (doma
 	return stored.Admin, nil
 }
 
-// Register provisions a new administrator account.
+// Register provisions a new admin account.
 func (s *Service) Register(ctx context.Context, input domain.AdminRegisterInput) (domain.Admin, error) {
 	email := domain.NormalizeEmail(input.Email)
 	if email == "" || !isLikelyEmail(email) {
@@ -112,6 +109,7 @@ func (s *Service) Register(ctx context.Context, input domain.AdminRegisterInput)
 	if err != nil {
 		return domain.Admin{}, err
 	}
+
 	display := deriveDisplayName(email)
 	stored, err := s.repo.Create(ctx, domain.AdminCreateParams{
 		Email:        email,
@@ -125,7 +123,7 @@ func (s *Service) Register(ctx context.Context, input domain.AdminRegisterInput)
 	return stored.Admin, nil
 }
 
-// GetProfile fetches the admin profile by email.
+// GetProfile fetches admin profile details.
 func (s *Service) GetProfile(ctx context.Context, email string) (domain.Admin, error) {
 	normalized := domain.NormalizeEmail(email)
 	if normalized == "" {

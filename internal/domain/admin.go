@@ -8,25 +8,25 @@ import (
 )
 
 var (
-	// ErrAdminNotFound indicates the requested administrator account does not exist.
+	// ErrAdminNotFound indicates the requested administrator account was not found.
 	ErrAdminNotFound = errors.New("admin: account not found")
-	// ErrAdminEmailExists signals that an account already uses the provided email.
+	// ErrAdminEmailExists signals an attempt to create an account with an existing email.
 	ErrAdminEmailExists = errors.New("admin: email already exists")
-	// ErrAdminInvalidCredentials is returned when login fails due to bad email/password combination.
+	// ErrAdminInvalidCredentials occurs when login credentials are invalid.
 	ErrAdminInvalidCredentials = errors.New("admin: invalid credentials")
-	// ErrAdminInvalidEmail represents an invalid email format.
+	// ErrAdminInvalidEmail indicates the provided email address fails validation.
 	ErrAdminInvalidEmail = errors.New("admin: invalid email address")
-	// ErrAdminPasswordTooShort indicates the password does not meet length requirements.
+	// ErrAdminPasswordTooShort indicates the supplied password is shorter than the minimum requirement.
 	ErrAdminPasswordTooShort = errors.New("admin: password must be at least 8 characters")
-	// ErrAdminPasswordMismatch indicates the confirmation password did not match.
+	// ErrAdminPasswordMismatch indicates password confirmation did not match.
 	ErrAdminPasswordMismatch = errors.New("admin: passwords do not match")
 	// ErrAdminDisplayNameRequired indicates display name input was empty.
 	ErrAdminDisplayNameRequired = errors.New("admin: display name is required")
-	// ErrAdminRoleNotFound indicates the target role record was not found.
+	// ErrAdminRoleNotFound indicates the role lookup failed.
 	ErrAdminRoleNotFound = errors.New("admin: role not found")
 )
 
-// Admin models the public information for an administrator account.
+// Admin represents public administrator information.
 type Admin struct {
 	ID          int64     `json:"id"`
 	Email       string    `json:"email"`
@@ -35,19 +35,19 @@ type Admin struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-// StoredAdmin includes sensitive fields retrieved from persistence.
+// StoredAdmin contains persisted admin data including sensitive fields.
 type StoredAdmin struct {
 	Admin
 	PasswordHash string
 }
 
-// AdminRole models a user role row relevant to admin provisioning.
+// AdminRole provides role metadata used when assigning admin accounts.
 type AdminRole struct {
 	ID   int64
 	Name string
 }
 
-// AdminCreateParams captures data needed to persist a new admin account.
+// AdminCreateParams contains data required to create an admin account.
 type AdminCreateParams struct {
 	Email        string
 	DisplayName  string
@@ -55,33 +55,33 @@ type AdminCreateParams struct {
 	RoleID       int64
 }
 
-// AdminProfileUpdateParams describes updates to an existing account.
+// AdminProfileUpdateParams holds profile update values.
 type AdminProfileUpdateParams struct {
 	DisplayName  string
 	PasswordHash *string
 }
 
-// AdminLoginInput describes credentials used for authentication.
+// AdminLoginInput represents login credentials.
 type AdminLoginInput struct {
 	Email    string
 	Password string
 }
 
-// AdminRegisterInput provides details for registering a new administrator account.
+// AdminRegisterInput captures information for registering a new admin.
 type AdminRegisterInput struct {
 	Email           string
 	Password        string
 	ConfirmPassword string
 }
 
-// AdminProfileInput captures profile edits submitted by the account owner.
+// AdminProfileInput contains profile changes submitted by an admin.
 type AdminProfileInput struct {
 	DisplayName     string
 	Password        string
 	ConfirmPassword string
 }
 
-// AdminRepository abstracts persistence for administrator accounts.
+// AdminRepository abstracts persistence concerns for admin accounts.
 type AdminRepository interface {
 	GetByEmail(ctx context.Context, email string) (StoredAdmin, error)
 	Create(ctx context.Context, params AdminCreateParams) (StoredAdmin, error)
@@ -89,7 +89,7 @@ type AdminRepository interface {
 	FindRoleByName(ctx context.Context, role string) (AdminRole, error)
 }
 
-// AdminService defines use-cases around administrator accounts.
+// AdminService exposes admin account use cases.
 type AdminService interface {
 	Login(ctx context.Context, input AdminLoginInput) (Admin, error)
 	Register(ctx context.Context, input AdminRegisterInput) (Admin, error)
@@ -97,7 +97,7 @@ type AdminService interface {
 	UpdateProfile(ctx context.Context, email string, input AdminProfileInput) (Admin, error)
 }
 
-// NormalizeEmail lowercases and trims an input email.
+// NormalizeEmail lowercases and trims an email.
 func NormalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
 }

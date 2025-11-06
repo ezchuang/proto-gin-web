@@ -9,7 +9,7 @@ import (
 	"proto-gin-web/internal/domain"
 )
 
-// AdminAccountRepository implements domain.AdminRepository backed by pgx queries.
+// AdminAccountRepository implements domain.AdminRepository using pgx Queries.
 type AdminAccountRepository struct {
 	queries *Queries
 }
