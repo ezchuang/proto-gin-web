@@ -3,18 +3,17 @@ package adminui
 import (
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	adminuisvc "proto-gin-web/internal/application/adminui"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/auth"
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 // RegisterRoutes mounts simple SSR pages for admin management (MVP).
-func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Service) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")
@@ -24,7 +23,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 	{
 		admin.GET("/posts", func(c *gin.Context) {
 			ctx := c.Request.Context()
-			rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 50})
+			rows, err := svc.ListPosts(ctx, 50)
 			if err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
@@ -45,21 +44,16 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 			status := c.DefaultPostForm("status", "draft")
 			authorStr := c.DefaultPostForm("author_id", "1")
 			authorID, _ := strconv.ParseInt(authorStr, 10, 64)
-			var publishedAt *time.Time
-			_ = publishedAt // keep nil for now
-			input := domain.CreatePostInput{
-				Title:       title,
-				Slug:        slug,
-				Summary:     summary,
-				ContentMD:   content,
-				Status:      status,
-				AuthorID:    authorID,
-				PublishedAt: publishedAt,
+			params := adminuisvc.CreatePostParams{
+				Title:     title,
+				Slug:      slug,
+				Summary:   summary,
+				ContentMD: content,
+				CoverURL:  cover,
+				Status:    status,
+				AuthorID:  authorID,
 			}
-			if cover != "" {
-				input.CoverURL = &cover
-			}
-			if _, err := postSvc.Create(c.Request.Context(), input); err != nil {
+			if _, err := svc.CreatePost(c.Request.Context(), params); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -68,7 +62,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 
 		admin.GET("/posts/:slug/edit", func(c *gin.Context) {
 			slug := c.Param("slug")
-			result, err := postSvc.GetBySlug(c.Request.Context(), slug)
+			result, err := svc.GetPost(c.Request.Context(), slug)
 			if err != nil {
 				c.String(http.StatusNotFound, "post not found")
 				return
@@ -77,32 +71,23 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		})
 
 		admin.POST("/posts/:slug", func(c *gin.Context) {
-			slug := c.Param("slug")
-			title := c.PostForm("title")
-			summary := c.PostForm("summary")
-			content := c.PostForm("content_md")
-			cover := c.PostForm("cover_url")
-			status := c.DefaultPostForm("status", "draft")
-			input := domain.UpdatePostInput{
-				Slug:      slug,
-				Title:     title,
-				Summary:   summary,
-				ContentMD: content,
-				Status:    status,
+			params := adminuisvc.UpdatePostParams{
+				Slug:      c.Param("slug"),
+				Title:     c.PostForm("title"),
+				Summary:   c.PostForm("summary"),
+				ContentMD: c.PostForm("content_md"),
+				CoverURL:  c.PostForm("cover_url"),
+				Status:    c.DefaultPostForm("status", "draft"),
 			}
-			if cover != "" {
-				input.CoverURL = &cover
-			}
-			if _, err := postSvc.Update(c.Request.Context(), input); err != nil {
+			if _, err := svc.UpdatePost(c.Request.Context(), params); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
+			c.Redirect(http.StatusFound, "/admin/ui/posts/"+params.Slug+"/edit")
 		})
 
 		admin.POST("/posts/:slug/delete", func(c *gin.Context) {
-			slug := c.Param("slug")
-			if err := postSvc.Delete(c.Request.Context(), slug); err != nil {
+			if err := svc.DeletePost(c.Request.Context(), c.Param("slug")); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -112,7 +97,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		admin.POST("/posts/:slug/categories/add", func(c *gin.Context) {
 			slug := c.Param("slug")
 			cat := c.PostForm("category_slug")
-			if err := postSvc.AddCategory(c.Request.Context(), slug, cat); err != nil {
+			if err := svc.AddCategory(c.Request.Context(), slug, cat); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -121,7 +106,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		admin.POST("/posts/:slug/categories/remove", func(c *gin.Context) {
 			slug := c.Param("slug")
 			cat := c.PostForm("category_slug")
-			if err := postSvc.RemoveCategory(c.Request.Context(), slug, cat); err != nil {
+			if err := svc.RemoveCategory(c.Request.Context(), slug, cat); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -131,7 +116,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		admin.POST("/posts/:slug/tags/add", func(c *gin.Context) {
 			slug := c.Param("slug")
 			tag := c.PostForm("tag_slug")
-			if err := postSvc.AddTag(c.Request.Context(), slug, tag); err != nil {
+			if err := svc.AddTag(c.Request.Context(), slug, tag); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -140,7 +125,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		admin.POST("/posts/:slug/tags/remove", func(c *gin.Context) {
 			slug := c.Param("slug")
 			tag := c.PostForm("tag_slug")
-			if err := postSvc.RemoveTag(c.Request.Context(), slug, tag); err != nil {
+			if err := svc.RemoveTag(c.Request.Context(), slug, tag); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}

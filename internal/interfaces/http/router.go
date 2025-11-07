@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminuiusecase "proto-gin-web/internal/application/adminui"
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	adminroutes "proto-gin-web/internal/interfaces/http/admin"
@@ -16,7 +17,7 @@ import (
 )
 
 // NewRouter wires middleware, views, and routes.
-func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, taxonomySvc domain.TaxonomyService) *gin.Engine {
+func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, taxonomySvc domain.TaxonomyService, adminUISvc *adminuiusecase.Service) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -46,7 +47,7 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 	loginLimiter := NewIPRateLimiter(5, time.Minute)
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 	adminroutes.RegisterRoutes(r, cfg, postSvc, adminSvc, taxonomySvc, loginLimiter, registerLimiter)
-	adminuiroutes.RegisterRoutes(r, cfg, postSvc)
+	adminuiroutes.RegisterRoutes(r, cfg, adminUISvc)
 
 	return r
 }

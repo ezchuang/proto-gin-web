@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 
 	adminusecase "proto-gin-web/internal/application/admin"
+	adminuiusecase "proto-gin-web/internal/application/adminui"
 	postusecase "proto-gin-web/internal/application/post"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
@@ -46,8 +47,9 @@ func main() {
 	})
 	taxonomyRepo := appdb.NewTaxonomyRepository(queries)
 	taxonomySvc := taxonomyusecase.NewService(taxonomyRepo)
+	adminUISvc := adminuiusecase.NewService(postSvc)
 
-	r := httpapp.NewRouter(cfg, postSvc, adminSvc, taxonomySvc)
+	r := httpapp.NewRouter(cfg, postSvc, adminSvc, taxonomySvc, adminUISvc)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
