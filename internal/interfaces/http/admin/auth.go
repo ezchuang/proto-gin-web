@@ -12,17 +12,12 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
+	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 func registerAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
-		view.RenderHTML(c, http.StatusOK, "admin_login.tmpl", gin.H{
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"Error":           c.Query("error"),
-		})
+		presenter.AdminLoginPage(c, cfg, c.Query("error"))
 	})
 
 	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
@@ -94,13 +89,7 @@ func registerAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.Admi
 	})
 
 	r.GET("/admin/register", func(c *gin.Context) {
-		view.RenderHTML(c, http.StatusOK, "admin_register.tmpl", gin.H{
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"Error":           c.Query("error"),
-		})
+		presenter.AdminRegisterPage(c, cfg, c.Query("error"))
 	})
 
 	r.POST("/admin/register", registerLimiter, func(c *gin.Context) {
