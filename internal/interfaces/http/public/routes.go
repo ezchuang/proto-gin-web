@@ -16,7 +16,7 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/infrastructure/seo"
-	"proto-gin-web/internal/interfaces/http/view"
+	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 // RegisterRoutes mounts health checks, SEO endpoints, and SSR pages for public visitors.
@@ -48,18 +48,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 	})
 
 	r.GET("/", func(c *gin.Context) {
-		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
-		view.RenderHTML(c, http.StatusOK, "index.tmpl", gin.H{
-			"Title":           "Index",
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"DocsURL":         "https://gin-gonic.com/en/docs/",
-			"PostsURL":        "/posts",
-			"APIPostsURL":     "/api/posts?limit=10&offset=0",
-			"MetaTags":        template.HTML(m.Tags()),
-		})
+		presenter.PublicLanding(c, cfg)
 	})
 
 	r.GET("/robots.txt", func(c *gin.Context) {
@@ -163,18 +152,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 			respondInternal(c, "list posts for index failed", err)
 			return
 		}
-		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
-		view.RenderHTML(c, http.StatusOK, "posts.tmpl", gin.H{
-			"Title":           "Posts",
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"Posts":           rows,
-			"Page":            page,
-			"Size":            size,
-			"MetaTags":        template.HTML(m.Tags()),
-		})
+		presenter.PublicPosts(c, cfg, rows, page, size)
 	})
 
 	r.GET("/posts/:slug", func(c *gin.Context) {
@@ -194,21 +172,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 		unsafe := bf.Run([]byte(md))
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
-		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage(result.Post.Title, result.Post.Summary, cfg.BaseURL+"/posts/"+slug, result.Post.CoverURL)
-		m.Type = "article"
-		view.RenderHTML(c, http.StatusOK, "post.tmpl", gin.H{
-			"Title":           result.Post.Title,
-			"Summary":         result.Post.Summary,
-			"CoverURL":        result.Post.CoverURL,
-			"ContentHTML":     template.HTML(string(safe)),
-			"Categories":      result.Categories,
-			"Tags":            result.Tags,
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"MetaTags":        template.HTML(m.Tags()),
-		})
+		presenter.PublicPostDetail(c, cfg, result, template.HTML(string(safe)))
 	})
 }
 

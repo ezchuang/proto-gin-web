@@ -10,7 +10,7 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/auth"
-	"proto-gin-web/internal/interfaces/http/view"
+	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 // RegisterRoutes mounts simple SSR pages for admin management (MVP).
@@ -29,25 +29,11 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			view.RenderHTML(c, http.StatusOK, "admin_posts.tmpl", gin.H{
-				"Title":           "Admin · Posts · " + cfg.SiteName,
-				"Env":             cfg.Env,
-				"BaseURL":         cfg.BaseURL,
-				"SiteName":        cfg.SiteName,
-				"SiteDescription": cfg.SiteDescription,
-				"Posts":           rows,
-			})
+			presenter.AdminPostsPage(c, cfg, rows)
 		})
 
 		admin.GET("/posts/new", func(c *gin.Context) {
-			view.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
-				"Title":           "Admin · New Post · " + cfg.SiteName,
-				"Env":             cfg.Env,
-				"BaseURL":         cfg.BaseURL,
-				"SiteName":        cfg.SiteName,
-				"SiteDescription": cfg.SiteDescription,
-				"IsNew":           true,
-			})
+			presenter.AdminPostFormNew(c, cfg)
 		})
 
 		admin.POST("/posts/new", func(c *gin.Context) {
@@ -87,17 +73,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostServi
 				c.String(http.StatusNotFound, "post not found")
 				return
 			}
-			view.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", gin.H{
-				"Title":           "Admin · Edit Post · " + result.Post.Title + " · " + cfg.SiteName,
-				"Env":             cfg.Env,
-				"BaseURL":         cfg.BaseURL,
-				"SiteName":        cfg.SiteName,
-				"SiteDescription": cfg.SiteDescription,
-				"IsNew":           false,
-				"Post":            result.Post,
-				"Categories":      result.Categories,
-				"Tags":            result.Tags,
-			})
+			presenter.AdminPostFormEdit(c, cfg, result)
 		})
 
 		admin.POST("/posts/:slug", func(c *gin.Context) {
