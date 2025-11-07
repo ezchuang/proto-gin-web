@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
 func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, taxonomySvc domain.TaxonomyService) {
@@ -20,7 +21,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 			AuthorID  int64  `json:"author_id"`
 		}
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 
@@ -39,10 +40,10 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 
 		row, err := postSvc.Create(ctx, input)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.JSON(http.StatusOK, row)
+		responder.JSONSuccess(c, http.StatusOK, row)
 	})
 
 	group.PUT("/posts/:slug", func(c *gin.Context) {
@@ -55,7 +56,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 			Status    string `json:"status"`
 		}
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		cover := body.CoverURL
@@ -71,17 +72,17 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 		ctx := c.Request.Context()
 		row, err := postSvc.Update(ctx, input)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.JSON(http.StatusOK, row)
+		responder.JSONSuccess(c, http.StatusOK, row)
 	})
 
 	group.DELETE("/posts/:slug", func(c *gin.Context) {
 		slug := c.Param("slug")
 		ctx := c.Request.Context()
 		if err := postSvc.Delete(ctx, slug); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -90,7 +91,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.POST("/posts/:slug/categories/:cat", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := postSvc.AddCategory(ctx, c.Param("slug"), c.Param("cat")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -99,7 +100,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.DELETE("/posts/:slug/categories/:cat", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := postSvc.RemoveCategory(ctx, c.Param("slug"), c.Param("cat")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -108,7 +109,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.POST("/posts/:slug/tags/:tag", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := postSvc.AddTag(ctx, c.Param("slug"), c.Param("tag")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -117,7 +118,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.DELETE("/posts/:slug/tags/:tag", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := postSvc.RemoveTag(ctx, c.Param("slug"), c.Param("tag")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -126,7 +127,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.POST("/categories", func(c *gin.Context) {
 		var body struct{ Name, Slug string }
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		ctx := c.Request.Context()
@@ -135,16 +136,16 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 			Slug: body.Slug,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.JSON(http.StatusOK, category)
+		responder.JSONSuccess(c, http.StatusOK, category)
 	})
 
 	group.DELETE("/categories/:slug", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := taxonomySvc.DeleteCategory(ctx, c.Param("slug")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -153,7 +154,7 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 	group.POST("/tags", func(c *gin.Context) {
 		var body struct{ Name, Slug string }
 		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
 		ctx := c.Request.Context()
@@ -162,16 +163,16 @@ func registerContentRoutes(group *gin.RouterGroup, postSvc domain.PostService, t
 			Slug: body.Slug,
 		})
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		c.JSON(http.StatusOK, tag)
+		responder.JSONSuccess(c, http.StatusOK, tag)
 	})
 
 	group.DELETE("/tags/:slug", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		if err := taxonomySvc.DeleteTag(ctx, c.Param("slug")); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
