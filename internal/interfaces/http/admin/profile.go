@@ -12,6 +12,7 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
+	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc domain.AdminService) {
@@ -52,16 +53,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 			return
 		}
 
-		view.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", gin.H{
-			"Title":           "Account Settings",
-			"SiteName":        cfg.SiteName,
-			"SiteDescription": cfg.SiteDescription,
-			"Env":             cfg.Env,
-			"BaseURL":         cfg.BaseURL,
-			"Profile":         profile,
-			"Updated":         c.Query("updated") == "1",
-			"Error":           c.Query("error"),
-		})
+		presenter.AdminProfilePage(c, cfg, profile, c.Query("updated") == "1", c.Query("error"))
 	})
 
 	group.POST("/profile", func(c *gin.Context) {
@@ -117,18 +109,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 
 		handleProfileError := func(status int, message string) {
 			if isForm {
-				view.RenderHTML(c, status, "admin_profile.tmpl", gin.H{
-					"Title":           "Account Settings",
-					"SiteName":        cfg.SiteName,
-					"SiteDescription": cfg.SiteDescription,
-					"Env":             cfg.Env,
-					"BaseURL":         cfg.BaseURL,
-					"Profile": gin.H{
-						"Email":       current.Email,
-						"DisplayName": req.DisplayName,
-					},
-					"Error": message,
-				})
+				presenter.AdminProfileError(c, cfg, current.Email, req.DisplayName, message, status)
 			} else {
 				c.JSON(status, gin.H{"ok": false, "error": message})
 			}
