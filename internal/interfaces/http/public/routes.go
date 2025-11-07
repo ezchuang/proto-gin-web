@@ -1,4 +1,4 @@
-package http
+package public
 
 import (
 	"context"
@@ -19,12 +19,12 @@ import (
 	"proto-gin-web/internal/interfaces/http/view"
 )
 
-// registerPublicRoutes mounts health checks, SEO endpoints, and SSR pages.
-func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+// RegisterRoutes mounts health checks, SEO endpoints, and SSR pages for public visitors.
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
 	logger := slog.Default()
 	respondInternal := func(c *gin.Context, msg string, err error) {
 		logger.Error(msg,
-			slog.String("request_id", GetRequestID(c)),
+			slog.String("request_id", requestID(c)),
 			slog.String("path", c.FullPath()),
 			slog.Any("error", err))
 		c.String(http.StatusInternalServerError, "internal server error")
@@ -39,7 +39,7 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		defer cancel()
 		if _, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 1}); err != nil {
 			logger.Warn("readiness probe failed",
-				slog.String("request_id", GetRequestID(c)),
+				slog.String("request_id", requestID(c)),
 				slog.Any("error", err))
 			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready"})
 			return
@@ -195,7 +195,6 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
 		m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage(result.Post.Title, result.Post.Summary, cfg.BaseURL+"/posts/"+slug, result.Post.CoverURL)
-		// Mark as article for richer previews
 		m.Type = "article"
 		view.RenderHTML(c, http.StatusOK, "post.tmpl", gin.H{
 			"Title":           result.Post.Title,
@@ -211,4 +210,11 @@ func registerPublicRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Pos
 			"MetaTags":        template.HTML(m.Tags()),
 		})
 	})
+}
+
+func requestID(c *gin.Context) string {
+	if rid := c.Writer.Header().Get("X-Request-ID"); rid != "" {
+		return rid
+	}
+	return c.GetHeader("X-Request-ID")
 }

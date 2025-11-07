@@ -9,6 +9,8 @@ import (
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	adminroutes "proto-gin-web/internal/interfaces/http/admin"
+	apiroutes "proto-gin-web/internal/interfaces/http/api"
+	publicroutes "proto-gin-web/internal/interfaces/http/public"
 	helper "proto-gin-web/internal/interfaces/http/templates"
 )
 
@@ -38,8 +40,8 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/views", "layouts/*.tmpl", "includes/*.tmpl")
 	r.Static("/static", "web/static")
 
-	registerPublicRoutes(r, cfg, postSvc)
-	registerAPIRoutes(r, postSvc)
+	publicroutes.RegisterRoutes(r, cfg, postSvc)
+	apiroutes.RegisterRoutes(r, postSvc)
 	loginLimiter := NewIPRateLimiter(5, time.Minute)
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 	adminroutes.RegisterRoutes(r, cfg, postSvc, adminSvc, taxonomySvc, loginLimiter, registerLimiter)
