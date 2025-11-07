@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
 // RegisterRoutes attaches JSON endpoints for posts.
@@ -31,19 +32,19 @@ func RegisterRoutes(r *gin.Engine, postSvc domain.PostService) {
 				Offset: offset,
 			})
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				responder.JSONError(c, http.StatusInternalServerError, err.Error())
 				return
 			}
-			c.JSON(http.StatusOK, rows)
+			responder.JSONSuccess(c, http.StatusOK, rows)
 		})
 
 		api.GET("/posts/:slug", func(c *gin.Context) {
 			row, err := postSvc.GetBySlug(c.Request.Context(), c.Param("slug"))
 			if err != nil {
-				c.JSON(http.StatusNotFound, gin.H{"error": "post not found"})
+				responder.JSONError(c, http.StatusNotFound, "post not found")
 				return
 			}
-			c.JSON(http.StatusOK, row)
+			responder.JSONSuccess(c, http.StatusOK, row)
 		})
 	}
 }
