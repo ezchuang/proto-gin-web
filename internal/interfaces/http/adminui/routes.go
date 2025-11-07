@@ -1,4 +1,4 @@
-package http
+package adminui
 
 import (
 	"net/http"
@@ -13,8 +13,8 @@ import (
 	"proto-gin-web/internal/interfaces/http/view"
 )
 
-// registerAdminUIRoutes mounts simple SSR pages for admin management (MVP).
-func registerAdminUIRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+// RegisterRoutes mounts simple SSR pages for admin management (MVP).
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")
