@@ -124,6 +124,7 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 		mu    sync.Mutex
 		store = make(map[string]entry)
 	)
+	logger := slog.Default()
 
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
@@ -139,6 +140,12 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 		mu.Unlock()
 
 		if e.count > maxRequests {
+			logger.Warn("rate limit exceeded",
+				slog.String("request_id", GetRequestID(c)),
+				slog.String("ip", ip),
+				slog.String("path", c.Request.URL.Path),
+				slog.Int("max_requests", maxRequests),
+				slog.Duration("window", window))
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
 				"error":       "too many requests, try again later",
 				"retry_after": int(e.expiry.Sub(now).Seconds()),
