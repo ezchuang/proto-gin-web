@@ -1,0 +1,27 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Administrator Registration</h2>
+  {{ if .Error }}
+  <p class="error">{{ .Error | html }}</p>
+  {{ end }}
+  <p class="hint">Create an administrator account to manage content. Passwords must be at least 8 characters.</p>
+  <form method="post" action="/admin/register" class="form">
+    <label>
+      Email address
+      <input type="email" name="u" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="p" required autocomplete="new-password" />
+    </label>
+    <label>
+      Confirm Password
+      <input type="password" name="confirm" required autocomplete="new-password" />
+    </label>
+    <button type="submit">Create Account</button>
+  </form>
+  <p><a href="/admin/login">Already registered?</a></p>
+</section>
+{{ end }}

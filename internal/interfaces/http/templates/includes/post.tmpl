@@ -1,0 +1,29 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<article>
+  <h2>{{ .Title | html }}</h2>
+  {{ if .CoverURL }}
+  <p><img src="{{ .CoverURL | html }}" alt="cover" style="max-width:100%;height:auto;" /></p>
+  {{ end }}
+  <p><em>{{ .Summary | html }}</em></p>
+  {{ if or .Categories .Tags }}
+  <p>
+    {{ if .Categories }}Categories:
+      {{ range $i, $c := .Categories }}
+        {{ if $i }} · {{ end }}<a href="/posts?category={{ $c.Slug | html }}">{{ $c.Name | html }}</a>
+      {{ end }}
+    {{ end }}
+    {{ if .Tags }}
+      {{ if .Categories }} · {{ end }}Tags:
+      {{ range $j, $t := .Tags }}
+        {{ if $j }} · {{ end }}<a href="/posts?tag={{ $t.Slug | html }}">{{ $t.Name | html }}</a>
+      {{ end }}
+    {{ end }}
+  </p>
+  {{ end }}
+  <div>
+    {{ .ContentHTML }}
+  </div>
+</article>
+{{ end }}
