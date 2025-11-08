@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	admincontentusecase "proto-gin-web/internal/application/admincontent"
 	adminuiusecase "proto-gin-web/internal/application/adminui"
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
@@ -16,8 +17,8 @@ import (
 	helper "proto-gin-web/internal/interfaces/http/templates"
 )
 
-// NewRouter wires middleware, views, and routes.
-func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, taxonomySvc domain.TaxonomyService, adminUISvc *adminuiusecase.Service) *gin.Engine {
+// NewRouter wires middleware, templates, and routes.
+func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -39,14 +40,14 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 		},
 	})
 
-	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/views", "layouts/*.tmpl", "includes/*.tmpl")
+	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/templates", "layouts/*.tmpl", "includes/*.tmpl")
 	r.Static("/static", "web/static")
 
 	publicroutes.RegisterRoutes(r, cfg, postSvc)
 	apiroutes.RegisterRoutes(r, postSvc)
 	loginLimiter := NewIPRateLimiter(5, time.Minute)
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
-	adminroutes.RegisterRoutes(r, cfg, postSvc, adminSvc, taxonomySvc, loginLimiter, registerLimiter)
+	adminroutes.RegisterRoutes(r, cfg, adminSvc, adminContentSvc, loginLimiter, registerLimiter)
 	adminuiroutes.RegisterRoutes(r, cfg, adminUISvc)
 
 	return r
