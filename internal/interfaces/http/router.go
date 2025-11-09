@@ -2,10 +2,15 @@ package http
 
 import (
 	"html/template"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
+	swaggerdocs "proto-gin-web/docs"
 	admincontentusecase "proto-gin-web/internal/application/admincontent"
 	adminuiusecase "proto-gin-web/internal/application/adminui"
 	"proto-gin-web/internal/domain"
@@ -21,6 +26,16 @@ import (
 func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
+	}
+
+	swaggerdocs.SwaggerInfo.Title = cfg.SiteName + " API"
+	swaggerdocs.SwaggerInfo.Description = cfg.SiteDescription
+	swaggerdocs.SwaggerInfo.BasePath = "/"
+	swaggerdocs.SwaggerInfo.Host = hostFromBaseURL(cfg.BaseURL)
+	if cfg.Env == "production" {
+		swaggerdocs.SwaggerInfo.Schemes = []string{"https", "http"}
+	} else {
+		swaggerdocs.SwaggerInfo.Schemes = []string{"http", "https"}
 	}
 
 	r := gin.New()
@@ -49,6 +64,23 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 	adminroutes.RegisterRoutes(r, cfg, adminSvc, adminContentSvc, loginLimiter, registerLimiter)
 	adminuiroutes.RegisterRoutes(r, cfg, adminUISvc)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	return r
+}
+
+func hostFromBaseURL(base string) string {
+	if base == "" {
+		return "localhost:8080"
+	}
+	u, err := url.Parse(base)
+	if err == nil && u.Host != "" {
+		return u.Host
+	}
+	trimmed := strings.TrimPrefix(base, "https://")
+	trimmed = strings.TrimPrefix(trimmed, "http://")
+	if trimmed == "" {
+		return "localhost:8080"
+	}
+	return trimmed
 }

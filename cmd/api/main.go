@@ -22,6 +22,11 @@ import (
 	httpapp "proto-gin-web/internal/interfaces/http"
 )
 
+// @title           Proto Gin Web API
+// @version         1.0
+// @description     Public endpoints for blog content plus admin content APIs.
+// @BasePath        /
+// @schemes         http https
 func main() {
 	_ = godotenv.Load()
 

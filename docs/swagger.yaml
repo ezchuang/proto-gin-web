@@ -1,0 +1,142 @@
+basePath: /
+definitions:
+  api.errorResponse:
+    properties:
+      error:
+        type: string
+      ok:
+        type: boolean
+    type: object
+  api.postListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/domain.Post'
+        type: array
+      ok:
+        type: boolean
+    type: object
+  api.postResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.PostWithRelations'
+      ok:
+        type: boolean
+    type: object
+  domain.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  domain.Post:
+    properties:
+      author_id:
+        type: integer
+      content_md:
+        type: string
+      cover_url:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      published_at:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.PostWithRelations:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/domain.Category'
+        type: array
+      post:
+        $ref: '#/definitions/domain.Post'
+      tags:
+        items:
+          $ref: '#/definitions/domain.Tag'
+        type: array
+    type: object
+  domain.Tag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Public endpoints for blog content plus admin content APIs.
+  title: Proto Gin Web API
+  version: "1.0"
+paths:
+  /api/posts:
+    get:
+      description: Retrieves a paginated list of published posts.
+      parameters:
+      - default: 10
+        description: Number of posts to return
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Pagination offset
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.postListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: List published posts
+      tags:
+      - Public
+  /api/posts/{slug}:
+    get:
+      description: Retrieves a post together with its categories and tags.
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.postResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.errorResponse'
+      summary: Get a post by slug
+      tags:
+      - Public
+schemes:
+- http
+- https
+swagger: "2.0"
