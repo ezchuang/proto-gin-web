@@ -19,7 +19,7 @@ import (
 	adminuiroutes "proto-gin-web/internal/interfaces/http/adminui"
 	apiroutes "proto-gin-web/internal/interfaces/http/api"
 	publicroutes "proto-gin-web/internal/interfaces/http/public"
-	helper "proto-gin-web/internal/interfaces/http/templates"
+	helper "proto-gin-web/internal/platform/http/templates"
 )
 
 // NewRouter wires middleware, templates, and routes.
@@ -55,7 +55,7 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 		},
 	})
 
-	r.HTMLRender = helper.LoadTemplates("internal/interfaces/http/templates", "layouts/*.tmpl", "includes/*.tmpl")
+	r.HTMLRender = helper.LoadTemplates("internal/platform/http/templates", "layouts/*.tmpl", "includes/*.tmpl")
 	r.Static("/static", "web/static")
 
 	publicroutes.RegisterRoutes(r, cfg, postSvc)

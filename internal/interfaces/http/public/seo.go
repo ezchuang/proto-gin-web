@@ -9,7 +9,7 @@ import (
 
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/infrastructure/seo"
+	"proto-gin-web/internal/platform/seo"
 )
 
 func registerSEORoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {

@@ -19,7 +19,7 @@ import (
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
-	httpapp "proto-gin-web/internal/interfaces/http"
+	httpapp "proto-gin-web/internal/platform/http"
 )
 
 // @title           Proto Gin Web API
