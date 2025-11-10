@@ -15,6 +15,435 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/categories": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create category",
+                "parameters": [
+                    {
+                        "description": "Category payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminTaxonomyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminCategoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/categories/{slug}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts": {
+            "post": {
+                "description": "Creates a post for the admin UI.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create a post",
+                "parameters": [
+                    {
+                        "description": "Post payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminCreatePostRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminPostResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{slug}": {
+            "put": {
+                "description": "Updates a post identified by slug.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Update a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Post payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminUpdatePostRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminPostResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a post identified by slug.",
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{slug}/categories/{cat}": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Attach a category to a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category slug",
+                        "name": "cat",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Remove a category from a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category slug",
+                        "name": "cat",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/posts/{slug}/tags/{tag}": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Attach a tag to a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Remove a tag from a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "tag",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tags": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Create tag",
+                "parameters": [
+                    {
+                        "description": "Tag payload",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminTaxonomyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminTagResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/tags/{slug}": {
+            "delete": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete tag",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tag slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/admin.AdminErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/posts": {
             "get": {
                 "description": "Retrieves a paginated list of published posts.",
@@ -94,6 +523,120 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "admin.AdminCategoryResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/domain.Category"
+                },
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "admin.AdminCreatePostRequest": {
+            "type": "object",
+            "required": [
+                "content_md",
+                "slug",
+                "title"
+            ],
+            "properties": {
+                "author_id": {
+                    "type": "integer"
+                },
+                "content_md": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "admin.AdminErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "admin.AdminPostResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/domain.Post"
+                },
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "admin.AdminTagResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/domain.Tag"
+                },
+                "ok": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "admin.AdminTaxonomyRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "slug"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "admin.AdminUpdatePostRequest": {
+            "type": "object",
+            "required": [
+                "content_md",
+                "title"
+            ],
+            "properties": {
+                "content_md": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "api.errorResponse": {
             "type": "object",
             "properties": {
@@ -111,7 +654,7 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.Post"
+                        "$ref": "#/definitions/presenter.PublicPost"
                     }
                 },
                 "ok": {
@@ -123,7 +666,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "data": {
-                    "$ref": "#/definitions/domain.PostWithRelations"
+                    "$ref": "#/definitions/presenter.PublicPostWithRelations"
                 },
                 "ok": {
                     "type": "boolean"
@@ -182,27 +725,79 @@ const docTemplate = `{
                 }
             }
         },
-        "domain.PostWithRelations": {
+        "domain.Tag": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "presenter.PublicPost": {
+            "type": "object",
+            "properties": {
+                "author_id": {
+                    "type": "integer"
+                },
+                "content_md": {
+                    "type": "string"
+                },
+                "cover_url": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "published_at": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "presenter.PublicPostWithRelations": {
             "type": "object",
             "properties": {
                 "categories": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.Category"
+                        "$ref": "#/definitions/presenter.PublicTaxonomy"
                     }
                 },
                 "post": {
-                    "$ref": "#/definitions/domain.Post"
+                    "$ref": "#/definitions/presenter.PublicPost"
                 },
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/domain.Tag"
+                        "$ref": "#/definitions/presenter.PublicTaxonomy"
                     }
                 }
             }
         },
-        "domain.Tag": {
+        "presenter.PublicTaxonomy": {
             "type": "object",
             "properties": {
                 "id": {

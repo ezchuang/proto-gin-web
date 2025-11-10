@@ -1,5 +1,80 @@
 basePath: /
 definitions:
+  admin.AdminCategoryResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.Category'
+      ok:
+        type: boolean
+    type: object
+  admin.AdminCreatePostRequest:
+    properties:
+      author_id:
+        type: integer
+      content_md:
+        type: string
+      cover_url:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+    required:
+    - content_md
+    - slug
+    - title
+    type: object
+  admin.AdminErrorResponse:
+    properties:
+      error:
+        type: string
+      ok:
+        type: boolean
+    type: object
+  admin.AdminPostResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.Post'
+      ok:
+        type: boolean
+    type: object
+  admin.AdminTagResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.Tag'
+      ok:
+        type: boolean
+    type: object
+  admin.AdminTaxonomyRequest:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  admin.AdminUpdatePostRequest:
+    properties:
+      content_md:
+        type: string
+      cover_url:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+    required:
+    - content_md
+    - title
+    type: object
   api.errorResponse:
     properties:
       error:
@@ -11,7 +86,7 @@ definitions:
     properties:
       data:
         items:
-          $ref: '#/definitions/domain.Post'
+          $ref: '#/definitions/presenter.PublicPost'
         type: array
       ok:
         type: boolean
@@ -19,7 +94,7 @@ definitions:
   api.postResponse:
     properties:
       data:
-        $ref: '#/definitions/domain.PostWithRelations'
+        $ref: '#/definitions/presenter.PublicPostWithRelations'
       ok:
         type: boolean
     type: object
@@ -57,20 +132,54 @@ definitions:
       updated_at:
         type: string
     type: object
-  domain.PostWithRelations:
+  domain.Tag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  presenter.PublicPost:
+    properties:
+      author_id:
+        type: integer
+      content_md:
+        type: string
+      cover_url:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      published_at:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  presenter.PublicPostWithRelations:
     properties:
       categories:
         items:
-          $ref: '#/definitions/domain.Category'
+          $ref: '#/definitions/presenter.PublicTaxonomy'
         type: array
       post:
-        $ref: '#/definitions/domain.Post'
+        $ref: '#/definitions/presenter.PublicPost'
       tags:
         items:
-          $ref: '#/definitions/domain.Tag'
+          $ref: '#/definitions/presenter.PublicTaxonomy'
         type: array
     type: object
-  domain.Tag:
+  presenter.PublicTaxonomy:
     properties:
       id:
         type: integer
@@ -85,6 +194,287 @@ info:
   title: Proto Gin Web API
   version: "1.0"
 paths:
+  /admin/categories:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Category payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/admin.AdminTaxonomyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/admin.AdminCategoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Create category
+      tags:
+      - Admin
+  /admin/categories/{slug}:
+    delete:
+      parameters:
+      - description: Category slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Delete category
+      tags:
+      - Admin
+  /admin/posts:
+    post:
+      consumes:
+      - application/json
+      description: Creates a post for the admin UI.
+      parameters:
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/admin.AdminCreatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/admin.AdminPostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Create a post
+      tags:
+      - Admin
+  /admin/posts/{slug}:
+    delete:
+      description: Deletes a post identified by slug.
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Delete a post
+      tags:
+      - Admin
+    put:
+      consumes:
+      - application/json
+      description: Updates a post identified by slug.
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/admin.AdminUpdatePostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/admin.AdminPostResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Update a post
+      tags:
+      - Admin
+  /admin/posts/{slug}/categories/{cat}:
+    delete:
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Category slug
+        in: path
+        name: cat
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Remove a category from a post
+      tags:
+      - Admin
+    post:
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Category slug
+        in: path
+        name: cat
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Attach a category to a post
+      tags:
+      - Admin
+  /admin/posts/{slug}/tags/{tag}:
+    delete:
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Tag slug
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Remove a tag from a post
+      tags:
+      - Admin
+    post:
+      parameters:
+      - description: Post slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Tag slug
+        in: path
+        name: tag
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Attach a tag to a post
+      tags:
+      - Admin
+  /admin/tags:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Tag payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/admin.AdminTaxonomyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/admin.AdminTagResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Create tag
+      tags:
+      - Admin
+  /admin/tags/{slug}:
+    delete:
+      parameters:
+      - description: Tag slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/admin.AdminErrorResponse'
+      summary: Delete tag
+      tags:
+      - Admin
   /api/posts:
     get:
       description: Retrieves a paginated list of published posts.

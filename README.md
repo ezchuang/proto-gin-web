@@ -48,6 +48,12 @@ proto-gin-web/
    make deps
    make run            # http://localhost:8080
    ```
+4. 產生/更新 Swagger 文件
+   ```bash
+   go install github.com/swaggo/swag/cmd/swag@latest
+   swag init -g cmd/api/main.go -o docs
+   ```
+   開發環境可透過 `http://localhost:8080/swagger/index.html` 查看文件（production 預設不開放）。
 
 ### Docker Workflow
 ```bash

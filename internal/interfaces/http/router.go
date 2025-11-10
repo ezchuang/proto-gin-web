@@ -64,7 +64,9 @@ func NewRouter(cfg platform.Config, postSvc domain.PostService, adminSvc domain.
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 	adminroutes.RegisterRoutes(r, cfg, adminSvc, adminContentSvc, loginLimiter, registerLimiter)
 	adminuiroutes.RegisterRoutes(r, cfg, adminUISvc)
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	if cfg.Env != "production" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	return r
 }

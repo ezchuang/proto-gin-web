@@ -10,17 +10,60 @@ import (
 	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
+// AdminCreatePostRequest describes the payload to create a post.
+type AdminCreatePostRequest struct {
+	Title     string `json:"title" binding:"required"`
+	Slug      string `json:"slug" binding:"required"`
+	Summary   string `json:"summary"`
+	ContentMD string `json:"content_md" binding:"required"`
+	CoverURL  string `json:"cover_url"`
+	Status    string `json:"status"`
+	AuthorID  int64  `json:"author_id"`
+}
+
+// AdminUpdatePostRequest describes the payload to update a post.
+type AdminUpdatePostRequest struct {
+	Title     string `json:"title" binding:"required"`
+	Summary   string `json:"summary"`
+	ContentMD string `json:"content_md" binding:"required"`
+	CoverURL  string `json:"cover_url"`
+	Status    string `json:"status"`
+}
+
+// AdminTaxonomyRequest describes a category/tag payload.
+type AdminTaxonomyRequest struct {
+	Name string `json:"name" binding:"required"`
+	Slug string `json:"slug" binding:"required"`
+}
+
 func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Service) {
-	group.POST("/posts", func(c *gin.Context) {
-		var body struct {
-			Title     string `json:"title" binding:"required"`
-			Slug      string `json:"slug" binding:"required"`
-			Summary   string `json:"summary"`
-			ContentMD string `json:"content_md" binding:"required"`
-			CoverURL  string `json:"cover_url"`
-			Status    string `json:"status"`
-			AuthorID  int64  `json:"author_id"`
-		}
+	group.POST("/posts", createPostHandler(contentSvc))
+	group.PUT("/posts/:slug", updatePostHandler(contentSvc))
+	group.DELETE("/posts/:slug", deletePostHandler(contentSvc))
+	group.POST("/posts/:slug/categories/:cat", addCategoryHandler(contentSvc))
+	group.DELETE("/posts/:slug/categories/:cat", removeCategoryHandler(contentSvc))
+	group.POST("/posts/:slug/tags/:tag", addTagHandler(contentSvc))
+	group.DELETE("/posts/:slug/tags/:tag", removeTagHandler(contentSvc))
+	group.POST("/categories", createCategoryHandler(contentSvc))
+	group.DELETE("/categories/:slug", deleteCategoryHandler(contentSvc))
+	group.POST("/tags", createTagHandler(contentSvc))
+	group.DELETE("/tags/:slug", deleteTagHandler(contentSvc))
+}
+
+// createPostHandler godoc
+// @Summary      Create a post
+// @Description  Creates a post for the admin UI.
+// @Tags         Admin
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      AdminCreatePostRequest  true  "Post payload"
+// @Success      200      {object}  AdminPostResponse
+// @Failure      400      {object}  AdminErrorResponse
+// @Failure      500      {object}  AdminErrorResponse
+// @Router       /admin/posts [post]
+func createPostHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body AdminCreatePostRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
@@ -44,17 +87,25 @@ func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Serv
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, row)
-	})
+	}
+}
 
-	group.PUT("/posts/:slug", func(c *gin.Context) {
+// updatePostHandler godoc
+// @Summary      Update a post
+// @Description  Updates a post identified by slug.
+// @Tags         Admin
+// @Accept       json
+// @Produce      json
+// @Param        slug     path      string                   true  "Post slug"
+// @Param        payload  body      AdminUpdatePostRequest   true  "Post payload"
+// @Success      200      {object}  AdminPostResponse
+// @Failure      400      {object}  AdminErrorResponse
+// @Failure      500      {object}  AdminErrorResponse
+// @Router       /admin/posts/{slug} [put]
+func updatePostHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		slug := c.Param("slug")
-		var body struct {
-			Title     string `json:"title" binding:"required"`
-			Summary   string `json:"summary"`
-			ContentMD string `json:"content_md" binding:"required"`
-			CoverURL  string `json:"cover_url"`
-			Status    string `json:"status"`
-		}
+		var body AdminUpdatePostRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
@@ -75,51 +126,113 @@ func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Serv
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, row)
-	})
+	}
+}
 
-	group.DELETE("/posts/:slug", func(c *gin.Context) {
+// deletePostHandler godoc
+// @Summary      Delete a post
+// @Description  Deletes a post identified by slug.
+// @Tags         Admin
+// @Param        slug  path  string  true  "Post slug"
+// @Success      204  {string}  string  ""
+// @Failure      500  {object}  AdminErrorResponse
+// @Router       /admin/posts/{slug} [delete]
+func deletePostHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		slug := c.Param("slug")
 		if err := contentSvc.DeletePost(c.Request.Context(), slug); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.POST("/posts/:slug/categories/:cat", func(c *gin.Context) {
+// addCategoryHandler godoc
+// @Summary      Attach a category to a post
+// @Tags         Admin
+// @Param        slug  path  string  true  "Post slug"
+// @Param        cat   path  string  true  "Category slug"
+// @Success      204 {string} string ""
+// @Failure      500 {object} AdminErrorResponse
+// @Router       /admin/posts/{slug}/categories/{cat} [post]
+func addCategoryHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.AddCategory(c.Request.Context(), c.Param("slug"), c.Param("cat")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.DELETE("/posts/:slug/categories/:cat", func(c *gin.Context) {
+// removeCategoryHandler godoc
+// @Summary      Remove a category from a post
+// @Tags         Admin
+// @Param        slug  path  string  true  "Post slug"
+// @Param        cat   path  string  true  "Category slug"
+// @Success      204 {string} string ""
+// @Failure      500 {object} AdminErrorResponse
+// @Router       /admin/posts/{slug}/categories/{cat} [delete]
+func removeCategoryHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.RemoveCategory(c.Request.Context(), c.Param("slug"), c.Param("cat")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.POST("/posts/:slug/tags/:tag", func(c *gin.Context) {
+// addTagHandler godoc
+// @Summary      Attach a tag to a post
+// @Tags         Admin
+// @Param        slug  path  string  true  "Post slug"
+// @Param        tag   path  string  true  "Tag slug"
+// @Success      204 {string} string ""
+// @Failure      500 {object} AdminErrorResponse
+// @Router       /admin/posts/{slug}/tags/{tag} [post]
+func addTagHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.AddTag(c.Request.Context(), c.Param("slug"), c.Param("tag")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.DELETE("/posts/:slug/tags/:tag", func(c *gin.Context) {
+// removeTagHandler godoc
+// @Summary      Remove a tag from a post
+// @Tags         Admin
+// @Param        slug  path  string  true  "Post slug"
+// @Param        tag   path  string  true  "Tag slug"
+// @Success      204 {string} string ""
+// @Failure      500 {object} AdminErrorResponse
+// @Router       /admin/posts/{slug}/tags/{tag} [delete]
+func removeTagHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.RemoveTag(c.Request.Context(), c.Param("slug"), c.Param("tag")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.POST("/categories", func(c *gin.Context) {
-		var body struct{ Name, Slug string }
+// createCategoryHandler godoc
+// @Summary      Create category
+// @Tags         Admin
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      AdminTaxonomyRequest  true  "Category payload"
+// @Success      200      {object}  AdminCategoryResponse
+// @Failure      400      {object}  AdminErrorResponse
+// @Failure      500      {object}  AdminErrorResponse
+// @Router       /admin/categories [post]
+func createCategoryHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body AdminTaxonomyRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
@@ -133,18 +246,39 @@ func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Serv
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, category)
-	})
+	}
+}
 
-	group.DELETE("/categories/:slug", func(c *gin.Context) {
+// deleteCategoryHandler godoc
+// @Summary      Delete category
+// @Tags         Admin
+// @Param        slug  path  string  true  "Category slug"
+// @Success      204  {string} string ""
+// @Failure      500  {object}  AdminErrorResponse
+// @Router       /admin/categories/{slug} [delete]
+func deleteCategoryHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.DeleteCategory(c.Request.Context(), c.Param("slug")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
+}
 
-	group.POST("/tags", func(c *gin.Context) {
-		var body struct{ Name, Slug string }
+// createTagHandler godoc
+// @Summary      Create tag
+// @Tags         Admin
+// @Accept       json
+// @Produce      json
+// @Param        payload  body      AdminTaxonomyRequest  true  "Tag payload"
+// @Success      200      {object}  AdminTagResponse
+// @Failure      400      {object}  AdminErrorResponse
+// @Failure      500      {object}  AdminErrorResponse
+// @Router       /admin/tags [post]
+func createTagHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var body AdminTaxonomyRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
@@ -158,13 +292,22 @@ func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Serv
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, tag)
-	})
+	}
+}
 
-	group.DELETE("/tags/:slug", func(c *gin.Context) {
+// deleteTagHandler godoc
+// @Summary      Delete tag
+// @Tags         Admin
+// @Param        slug  path  string  true  "Tag slug"
+// @Success      204  {string} string ""
+// @Failure      500  {object}  AdminErrorResponse
+// @Router       /admin/tags/{slug} [delete]
+func deleteTagHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		if err := contentSvc.DeleteTag(c.Request.Context(), c.Param("slug")); err != nil {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
 		c.Status(http.StatusNoContent)
-	})
+	}
 }

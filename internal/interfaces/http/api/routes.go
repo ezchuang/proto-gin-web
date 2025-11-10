@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/domain"
+	"proto-gin-web/internal/interfaces/http/view/presenter"
 	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
@@ -51,7 +52,7 @@ func listPostsHandler(postSvc domain.PostService) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		responder.JSONSuccess(c, http.StatusOK, rows)
+		responder.JSONSuccess(c, http.StatusOK, presenter.BuildPublicPosts(rows))
 	}
 }
 
@@ -71,6 +72,6 @@ func getPostHandler(postSvc domain.PostService) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusNotFound, "post not found")
 			return
 		}
-		responder.JSONSuccess(c, http.StatusOK, row)
+		responder.JSONSuccess(c, http.StatusOK, presenter.BuildPublicPostWithRelations(row))
 	}
 }
