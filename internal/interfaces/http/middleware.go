@@ -103,9 +103,10 @@ func generateRequestID() string {
 func SecurityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h := c.Writer.Header()
-		if _, ok := h["Content-Security-Policy"]; !ok {
-			h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
-		}
+		// CSP 暫時關閉以便 Swagger 等內嵌腳本正常運作。
+		// if _, ok := h["Content-Security-Policy"]; !ok {
+		// 	h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
+		// }
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "same-origin")
@@ -124,6 +125,7 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 		mu    sync.Mutex
 		store = make(map[string]entry)
 	)
+	logger := slog.Default()
 
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
@@ -139,6 +141,12 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 		mu.Unlock()
 
 		if e.count > maxRequests {
+			logger.Warn("rate limit exceeded",
+				slog.String("request_id", GetRequestID(c)),
+				slog.String("ip", ip),
+				slog.String("path", c.Request.URL.Path),
+				slog.Int("max_requests", maxRequests),
+				slog.Duration("window", window))
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
 				"error":       "too many requests, try again later",
 				"retry_after": int(e.expiry.Sub(now).Seconds()),

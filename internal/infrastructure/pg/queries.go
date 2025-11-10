@@ -3,9 +3,11 @@ package pg
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,6 +16,8 @@ import (
 type Queries struct {
 	pool *pgxpool.Pool
 }
+
+var ErrEmailAlreadyExists = errors.New("email already exists")
 
 // New wraps a pgx pool to provide strongly typed query helpers.
 func New(pool *pgxpool.Pool) *Queries {
@@ -44,6 +48,11 @@ type Tag struct {
 	ID   int64
 	Name string
 	Slug string
+}
+
+type Role struct {
+	ID   int64
+	Name string
 }
 
 type User struct {
@@ -83,6 +92,19 @@ type CreateCategoryParams struct {
 type CreateTagParams struct {
 	Name string
 	Slug string
+}
+
+type CreateUserParams struct {
+	Email        string
+	DisplayName  string
+	PasswordHash string
+	RoleID       *int64
+}
+
+type UpdateUserProfileParams struct {
+	Email        string
+	DisplayName  string
+	PasswordHash *string
 }
 
 func (q *Queries) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]Post, error) {
@@ -243,6 +265,48 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		return User{}, err
 	}
 	return u, nil
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	const stmt = `INSERT INTO app_user (email, display_name, password_hash, role_id) VALUES ($1, $2, $3, $4) RETURNING id, email, display_name, password_hash, role_id, created_at`
+	var role any
+	if arg.RoleID != nil {
+		role = *arg.RoleID
+	}
+	row := q.pool.QueryRow(ctx, stmt, arg.Email, arg.DisplayName, arg.PasswordHash, role)
+	var u User
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.RoleID, &u.CreatedAt); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "app_user_email_key" {
+			return User{}, ErrEmailAlreadyExists
+		}
+		return User{}, err
+	}
+	return u, nil
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	const stmt = `UPDATE app_user SET display_name = $2, password_hash = COALESCE($3, password_hash) WHERE email = $1 RETURNING id, email, display_name, password_hash, role_id, created_at`
+	var password any
+	if arg.PasswordHash != nil {
+		password = *arg.PasswordHash
+	}
+	row := q.pool.QueryRow(ctx, stmt, arg.Email, arg.DisplayName, password)
+	var u User
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.RoleID, &u.CreatedAt); err != nil {
+		return User{}, err
+	}
+	return u, nil
+}
+
+func (q *Queries) GetRoleByName(ctx context.Context, name string) (Role, error) {
+	const stmt = `SELECT id, name FROM role WHERE name = $1`
+	row := q.pool.QueryRow(ctx, stmt, name)
+	var r Role
+	if err := row.Scan(&r.ID, &r.Name); err != nil {
+		return Role{}, err
+	}
+	return r, nil
 }
 
 func (q *Queries) listPosts(ctx context.Context, stmt string, args ...any) ([]Post, error) {

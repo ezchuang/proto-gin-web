@@ -184,3 +184,49 @@ small {
 .nav__link {
   font-weight: 600;
 }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: var(--color-accent);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  outline: none;
+}
+
+.button--link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-accent);
+  box-shadow: none;
+}
+
+.button--link:hover,
+.button--link:focus-visible {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
+.logout-form {
+  margin: 0;
+  display: inline;
+}
+
+.logout-form button {
+  font-size: inherit;
+}
+
+.logout-form--inline {
+  display: inline;
+}

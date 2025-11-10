@@ -6,10 +6,11 @@
   {{ if .Error }}
   <p class="error">{{ .Error | html }}</p>
   {{ end }}
+  <p class="hint">Create an administrator account to manage content. Passwords must be at least 8 characters.</p>
   <form method="post" action="/admin/register" class="form">
     <label>
-      Username
-      <input type="text" name="u" required autocomplete="username" />
+      Email address
+      <input type="email" name="u" required autocomplete="username" />
     </label>
     <label>
       Password

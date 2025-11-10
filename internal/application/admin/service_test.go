@@ -1,0 +1,245 @@
+package admin
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"proto-gin-web/internal/domain"
+)
+
+type mockAdminRepo struct {
+	adminByEmail    map[string]domain.StoredAdmin
+	roleByName      map[string]domain.AdminRole
+	createErr       error
+	updateErr       error
+	getErr          error
+	roleErr         error
+	createInput     domain.AdminCreateParams
+	updateInput     domain.AdminProfileUpdateParams
+	lastEmail       string
+	lastUpdateEmail string
+}
+
+func newMockAdminRepo() *mockAdminRepo {
+	return &mockAdminRepo{
+		adminByEmail: map[string]domain.StoredAdmin{},
+		roleByName:   map[string]domain.AdminRole{"admin": {ID: 1, Name: "admin"}},
+	}
+}
+
+func (m *mockAdminRepo) GetByEmail(ctx context.Context, email string) (domain.StoredAdmin, error) {
+	m.lastEmail = email
+	if m.getErr != nil {
+		return domain.StoredAdmin{}, m.getErr
+	}
+	if admin, ok := m.adminByEmail[email]; ok {
+		return admin, nil
+	}
+	return domain.StoredAdmin{}, domain.ErrAdminNotFound
+}
+
+func (m *mockAdminRepo) Create(ctx context.Context, params domain.AdminCreateParams) (domain.StoredAdmin, error) {
+	if m.createErr != nil {
+		return domain.StoredAdmin{}, m.createErr
+	}
+	m.createInput = params
+	admin := domain.StoredAdmin{
+		Admin: domain.Admin{
+			ID:          2,
+			Email:       params.Email,
+			DisplayName: params.DisplayName,
+		},
+		PasswordHash: params.PasswordHash,
+	}
+	m.adminByEmail[params.Email] = admin
+	return admin, nil
+}
+
+func (m *mockAdminRepo) UpdateProfile(ctx context.Context, email string, params domain.AdminProfileUpdateParams) (domain.StoredAdmin, error) {
+	if m.updateErr != nil {
+		return domain.StoredAdmin{}, m.updateErr
+	}
+	m.lastUpdateEmail = email
+	m.updateInput = params
+	admin := m.adminByEmail[email]
+	admin.DisplayName = params.DisplayName
+	if params.PasswordHash != nil {
+		admin.PasswordHash = *params.PasswordHash
+	}
+	m.adminByEmail[email] = admin
+	return admin, nil
+}
+
+func (m *mockAdminRepo) FindRoleByName(ctx context.Context, name string) (domain.AdminRole, error) {
+	if m.roleErr != nil {
+		return domain.AdminRole{}, m.roleErr
+	}
+	if role, ok := m.roleByName[name]; ok {
+		return role, nil
+	}
+	return domain.AdminRole{}, domain.ErrAdminRoleNotFound
+}
+
+func TestService_Login_Success(t *testing.T) {
+	repo := newMockAdminRepo()
+	hash, err := hashArgon2idPassword("pass1234")
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	repo.adminByEmail["user@example.com"] = domain.StoredAdmin{
+		Admin: domain.Admin{
+			ID:          1,
+			Email:       "user@example.com",
+			DisplayName: "User",
+		},
+		PasswordHash: hash,
+	}
+	svc := NewService(repo, Config{})
+
+	admin, err := svc.Login(context.Background(), domain.AdminLoginInput{
+		Email:    "user@example.com",
+		Password: "pass1234",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if admin.Email != "user@example.com" {
+		t.Fatalf("expected email user@example.com got %s", admin.Email)
+	}
+}
+
+func TestService_Login_InvalidCredentials(t *testing.T) {
+	repo := newMockAdminRepo()
+	svc := NewService(repo, Config{})
+
+	_, err := svc.Login(context.Background(), domain.AdminLoginInput{
+		Email:    "missing@example.com",
+		Password: "pass",
+	})
+	if !errors.Is(err, domain.ErrAdminInvalidCredentials) {
+		t.Fatalf("expected invalid credentials, got %v", err)
+	}
+}
+
+func TestService_Login_LegacyFallback(t *testing.T) {
+	repo := newMockAdminRepo()
+	repo.getErr = domain.ErrAdminNotFound
+	svc := NewService(repo, Config{
+		LegacyUser:     "legacy@example.com",
+		LegacyPassword: "legacy",
+	})
+
+	admin, err := svc.Login(context.Background(), domain.AdminLoginInput{
+		Email:    "legacy@example.com",
+		Password: "legacy",
+	})
+	if err != nil {
+		t.Fatalf("expected legacy login to succeed: %v", err)
+	}
+	if admin.Email != "legacy@example.com" {
+		t.Fatalf("unexpected legacy admin email %s", admin.Email)
+	}
+}
+
+func TestService_Register_Validation(t *testing.T) {
+	svc := NewService(newMockAdminRepo(), Config{})
+	_, err := svc.Register(context.Background(), domain.AdminRegisterInput{
+		Email:           "invalid",
+		Password:        "12345678",
+		ConfirmPassword: "12345678",
+	})
+	if !errors.Is(err, domain.ErrAdminInvalidEmail) {
+		t.Fatalf("expected email error, got %v", err)
+	}
+
+	_, err = svc.Register(context.Background(), domain.AdminRegisterInput{
+		Email:           "user@example.com",
+		Password:        "short",
+		ConfirmPassword: "short",
+	})
+	if !errors.Is(err, domain.ErrAdminPasswordTooShort) {
+		t.Fatalf("expected short password error, got %v", err)
+	}
+
+	_, err = svc.Register(context.Background(), domain.AdminRegisterInput{
+		Email:           "user@example.com",
+		Password:        "longenough",
+		ConfirmPassword: "different",
+	})
+	if !errors.Is(err, domain.ErrAdminPasswordMismatch) {
+		t.Fatalf("expected mismatch error, got %v", err)
+	}
+}
+
+func TestService_Register_Success(t *testing.T) {
+	repo := newMockAdminRepo()
+	svc := NewService(repo, Config{})
+
+	admin, err := svc.Register(context.Background(), domain.AdminRegisterInput{
+		Email:           "user@example.com",
+		Password:        "longenough",
+		ConfirmPassword: "longenough",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if admin.Email != "user@example.com" {
+		t.Fatalf("expected user@example.com got %s", admin.Email)
+	}
+	if repo.createInput.Email != "user@example.com" {
+		t.Fatalf("expected repo create email to be set")
+	}
+}
+
+func TestService_UpdateProfile_Validation(t *testing.T) {
+	repo := newMockAdminRepo()
+	repo.adminByEmail["user@example.com"] = domain.StoredAdmin{
+		Admin: domain.Admin{Email: "user@example.com", DisplayName: "User"},
+	}
+	svc := NewService(repo, Config{})
+
+	_, err := svc.UpdateProfile(context.Background(), "user@example.com", domain.AdminProfileInput{
+		DisplayName: "",
+	})
+	if !errors.Is(err, domain.ErrAdminDisplayNameRequired) {
+		t.Fatalf("expected display name required, got %v", err)
+	}
+
+	_, err = svc.UpdateProfile(context.Background(), "user@example.com", domain.AdminProfileInput{
+		DisplayName:     "User",
+		Password:        "short",
+		ConfirmPassword: "short",
+	})
+	if !errors.Is(err, domain.ErrAdminPasswordTooShort) {
+		t.Fatalf("expected short password error, got %v", err)
+	}
+}
+
+func TestService_UpdateProfile_Success(t *testing.T) {
+	repo := newMockAdminRepo()
+	hash, _ := hashArgon2idPassword("pass1234")
+	repo.adminByEmail["user@example.com"] = domain.StoredAdmin{
+		Admin:        domain.Admin{Email: "user@example.com", DisplayName: "Old"},
+		PasswordHash: hash,
+	}
+	svc := NewService(repo, Config{})
+
+	admin, err := svc.UpdateProfile(context.Background(), "user@example.com", domain.AdminProfileInput{
+		DisplayName:     "New",
+		Password:        "newpassword",
+		ConfirmPassword: "newpassword",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if admin.DisplayName != "New" {
+		t.Fatalf("expected updated display name, got %s", admin.DisplayName)
+	}
+	if repo.updateInput.DisplayName != "New" {
+		t.Fatalf("repo update input not set")
+	}
+	if repo.updateInput.PasswordHash == nil {
+		t.Fatalf("expected password hash to be set")
+	}
+}

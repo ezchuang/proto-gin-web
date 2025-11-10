@@ -1,0 +1,19 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Admin Dashboard</h2>
+  {{ if .Registered }}
+  <p class="success">Welcome aboard! Your administrator account is ready.</p>
+  {{ end }}
+  <p>Signed in as {{ .User | html }}.</p>
+  <ul>
+    <li><a href="/admin/posts">Manage posts via API</a></li>
+    <li>
+      <form method="post" action="/admin/logout" class="logout-form">
+        <button type="submit" class="button button--link">Log out</button>
+      </form>
+    </li>
+  </ul>
+</section>
+{{ end }}

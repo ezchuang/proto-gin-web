@@ -1,0 +1,36 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Account Settings</h2>
+  {{ if .Updated }}
+  <p class="success">Profile updated successfully.</p>
+  {{ end }}
+  {{ if .Error }}
+  <p class="error">{{ .Error | html }}</p>
+  {{ end }}
+  <form method="post" action="/admin/profile" class="form">
+    <label>
+      Email
+      <input type="email" name="email" value="{{ .Profile.Email | html }}" readonly />
+    </label>
+    <label>
+      Display Name
+      <input type="text" name="display_name" value="{{ .Profile.DisplayName | html }}" required />
+    </label>
+    <fieldset class="form__fieldset">
+      <legend>Change Password (optional)</legend>
+      <label>
+        New Password
+        <input type="password" name="password" autocomplete="new-password" />
+      </label>
+      <label>
+        Confirm Password
+        <input type="password" name="confirm" autocomplete="new-password" />
+      </label>
+      <p class="hint">Leave password fields empty to keep your current password. Minimum length: 8 characters.</p>
+    </fieldset>
+    <button type="submit">Save Changes</button>
+  </form>
+</section>
+{{ end }}
