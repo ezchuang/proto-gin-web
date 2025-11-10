@@ -1,4 +1,4 @@
-package admin
+package contenthttp
 
 import "proto-gin-web/internal/domain"
 

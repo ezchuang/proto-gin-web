@@ -11,13 +11,13 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	swaggerdocs "proto-gin-web/docs"
+	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
 	admincontentusecase "proto-gin-web/internal/application/admincontent"
 	adminuiusecase "proto-gin-web/internal/application/adminui"
 	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
 	"proto-gin-web/internal/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	adminroutes "proto-gin-web/internal/interfaces/http/admin"
 	adminuiroutes "proto-gin-web/internal/interfaces/http/adminui"
 	helper "proto-gin-web/internal/platform/http/templates"
 )

@@ -1,4 +1,4 @@
-package admin
+package contenthttp
 
 import (
 	"net/http"
@@ -36,7 +36,7 @@ type AdminTaxonomyRequest struct {
 	Slug string `json:"slug" binding:"required"`
 }
 
-func registerContentRoutes(group *gin.RouterGroup, contentSvc *admincontent.Service) {
+func RegisterRoutes(group *gin.RouterGroup, contentSvc *admincontent.Service) {
 	group.POST("/posts", createPostHandler(contentSvc))
 	group.PUT("/posts/:slug", updatePostHandler(contentSvc))
 	group.DELETE("/posts/:slug", deletePostHandler(contentSvc))

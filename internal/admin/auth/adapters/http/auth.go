@@ -1,4 +1,4 @@
-package admin
+package authhttp
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ import (
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
-func registerAuthRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
 		presenter.AdminLoginPage(c, cfg, c.Query("error"))
 	})

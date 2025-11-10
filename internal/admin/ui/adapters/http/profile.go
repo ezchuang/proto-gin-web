@@ -1,4 +1,4 @@
-package admin
+package adminuihttp
 
 import (
 	"errors"
