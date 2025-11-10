@@ -3,8 +3,9 @@ package platform
 import "os"
 
 type Config struct {
-	Env  string
-	Port string
+	Env     string
+	Port    string
+	LogFile string
 
 	DBUser     string
 	DBPassword string
@@ -25,6 +26,7 @@ func Load() Config {
 	return Config{
 		Env:             getEnv("APP_ENV", "development"),
 		Port:            getEnv("PORT", "8080"),
+		LogFile:         getEnv("LOG_FILE", "logs/app.log"),
 		DBUser:          getEnv("POSTGRES_USER", "proto_user"),
 		DBPassword:      getEnv("POSTGRES_PASSWORD", "proto_password"),
 		DBName:          getEnv("POSTGRES_DB", "proto_db"),

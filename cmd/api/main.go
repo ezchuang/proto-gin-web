@@ -32,7 +32,7 @@ func main() {
 
 	cfg := platform.Load()
 
-	log := platform.NewLogger(cfg.Env)
+	log := platform.NewLogger(cfg.Env, cfg.LogFile)
 	slog.SetDefault(log)
 
 	pool, err := appdb.NewPool(context.Background(), cfg)
