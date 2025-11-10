@@ -12,18 +12,27 @@ import (
 
 	"github.com/joho/godotenv"
 
+	adminusecase "proto-gin-web/internal/application/admin"
+	admincontentusecase "proto-gin-web/internal/application/admincontent"
+	adminuiusecase "proto-gin-web/internal/application/adminui"
 	postusecase "proto-gin-web/internal/application/post"
+	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
 	httpapp "proto-gin-web/internal/interfaces/http"
 )
 
+// @title           Proto Gin Web API
+// @version         1.0
+// @description     Public endpoints for blog content plus admin content APIs.
+// @BasePath        /
+// @schemes         http https
 func main() {
 	_ = godotenv.Load()
 
 	cfg := platform.Load()
 
-	log := platform.NewLogger(cfg.Env)
+	log := platform.NewLogger(cfg.Env, cfg.LogFile)
 	slog.SetDefault(log)
 
 	pool, err := appdb.NewPool(context.Background(), cfg)
@@ -33,11 +42,21 @@ func main() {
 	}
 	defer pool.Close()
 
+	queries := appdb.New(pool)
 	postRepo := appdb.NewPostRepository(pool)
 	postSvc := postusecase.NewService(postRepo)
-	queries := appdb.New(pool)
+	adminRepo := appdb.NewAdminAccountRepository(queries)
+	adminSvc := adminusecase.NewService(adminRepo, adminusecase.Config{
+		AdminRoleName:  "admin",
+		LegacyUser:     cfg.AdminUser,
+		LegacyPassword: cfg.AdminPass,
+	})
+	taxonomyRepo := appdb.NewTaxonomyRepository(queries)
+	taxonomySvc := taxonomyusecase.NewService(taxonomyRepo)
+	adminContentSvc := admincontentusecase.NewService(postSvc, taxonomySvc)
+	adminUISvc := adminuiusecase.NewService(postSvc)
 
-	r := httpapp.NewRouter(cfg, postSvc, queries)
+	r := httpapp.NewRouter(cfg, postSvc, adminSvc, adminContentSvc, adminUISvc)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
