@@ -103,9 +103,10 @@ func generateRequestID() string {
 func SecurityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h := c.Writer.Header()
-		if _, ok := h["Content-Security-Policy"]; !ok {
-			h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
-		}
+		// CSP 暫時關閉以便 Swagger 等內嵌腳本正常運作。
+		// if _, ok := h["Content-Security-Policy"]; !ok {
+		// 	h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
+		// }
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "same-origin")

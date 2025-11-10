@@ -15,7 +15,7 @@ import (
 // PublicLanding renders the site landing page.
 func PublicLanding(c *gin.Context, cfg platform.Config) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
-	view.RenderHTML(c, http.StatusOK, "index.tmpl", gin.H{
+	view.RenderHTML(c, http.StatusOK, "index.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           "Index",
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -25,13 +25,13 @@ func PublicLanding(c *gin.Context, cfg platform.Config) {
 		"PostsURL":        "/posts",
 		"APIPostsURL":     "/api/posts?limit=10&offset=0",
 		"MetaTags":        template.HTML(m.Tags()),
-	})
+	}))
 }
 
 // PublicPosts renders the paginated posts list.
 func PublicPosts(c *gin.Context, cfg platform.Config, posts []domain.Post, page, size int64) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
-	view.RenderHTML(c, http.StatusOK, "posts.tmpl", gin.H{
+	view.RenderHTML(c, http.StatusOK, "posts.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           "Posts",
 		"Env":             cfg.Env,
 		"BaseURL":         cfg.BaseURL,
@@ -41,7 +41,7 @@ func PublicPosts(c *gin.Context, cfg platform.Config, posts []domain.Post, page,
 		"Page":            page,
 		"Size":            size,
 		"MetaTags":        template.HTML(m.Tags()),
-	})
+	}))
 }
 
 // PublicPostDetail renders a single post detail page.
@@ -49,7 +49,7 @@ func PublicPostDetail(c *gin.Context, cfg platform.Config, post domain.PostWithR
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).
 		WithPage(post.Post.Title, post.Post.Summary, cfg.BaseURL+"/posts/"+post.Post.Slug, post.Post.CoverURL)
 	m.Type = "article"
-	view.RenderHTML(c, http.StatusOK, "post.tmpl", gin.H{
+	view.RenderHTML(c, http.StatusOK, "post.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           post.Post.Title,
 		"Summary":         post.Post.Summary,
 		"CoverURL":        post.Post.CoverURL,
@@ -61,5 +61,5 @@ func PublicPostDetail(c *gin.Context, cfg platform.Config, post domain.PostWithR
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
 		"MetaTags":        template.HTML(m.Tags()),
-	})
+	}))
 }

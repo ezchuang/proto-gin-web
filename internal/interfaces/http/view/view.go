@@ -6,8 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RenderHTML injects shared template context and renders a view.
+// RenderHTML renders a view with the provided data.
 func RenderHTML(c *gin.Context, status int, name string, data gin.H) {
+	if data == nil {
+		data = gin.H{}
+	}
+	c.HTML(status, name, data)
+}
+
+// WithAdminContext attaches admin session info when available.
+func WithAdminContext(c *gin.Context, data gin.H) gin.H {
 	if data == nil {
 		data = gin.H{}
 	}
@@ -17,7 +25,7 @@ func RenderHTML(c *gin.Context, status int, name string, data gin.H) {
 	if adminEmail, err := c.Cookie("admin_email"); err == nil && adminEmail != "" {
 		data["AdminEmail"] = adminEmail
 	}
-	c.HTML(status, name, data)
+	return data
 }
 
 // WantsHTMLResponse reports whether the caller likely expects HTML output.
