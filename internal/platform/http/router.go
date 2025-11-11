@@ -12,14 +12,13 @@ import (
 
 	swaggerdocs "proto-gin-web/docs"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
-	admincontentusecase "proto-gin-web/internal/application/admincontent"
-	adminuiusecase "proto-gin-web/internal/application/adminui"
+	adminuiusecase "proto-gin-web/internal/admin/ui/app"
 	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	adminuiroutes "proto-gin-web/internal/interfaces/http/adminui"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
 
@@ -64,7 +63,7 @@ func NewRouter(cfg platform.Config, postSvc postdomain.PostService, adminSvc aut
 	loginLimiter := NewIPRateLimiter(5, time.Minute)
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
 	adminroutes.RegisterRoutes(r, cfg, adminSvc, adminContentSvc, loginLimiter, registerLimiter)
-	adminuiroutes.RegisterRoutes(r, cfg, adminUISvc)
+	adminroutes.RegisterUIRoutes(r, cfg, adminUISvc)
 	if cfg.Env != "production" {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}

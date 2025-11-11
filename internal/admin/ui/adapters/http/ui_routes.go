@@ -1,4 +1,4 @@
-package adminui
+package adminuihttp
 
 import (
 	"net/http"
@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
-	adminuisvc "proto-gin-web/internal/application/adminui"
+	adminuisvc "proto-gin-web/internal/admin/ui/app"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/auth"
 )
 
-// RegisterRoutes mounts simple SSR pages for admin management (MVP).
-func RegisterRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Service) {
+// RegisterUIRoutes mounts legacy SSR pages that still live inside the admin context.
+func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Service) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")

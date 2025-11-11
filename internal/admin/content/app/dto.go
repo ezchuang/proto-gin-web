@@ -1,4 +1,4 @@
-package contenthttp
+package admincontent
 
 import (
 	postdomain "proto-gin-web/internal/blog/post/domain"

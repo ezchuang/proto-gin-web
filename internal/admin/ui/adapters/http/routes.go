@@ -6,7 +6,7 @@ import (
 	authhttp "proto-gin-web/internal/admin/auth/adapters/http"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	contenthttp "proto-gin-web/internal/admin/content/adapters/http"
-	admincontentusecase "proto-gin-web/internal/application/admincontent"
+	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/auth"
 )

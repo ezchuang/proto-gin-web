@@ -12,9 +12,9 @@ import (
 
 	"github.com/joho/godotenv"
 
+	admincontentusecase "proto-gin-web/internal/admin/content/app"
+	adminuiusecase "proto-gin-web/internal/admin/ui/app"
 	adminusecase "proto-gin-web/internal/application/admin"
-	admincontentusecase "proto-gin-web/internal/application/admincontent"
-	adminuiusecase "proto-gin-web/internal/application/adminui"
 	postusecase "proto-gin-web/internal/application/post"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
