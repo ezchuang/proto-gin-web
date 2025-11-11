@@ -5,12 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
 func TestServiceListPublished_Defaults(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.listPublishedPostsSortedFn = func(ctx context.Context, sort string, limit, offset int32) ([]domain.Post, error) {
+	repo.listPublishedPostsSortedFn = func(ctx context.Context, sort string, limit, offset int32) ([]postdomain.Post, error) {
 		if sort != "" {
 			t.Fatalf("expected empty sort passthrough, got %q", sort)
 		}
@@ -20,11 +21,11 @@ func TestServiceListPublished_Defaults(t *testing.T) {
 		if offset != 0 {
 			t.Fatalf("expected offset 0, got %d", offset)
 		}
-		return []domain.Post{{Slug: "hello"}}, nil
+		return []postdomain.Post{{Slug: "hello"}}, nil
 	}
 
 	svc := NewService(repo)
-	result, err := svc.ListPublished(context.Background(), domain.ListPostsOptions{})
+	result, err := svc.ListPublished(context.Background(), postdomain.ListPostsOptions{})
 	if err != nil {
 		t.Fatalf("ListPublished returned error: %v", err)
 	}
@@ -35,22 +36,22 @@ func TestServiceListPublished_Defaults(t *testing.T) {
 
 func TestServiceListPublished_Category(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.listPublishedPostsByCategorySortedFn = func(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]domain.Post, error) {
+	repo.listPublishedPostsByCategorySortedFn = func(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]postdomain.Post, error) {
 		if categorySlug != "news" {
 			t.Fatalf("expected category 'news', got %q", categorySlug)
 		}
 		if limit != 50 { // clamp to maxPageSize
 			t.Fatalf("expected clamped limit 50, got %d", limit)
 		}
-		return []domain.Post{{Slug: "filtered"}}, nil
+		return []postdomain.Post{{Slug: "filtered"}}, nil
 	}
-	repo.listPublishedPostsSortedFn = func(context.Context, string, int32, int32) ([]domain.Post, error) {
+	repo.listPublishedPostsSortedFn = func(context.Context, string, int32, int32) ([]postdomain.Post, error) {
 		t.Fatalf("should not call default list when category provided")
 		return nil, nil
 	}
 
 	svc := NewService(repo)
-	posts, err := svc.ListPublished(context.Background(), domain.ListPostsOptions{Category: "news", Limit: 100})
+	posts, err := svc.ListPublished(context.Background(), postdomain.ListPostsOptions{Category: "news", Limit: 100})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -61,7 +62,7 @@ func TestServiceListPublished_Category(t *testing.T) {
 
 func TestServiceListPublished_InvalidSortFallsBack(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.listPublishedPostsSortedFn = func(ctx context.Context, sort string, limit, offset int32) ([]domain.Post, error) {
+	repo.listPublishedPostsSortedFn = func(ctx context.Context, sort string, limit, offset int32) ([]postdomain.Post, error) {
 		if sort != "created_at_desc" {
 			t.Fatalf("expected fallback sort 'created_at_desc', got %q", sort)
 		}
@@ -69,21 +70,21 @@ func TestServiceListPublished_InvalidSortFallsBack(t *testing.T) {
 	}
 
 	svc := NewService(repo)
-	if _, err := svc.ListPublished(context.Background(), domain.ListPostsOptions{Sort: "unknown"}); err != nil {
+	if _, err := svc.ListPublished(context.Background(), postdomain.ListPostsOptions{Sort: "unknown"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
 func TestServiceGetBySlugAggregates(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.getPostBySlugFn = func(ctx context.Context, slug string) (domain.Post, error) {
-		return domain.Post{Slug: slug, Title: "Title"}, nil
+	repo.getPostBySlugFn = func(ctx context.Context, slug string) (postdomain.Post, error) {
+		return postdomain.Post{Slug: slug, Title: "Title"}, nil
 	}
-	repo.listCategoriesByPostSlugFn = func(ctx context.Context, slug string) ([]domain.Category, error) {
-		return []domain.Category{{Slug: "golang"}}, nil
+	repo.listCategoriesByPostSlugFn = func(ctx context.Context, slug string) ([]taxdomain.Category, error) {
+		return []taxdomain.Category{{Slug: "golang"}}, nil
 	}
-	repo.listTagsByPostSlugFn = func(ctx context.Context, slug string) ([]domain.Tag, error) {
-		return []domain.Tag{{Slug: "arch"}}, nil
+	repo.listTagsByPostSlugFn = func(ctx context.Context, slug string) ([]taxdomain.Tag, error) {
+		return []taxdomain.Tag{{Slug: "arch"}}, nil
 	}
 
 	svc := NewService(repo)
@@ -105,19 +106,19 @@ func TestServiceGetBySlugValidates(t *testing.T) {
 
 func TestServiceCreateNormalizesCover(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.createPostFn = func(ctx context.Context, input domain.CreatePostInput) (domain.Post, error) {
+	repo.createPostFn = func(ctx context.Context, input postdomain.CreatePostInput) (postdomain.Post, error) {
 		if input.CoverURL != nil {
 			t.Fatalf("expected normalized CoverURL to nil, got %v", *input.CoverURL)
 		}
 		if input.Title != "Title" || input.Slug != "slug" {
 			t.Fatalf("unexpected input: %+v", input)
 		}
-		return domain.Post{ID: 1, Slug: input.Slug, Title: input.Title}, nil
+		return postdomain.Post{ID: 1, Slug: input.Slug, Title: input.Title}, nil
 	}
 
 	svc := NewService(repo)
 	cover := "   "
-	post, err := svc.Create(context.Background(), domain.CreatePostInput{Title: "Title", Slug: "slug", CoverURL: &cover})
+	post, err := svc.Create(context.Background(), postdomain.CreatePostInput{Title: "Title", Slug: "slug", CoverURL: &cover})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -128,29 +129,29 @@ func TestServiceCreateNormalizesCover(t *testing.T) {
 
 func TestServiceCreateValidates(t *testing.T) {
 	svc := NewService(&fakePostRepo{})
-	if _, err := svc.Create(context.Background(), domain.CreatePostInput{Slug: "slug"}); !errors.Is(err, errTitleRequired) {
+	if _, err := svc.Create(context.Background(), postdomain.CreatePostInput{Slug: "slug"}); !errors.Is(err, errTitleRequired) {
 		t.Fatalf("expected errTitleRequired, got %v", err)
 	}
-	if _, err := svc.Create(context.Background(), domain.CreatePostInput{Title: "Title"}); !errors.Is(err, errSlugRequired) {
+	if _, err := svc.Create(context.Background(), postdomain.CreatePostInput{Title: "Title"}); !errors.Is(err, errSlugRequired) {
 		t.Fatalf("expected errSlugRequired, got %v", err)
 	}
 }
 
 func TestServiceUpdateNormalizes(t *testing.T) {
 	repo := &fakePostRepo{}
-	repo.updatePostBySlugFn = func(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error) {
+	repo.updatePostBySlugFn = func(ctx context.Context, input postdomain.UpdatePostInput) (postdomain.Post, error) {
 		if input.CoverURL != nil {
 			t.Fatalf("expected CoverURL nil after normalization")
 		}
 		if input.Slug != "slug" || input.Title != "Updated" {
 			t.Fatalf("unexpected update input: %+v", input)
 		}
-		return domain.Post{Slug: input.Slug, Title: input.Title}, nil
+		return postdomain.Post{Slug: input.Slug, Title: input.Title}, nil
 	}
 
 	svc := NewService(repo)
 	cover := ""
-	post, err := svc.Update(context.Background(), domain.UpdatePostInput{Slug: " slug ", Title: " Updated ", CoverURL: &cover})
+	post, err := svc.Update(context.Background(), postdomain.UpdatePostInput{Slug: " slug ", Title: " Updated ", CoverURL: &cover})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -161,10 +162,10 @@ func TestServiceUpdateNormalizes(t *testing.T) {
 
 func TestServiceUpdateValidates(t *testing.T) {
 	svc := NewService(&fakePostRepo{})
-	if _, err := svc.Update(context.Background(), domain.UpdatePostInput{Slug: ""}); !errors.Is(err, errSlugRequired) {
+	if _, err := svc.Update(context.Background(), postdomain.UpdatePostInput{Slug: ""}); !errors.Is(err, errSlugRequired) {
 		t.Fatalf("expected errSlugRequired, got %v", err)
 	}
-	if _, err := svc.Update(context.Background(), domain.UpdatePostInput{Slug: "slug"}); !errors.Is(err, errTitleRequired) {
+	if _, err := svc.Update(context.Background(), postdomain.UpdatePostInput{Slug: "slug"}); !errors.Is(err, errTitleRequired) {
 		t.Fatalf("expected errTitleRequired, got %v", err)
 	}
 }
@@ -279,69 +280,69 @@ func TestServiceAddTagValidates(t *testing.T) {
 }
 
 type fakePostRepo struct {
-	listPublishedPostsFn                 func(ctx context.Context, limit, offset int32) ([]domain.Post, error)
-	listPublishedPostsSortedFn           func(ctx context.Context, sort string, limit, offset int32) ([]domain.Post, error)
-	listPublishedPostsByCategorySortedFn func(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]domain.Post, error)
-	listPublishedPostsByTagSortedFn      func(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]domain.Post, error)
-	getPostBySlugFn                      func(ctx context.Context, slug string) (domain.Post, error)
-	createPostFn                         func(ctx context.Context, input domain.CreatePostInput) (domain.Post, error)
-	updatePostBySlugFn                   func(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error)
+	listPublishedPostsFn                 func(ctx context.Context, limit, offset int32) ([]postdomain.Post, error)
+	listPublishedPostsSortedFn           func(ctx context.Context, sort string, limit, offset int32) ([]postdomain.Post, error)
+	listPublishedPostsByCategorySortedFn func(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]postdomain.Post, error)
+	listPublishedPostsByTagSortedFn      func(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]postdomain.Post, error)
+	getPostBySlugFn                      func(ctx context.Context, slug string) (postdomain.Post, error)
+	createPostFn                         func(ctx context.Context, input postdomain.CreatePostInput) (postdomain.Post, error)
+	updatePostBySlugFn                   func(ctx context.Context, input postdomain.UpdatePostInput) (postdomain.Post, error)
 	deletePostBySlugFn                   func(ctx context.Context, slug string) error
 	addCategoryToPostFn                  func(ctx context.Context, slug, categorySlug string) error
 	removeCategoryFromPostFn             func(ctx context.Context, slug, categorySlug string) error
 	addTagToPostFn                       func(ctx context.Context, slug, tagSlug string) error
 	removeTagFromPostFn                  func(ctx context.Context, slug, tagSlug string) error
-	listCategoriesByPostSlugFn           func(ctx context.Context, slug string) ([]domain.Category, error)
-	listTagsByPostSlugFn                 func(ctx context.Context, slug string) ([]domain.Tag, error)
+	listCategoriesByPostSlugFn           func(ctx context.Context, slug string) ([]taxdomain.Category, error)
+	listTagsByPostSlugFn                 func(ctx context.Context, slug string) ([]taxdomain.Tag, error)
 }
 
-func (f *fakePostRepo) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]domain.Post, error) {
+func (f *fakePostRepo) ListPublishedPosts(ctx context.Context, limit, offset int32) ([]postdomain.Post, error) {
 	if f.listPublishedPostsFn != nil {
 		return f.listPublishedPostsFn(ctx, limit, offset)
 	}
 	return nil, nil
 }
 
-func (f *fakePostRepo) ListPublishedPostsSorted(ctx context.Context, sort string, limit, offset int32) ([]domain.Post, error) {
+func (f *fakePostRepo) ListPublishedPostsSorted(ctx context.Context, sort string, limit, offset int32) ([]postdomain.Post, error) {
 	if f.listPublishedPostsSortedFn != nil {
 		return f.listPublishedPostsSortedFn(ctx, sort, limit, offset)
 	}
 	return nil, nil
 }
 
-func (f *fakePostRepo) ListPublishedPostsByCategorySorted(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]domain.Post, error) {
+func (f *fakePostRepo) ListPublishedPostsByCategorySorted(ctx context.Context, categorySlug, sort string, limit, offset int32) ([]postdomain.Post, error) {
 	if f.listPublishedPostsByCategorySortedFn != nil {
 		return f.listPublishedPostsByCategorySortedFn(ctx, categorySlug, sort, limit, offset)
 	}
 	return nil, nil
 }
 
-func (f *fakePostRepo) ListPublishedPostsByTagSorted(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]domain.Post, error) {
+func (f *fakePostRepo) ListPublishedPostsByTagSorted(ctx context.Context, tagSlug, sort string, limit, offset int32) ([]postdomain.Post, error) {
 	if f.listPublishedPostsByTagSortedFn != nil {
 		return f.listPublishedPostsByTagSortedFn(ctx, tagSlug, sort, limit, offset)
 	}
 	return nil, nil
 }
 
-func (f *fakePostRepo) GetPostBySlug(ctx context.Context, slug string) (domain.Post, error) {
+func (f *fakePostRepo) GetPostBySlug(ctx context.Context, slug string) (postdomain.Post, error) {
 	if f.getPostBySlugFn != nil {
 		return f.getPostBySlugFn(ctx, slug)
 	}
-	return domain.Post{}, nil
+	return postdomain.Post{}, nil
 }
 
-func (f *fakePostRepo) CreatePost(ctx context.Context, input domain.CreatePostInput) (domain.Post, error) {
+func (f *fakePostRepo) CreatePost(ctx context.Context, input postdomain.CreatePostInput) (postdomain.Post, error) {
 	if f.createPostFn != nil {
 		return f.createPostFn(ctx, input)
 	}
-	return domain.Post{}, nil
+	return postdomain.Post{}, nil
 }
 
-func (f *fakePostRepo) UpdatePostBySlug(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error) {
+func (f *fakePostRepo) UpdatePostBySlug(ctx context.Context, input postdomain.UpdatePostInput) (postdomain.Post, error) {
 	if f.updatePostBySlugFn != nil {
 		return f.updatePostBySlugFn(ctx, input)
 	}
-	return domain.Post{}, nil
+	return postdomain.Post{}, nil
 }
 
 func (f *fakePostRepo) DeletePostBySlug(ctx context.Context, slug string) error {
@@ -379,14 +380,14 @@ func (f *fakePostRepo) RemoveTagFromPost(ctx context.Context, slug, tagSlug stri
 	return nil
 }
 
-func (f *fakePostRepo) ListCategoriesByPostSlug(ctx context.Context, slug string) ([]domain.Category, error) {
+func (f *fakePostRepo) ListCategoriesByPostSlug(ctx context.Context, slug string) ([]taxdomain.Category, error) {
 	if f.listCategoriesByPostSlugFn != nil {
 		return f.listCategoriesByPostSlugFn(ctx, slug)
 	}
 	return nil, nil
 }
 
-func (f *fakePostRepo) ListTagsByPostSlug(ctx context.Context, slug string) ([]domain.Tag, error) {
+func (f *fakePostRepo) ListTagsByPostSlug(ctx context.Context, slug string) ([]taxdomain.Tag, error) {
 	if f.listTagsByPostSlugFn != nil {
 		return f.listTagsByPostSlugFn(ctx, slug)
 	}

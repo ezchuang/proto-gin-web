@@ -1,8 +1,10 @@
-package domain
+package postdomain
 
 import (
 	"context"
 	"time"
+
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
 // PostService exposes the application-facing operations around posts.
@@ -30,9 +32,9 @@ type ListPostsOptions struct {
 
 // PostWithRelations bundles a post along with its taxonomy associations.
 type PostWithRelations struct {
-	Post       Post       `json:"post"`
-	Categories []Category `json:"categories"`
-	Tags       []Tag      `json:"tags"`
+	Post       Post                  `json:"post"`
+	Categories []taxdomain.Category  `json:"categories"`
+	Tags       []taxdomain.Tag       `json:"tags"`
 }
 
 // CreatePostInput describes the data required to create a post.

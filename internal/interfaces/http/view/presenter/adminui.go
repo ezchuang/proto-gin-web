@@ -5,13 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
 )
 
 // AdminPostsPage renders the admin posts list.
-func AdminPostsPage(c *gin.Context, cfg platform.Config, posts []domain.Post) {
+func AdminPostsPage(c *gin.Context, cfg platform.Config, posts []postdomain.Post) {
 	view.RenderHTML(c, http.StatusOK, "admin_posts.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           "Admin · Posts · " + cfg.SiteName,
 		"Env":             cfg.Env,
@@ -35,7 +35,7 @@ func AdminPostFormNew(c *gin.Context, cfg platform.Config) {
 }
 
 // AdminPostFormEdit renders the edit post form.
-func AdminPostFormEdit(c *gin.Context, cfg platform.Config, result domain.PostWithRelations) {
+func AdminPostFormEdit(c *gin.Context, cfg platform.Config, result postdomain.PostWithRelations) {
 	view.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           "Admin · Edit Post · " + result.Post.Title + " · " + cfg.SiteName,
 		"Env":             cfg.Env,

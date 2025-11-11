@@ -3,7 +3,7 @@ package presenter
 import (
 	"time"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 )
 
 // PublicPost represents the public JSON shape of a blog post.
@@ -30,13 +30,13 @@ type PublicTaxonomy struct {
 
 // PublicPostWithRelations contains a post and its taxonomies.
 type PublicPostWithRelations struct {
-	Post       PublicPost        `json:"post"`
-	Categories []PublicTaxonomy  `json:"categories"`
-	Tags       []PublicTaxonomy  `json:"tags"`
+	Post       PublicPost       `json:"post"`
+	Categories []PublicTaxonomy `json:"categories"`
+	Tags       []PublicTaxonomy `json:"tags"`
 }
 
 // BuildPublicPosts converts domain posts into public representation.
-func BuildPublicPosts(posts []domain.Post) []PublicPost {
+func BuildPublicPosts(posts []postdomain.Post) []PublicPost {
 	result := make([]PublicPost, len(posts))
 	for i, p := range posts {
 		result[i] = BuildPublicPost(p)
@@ -45,7 +45,7 @@ func BuildPublicPosts(posts []domain.Post) []PublicPost {
 }
 
 // BuildPublicPost converts a single post.
-func BuildPublicPost(p domain.Post) PublicPost {
+func BuildPublicPost(p postdomain.Post) PublicPost {
 	return PublicPost{
 		ID:          p.ID,
 		Title:       p.Title,
@@ -62,7 +62,7 @@ func BuildPublicPost(p domain.Post) PublicPost {
 }
 
 // BuildPublicPostWithRelations converts a domain result to public shape.
-func BuildPublicPostWithRelations(row domain.PostWithRelations) PublicPostWithRelations {
+func BuildPublicPostWithRelations(row postdomain.PostWithRelations) PublicPostWithRelations {
 	cats := make([]PublicTaxonomy, len(row.Categories))
 	for i, cat := range row.Categories {
 		cats[i] = PublicTaxonomy{ID: cat.ID, Name: cat.Name, Slug: cat.Slug}

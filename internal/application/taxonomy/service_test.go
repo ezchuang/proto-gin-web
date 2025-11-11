@@ -5,24 +5,24 @@ import (
 	"errors"
 	"testing"
 
-	"proto-gin-web/internal/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
 type mockRepo struct {
-	categoryInput domain.CreateCategoryInput
-	tagInput      domain.CreateTagInput
+	categoryInput taxdomain.CreateCategoryInput
+	tagInput      taxdomain.CreateTagInput
 	categorySlug  string
 	tagSlug       string
 
-	categoryResult domain.Category
-	tagResult      domain.Tag
+	categoryResult taxdomain.Category
+	tagResult      taxdomain.Tag
 
 	errCategory error
 	errTag      error
 	errDelete   error
 }
 
-func (m *mockRepo) CreateCategory(ctx context.Context, input domain.CreateCategoryInput) (domain.Category, error) {
+func (m *mockRepo) CreateCategory(ctx context.Context, input taxdomain.CreateCategoryInput) (taxdomain.Category, error) {
 	m.categoryInput = input
 	return m.categoryResult, m.errCategory
 }
@@ -32,7 +32,7 @@ func (m *mockRepo) DeleteCategory(ctx context.Context, slug string) error {
 	return m.errDelete
 }
 
-func (m *mockRepo) CreateTag(ctx context.Context, input domain.CreateTagInput) (domain.Tag, error) {
+func (m *mockRepo) CreateTag(ctx context.Context, input taxdomain.CreateTagInput) (taxdomain.Tag, error) {
 	m.tagInput = input
 	return m.tagResult, m.errTag
 }
@@ -44,18 +44,18 @@ func (m *mockRepo) DeleteTag(ctx context.Context, slug string) error {
 
 func TestService_CreateCategory_normalizesInput(t *testing.T) {
 	repo := &mockRepo{
-		categoryResult: domain.Category{ID: 1, Name: "Foo", Slug: "foo"},
+		categoryResult: taxdomain.Category{ID: 1, Name: "Foo", Slug: "foo"},
 	}
 	svc := NewService(repo)
 
-	result, err := svc.CreateCategory(context.Background(), domain.CreateCategoryInput{
+	result, err := svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{
 		Name: "  Foo  ",
 		Slug: "  FOO ",
 	})
 	if err != nil {
 		t.Fatalf("CreateCategory returned error: %v", err)
 	}
-	if result != (domain.Category{ID: 1, Name: "Foo", Slug: "foo"}) {
+	if result != (taxdomain.Category{ID: 1, Name: "Foo", Slug: "foo"}) {
 		t.Fatalf("unexpected category result: %+v", result)
 	}
 	if repo.categoryInput.Name != "Foo" || repo.categoryInput.Slug != "foo" {
@@ -66,7 +66,7 @@ func TestService_CreateCategory_normalizesInput(t *testing.T) {
 func TestService_CreateCategory_validation(t *testing.T) {
 	svc := NewService(&mockRepo{})
 
-	_, err := svc.CreateCategory(context.Background(), domain.CreateCategoryInput{
+	_, err := svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{
 		Name: "",
 		Slug: "slug",
 	})
@@ -74,7 +74,7 @@ func TestService_CreateCategory_validation(t *testing.T) {
 		t.Fatalf("expected name error, got %v", err)
 	}
 
-	_, err = svc.CreateCategory(context.Background(), domain.CreateCategoryInput{
+	_, err = svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{
 		Name: "Name",
 		Slug: "",
 	})
@@ -102,18 +102,18 @@ func TestService_DeleteCategory(t *testing.T) {
 
 func TestService_CreateTag_normalizesInput(t *testing.T) {
 	repo := &mockRepo{
-		tagResult: domain.Tag{ID: 1, Name: "Bar", Slug: "bar"},
+		tagResult: taxdomain.Tag{ID: 1, Name: "Bar", Slug: "bar"},
 	}
 	svc := NewService(repo)
 
-	result, err := svc.CreateTag(context.Background(), domain.CreateTagInput{
+	result, err := svc.CreateTag(context.Background(), taxdomain.CreateTagInput{
 		Name: "  Bar ",
 		Slug: "  BAR ",
 	})
 	if err != nil {
 		t.Fatalf("CreateTag returned error: %v", err)
 	}
-	if result != (domain.Tag{ID: 1, Name: "Bar", Slug: "bar"}) {
+	if result != (taxdomain.Tag{ID: 1, Name: "Bar", Slug: "bar"}) {
 		t.Fatalf("unexpected tag result: %+v", result)
 	}
 	if repo.tagInput.Name != "Bar" || repo.tagInput.Slug != "bar" {
@@ -124,7 +124,7 @@ func TestService_CreateTag_normalizesInput(t *testing.T) {
 func TestService_CreateTag_validation(t *testing.T) {
 	svc := NewService(&mockRepo{})
 
-	_, err := svc.CreateTag(context.Background(), domain.CreateTagInput{
+	_, err := svc.CreateTag(context.Background(), taxdomain.CreateTagInput{
 		Name: "",
 		Slug: "slug",
 	})
@@ -132,7 +132,7 @@ func TestService_CreateTag_validation(t *testing.T) {
 		t.Fatalf("expected name error, got %v", err)
 	}
 
-	_, err = svc.CreateTag(context.Background(), domain.CreateTagInput{
+	_, err = svc.CreateTag(context.Background(), taxdomain.CreateTagInput{
 		Name: "Name",
 		Slug: "",
 	})
@@ -166,12 +166,12 @@ func TestService_RepoErrorsPropagated(t *testing.T) {
 	}
 	svc := NewService(repo)
 
-	_, err := svc.CreateCategory(context.Background(), domain.CreateCategoryInput{Name: "Foo", Slug: "foo"})
+	_, err := svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{Name: "Foo", Slug: "foo"})
 	if err == nil || err.Error() != "db error" {
 		t.Fatalf("expected db error, got %v", err)
 	}
 
-	_, err = svc.CreateTag(context.Background(), domain.CreateTagInput{Name: "Bar", Slug: "bar"})
+	_, err = svc.CreateTag(context.Background(), taxdomain.CreateTagInput{Name: "Bar", Slug: "bar"})
 	if err == nil || err.Error() != "db error" {
 		t.Fatalf("expected db error, got %v", err)
 	}

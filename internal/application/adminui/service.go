@@ -5,29 +5,29 @@ import (
 	"errors"
 	"strings"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 )
 
 // Service wraps post operations used by the admin UI forms.
 type Service struct {
-	posts domain.PostService
+	posts postdomain.PostService
 }
 
 // NewService creates an admin UI helper service.
-func NewService(posts domain.PostService) *Service {
+func NewService(posts postdomain.PostService) *Service {
 	return &Service{posts: posts}
 }
 
 // ListPosts lists published posts for the UI with optional limit.
-func (s *Service) ListPosts(ctx context.Context, limit int32) ([]domain.Post, error) {
+func (s *Service) ListPosts(ctx context.Context, limit int32) ([]postdomain.Post, error) {
 	if limit <= 0 {
 		limit = 50
 	}
-	return s.posts.ListPublished(ctx, domain.ListPostsOptions{Limit: limit})
+	return s.posts.ListPublished(ctx, postdomain.ListPostsOptions{Limit: limit})
 }
 
 // GetPost fetches a post and its relations by slug.
-func (s *Service) GetPost(ctx context.Context, slug string) (domain.PostWithRelations, error) {
+func (s *Service) GetPost(ctx context.Context, slug string) (postdomain.PostWithRelations, error) {
 	return s.posts.GetBySlug(ctx, strings.TrimSpace(slug))
 }
 
@@ -43,8 +43,8 @@ type CreatePostParams struct {
 }
 
 // CreatePost creates a post from admin form params.
-func (s *Service) CreatePost(ctx context.Context, params CreatePostParams) (domain.Post, error) {
-	input := domain.CreatePostInput{
+func (s *Service) CreatePost(ctx context.Context, params CreatePostParams) (postdomain.Post, error) {
+	input := postdomain.CreatePostInput{
 		Title:     strings.TrimSpace(params.Title),
 		Slug:      strings.TrimSpace(params.Slug),
 		Summary:   strings.TrimSpace(params.Summary),
@@ -69,8 +69,8 @@ type UpdatePostParams struct {
 }
 
 // UpdatePost updates a post identified by slug.
-func (s *Service) UpdatePost(ctx context.Context, params UpdatePostParams) (domain.Post, error) {
-	input := domain.UpdatePostInput{
+func (s *Service) UpdatePost(ctx context.Context, params UpdatePostParams) (postdomain.Post, error) {
+	input := postdomain.UpdatePostInput{
 		Slug:      strings.TrimSpace(params.Slug),
 		Title:     strings.TrimSpace(params.Title),
 		Summary:   strings.TrimSpace(params.Summary),

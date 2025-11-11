@@ -7,12 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/platform/seo"
 )
 
-func registerSEORoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+func registerSEORoutes(r *gin.Engine, cfg platform.Config, postSvc postdomain.PostService) {
 	r.GET("/robots.txt", func(c *gin.Context) {
 		c.Header("Content-Type", "text/plain; charset=utf-8")
 		c.String(http.StatusOK, "User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n", cfg.BaseURL)
@@ -20,7 +20,7 @@ func registerSEORoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostSe
 
 	r.GET("/sitemap.xml", func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 100})
+		rows, err := postSvc.ListPublished(ctx, postdomain.ListPostsOptions{Limit: 100})
 		if err != nil {
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
@@ -40,7 +40,7 @@ func registerSEORoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostSe
 
 	r.GET("/rss.xml", func(c *gin.Context) {
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 20})
+		rows, err := postSvc.ListPublished(ctx, postdomain.ListPostsOptions{Limit: 20})
 		if err != nil {
 			c.String(http.StatusInternalServerError, "internal server error")
 			return

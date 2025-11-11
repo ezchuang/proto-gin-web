@@ -10,12 +10,12 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	bf "github.com/russross/blackfriday/v2"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
-func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.PostService) {
+func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomain.PostService) {
 	r.GET("/", func(c *gin.Context) {
 		presenter.PublicLanding(c, cfg)
 	})
@@ -37,7 +37,7 @@ func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc domain.Po
 		tag := c.Query("tag")
 		sort := c.DefaultQuery("sort", "created_at_desc")
 		ctx := c.Request.Context()
-		rows, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{
+		rows, err := postSvc.ListPublished(ctx, postdomain.ListPostsOptions{
 			Category: category,
 			Tag:      tag,
 			Sort:     sort,

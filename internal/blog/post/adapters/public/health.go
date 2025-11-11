@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 )
 
-func registerHealthRoutes(r *gin.Engine, postSvc domain.PostService) {
+func registerHealthRoutes(r *gin.Engine, postSvc postdomain.PostService) {
 	r.GET("/livez", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "alive"})
 	})
@@ -18,7 +18,7 @@ func registerHealthRoutes(r *gin.Engine, postSvc domain.PostService) {
 	r.GET("/readyz", func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
 		defer cancel()
-		if _, err := postSvc.ListPublished(ctx, domain.ListPostsOptions{Limit: 1}); err != nil {
+		if _, err := postSvc.ListPublished(ctx, postdomain.ListPostsOptions{Limit: 1}); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"status": "not ready"})
 			return
 		}

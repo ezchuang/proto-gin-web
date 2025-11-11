@@ -6,13 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
 // RegisterRoutes attaches JSON endpoints for posts.
-func RegisterRoutes(r *gin.Engine, postSvc domain.PostService) {
+func RegisterRoutes(r *gin.Engine, postSvc postdomain.PostService) {
 	api := r.Group("/api")
 	{
 		api.GET("/posts", listPostsHandler(postSvc))
@@ -30,7 +30,7 @@ func RegisterRoutes(r *gin.Engine, postSvc domain.PostService) {
 // @Success      200  {object}  postListResponse
 // @Failure      500  {object}  errorResponse
 // @Router       /api/posts [get]
-func listPostsHandler(postSvc domain.PostService) gin.HandlerFunc {
+func listPostsHandler(postSvc postdomain.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		limit := int32(10)
 		offset := int32(0)
@@ -44,7 +44,7 @@ func listPostsHandler(postSvc domain.PostService) gin.HandlerFunc {
 				offset = int32(parsed)
 			}
 		}
-		rows, err := postSvc.ListPublished(c.Request.Context(), domain.ListPostsOptions{
+		rows, err := postSvc.ListPublished(c.Request.Context(), postdomain.ListPostsOptions{
 			Limit:  limit,
 			Offset: offset,
 		})
@@ -65,7 +65,7 @@ func listPostsHandler(postSvc domain.PostService) gin.HandlerFunc {
 // @Success      200  {object}  postResponse
 // @Failure      404  {object}  errorResponse
 // @Router       /api/posts/{slug} [get]
-func getPostHandler(postSvc domain.PostService) gin.HandlerFunc {
+func getPostHandler(postSvc postdomain.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		row, err := postSvc.GetBySlug(c.Request.Context(), c.Param("slug"))
 		if err != nil {

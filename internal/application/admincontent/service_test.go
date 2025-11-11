@@ -5,18 +5,19 @@ import (
 	"errors"
 	"testing"
 
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
 func TestService_CreateAndUpdatePost_normalizesInput(t *testing.T) {
 	postSvc := &stubPostSvc{
-		createResult: domain.Post{ID: 1, Slug: "hello-world"},
-		updateResult: domain.Post{ID: 1, Slug: "hello-world"},
+		createResult: postdomain.Post{ID: 1, Slug: "hello-world"},
+		updateResult: postdomain.Post{ID: 1, Slug: "hello-world"},
 	}
 	svc := NewService(postSvc, &stubTaxonomySvc{})
 
 	cover := "  https://example.com/image.jpg  "
-	if _, err := svc.CreatePost(context.Background(), domain.CreatePostInput{
+	if _, err := svc.CreatePost(context.Background(), postdomain.CreatePostInput{
 		Title:     "  Title  ",
 		Slug:      "  hello-world  ",
 		Summary:   " summary ",
@@ -37,7 +38,7 @@ func TestService_CreateAndUpdatePost_normalizesInput(t *testing.T) {
 	}
 
 	updateCover := "  /cover.png "
-	if _, err := svc.UpdatePost(context.Background(), domain.UpdatePostInput{
+	if _, err := svc.UpdatePost(context.Background(), postdomain.UpdatePostInput{
 		Slug:      "  hello-world  ",
 		Title:     "  Updated ",
 		Summary:   " summary ",
@@ -75,12 +76,12 @@ func TestService_DeletePost_validatesSlug(t *testing.T) {
 
 func TestService_TaxonomyOperations_normalizeInput(t *testing.T) {
 	taxSvc := &stubTaxonomySvc{
-		categoryResult: domain.Category{ID: 1, Name: "Foo", Slug: "foo"},
-		tagResult:      domain.Tag{ID: 2, Name: "Bar", Slug: "bar"},
+		categoryResult: taxdomain.Category{ID: 1, Name: "Foo", Slug: "foo"},
+		tagResult:      taxdomain.Tag{ID: 2, Name: "Bar", Slug: "bar"},
 	}
 	svc := NewService(&stubPostSvc{}, taxSvc)
 
-	if _, err := svc.CreateCategory(context.Background(), domain.CreateCategoryInput{
+	if _, err := svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{
 		Name: "  Foo ",
 		Slug: "  FOO ",
 	}); err != nil {
@@ -100,7 +101,7 @@ func TestService_TaxonomyOperations_normalizeInput(t *testing.T) {
 		t.Fatalf("expected category slug required error, got %v", err)
 	}
 
-	if _, err := svc.CreateTag(context.Background(), domain.CreateTagInput{
+	if _, err := svc.CreateTag(context.Background(), taxdomain.CreateTagInput{
 		Name: "  Bar ",
 		Slug: "  BAR ",
 	}); err != nil {
@@ -173,7 +174,7 @@ func TestService_ErrorPropagation(t *testing.T) {
 	svc := NewService(postSvc, taxSvc)
 
 	cover := "cover"
-	if _, err := svc.CreatePost(context.Background(), domain.CreatePostInput{
+	if _, err := svc.CreatePost(context.Background(), postdomain.CreatePostInput{
 		Title:     "t",
 		Slug:      "s",
 		ContentMD: "c",
@@ -183,7 +184,7 @@ func TestService_ErrorPropagation(t *testing.T) {
 		t.Fatalf("expected create error, got %v", err)
 	}
 
-	if _, err := svc.UpdatePost(context.Background(), domain.UpdatePostInput{
+	if _, err := svc.UpdatePost(context.Background(), postdomain.UpdatePostInput{
 		Slug:      "s",
 		Title:     "t",
 		ContentMD: "c",
@@ -212,7 +213,7 @@ func TestService_ErrorPropagation(t *testing.T) {
 		t.Fatalf("expected remove tag error, got %v", err)
 	}
 
-	if _, err := svc.CreateCategory(context.Background(), domain.CreateCategoryInput{Name: "Foo", Slug: "foo"}); err == nil || err.Error() != "create category failed" {
+	if _, err := svc.CreateCategory(context.Background(), taxdomain.CreateCategoryInput{Name: "Foo", Slug: "foo"}); err == nil || err.Error() != "create category failed" {
 		t.Fatalf("expected create category error, got %v", err)
 	}
 
@@ -220,7 +221,7 @@ func TestService_ErrorPropagation(t *testing.T) {
 		t.Fatalf("expected delete category error, got %v", err)
 	}
 
-	if _, err := svc.CreateTag(context.Background(), domain.CreateTagInput{Name: "Bar", Slug: "bar"}); err == nil || err.Error() != "create tag failed" {
+	if _, err := svc.CreateTag(context.Background(), taxdomain.CreateTagInput{Name: "Bar", Slug: "bar"}); err == nil || err.Error() != "create tag failed" {
 		t.Fatalf("expected create tag error, got %v", err)
 	}
 
@@ -230,8 +231,8 @@ func TestService_ErrorPropagation(t *testing.T) {
 }
 
 type stubPostSvc struct {
-	createInput domain.CreatePostInput
-	updateInput domain.UpdatePostInput
+	createInput postdomain.CreatePostInput
+	updateInput postdomain.UpdatePostInput
 	deleteSlug  string
 
 	addCategoryArgs    [2]string
@@ -239,8 +240,8 @@ type stubPostSvc struct {
 	addTagArgs         [2]string
 	removeTagArgs      [2]string
 
-	createResult domain.Post
-	updateResult domain.Post
+	createResult postdomain.Post
+	updateResult postdomain.Post
 
 	errCreate      error
 	errUpdate      error
@@ -251,20 +252,20 @@ type stubPostSvc struct {
 	errRemoveTag   error
 }
 
-func (s *stubPostSvc) ListPublished(context.Context, domain.ListPostsOptions) ([]domain.Post, error) {
+func (s *stubPostSvc) ListPublished(context.Context, postdomain.ListPostsOptions) ([]postdomain.Post, error) {
 	return nil, nil
 }
 
-func (s *stubPostSvc) GetBySlug(context.Context, string) (domain.PostWithRelations, error) {
-	return domain.PostWithRelations{}, nil
+func (s *stubPostSvc) GetBySlug(context.Context, string) (postdomain.PostWithRelations, error) {
+	return postdomain.PostWithRelations{}, nil
 }
 
-func (s *stubPostSvc) Create(ctx context.Context, input domain.CreatePostInput) (domain.Post, error) {
+func (s *stubPostSvc) Create(ctx context.Context, input postdomain.CreatePostInput) (postdomain.Post, error) {
 	s.createInput = input
 	return s.createResult, s.errCreate
 }
 
-func (s *stubPostSvc) Update(ctx context.Context, input domain.UpdatePostInput) (domain.Post, error) {
+func (s *stubPostSvc) Update(ctx context.Context, input postdomain.UpdatePostInput) (postdomain.Post, error) {
 	s.updateInput = input
 	return s.updateResult, s.errUpdate
 }
@@ -295,13 +296,13 @@ func (s *stubPostSvc) RemoveTag(ctx context.Context, slug, tagSlug string) error
 }
 
 type stubTaxonomySvc struct {
-	categoryInput domain.CreateCategoryInput
-	tagInput      domain.CreateTagInput
+	categoryInput taxdomain.CreateCategoryInput
+	tagInput      taxdomain.CreateTagInput
 	categorySlug  string
 	tagSlug       string
 
-	categoryResult domain.Category
-	tagResult      domain.Tag
+	categoryResult taxdomain.Category
+	tagResult      taxdomain.Tag
 
 	errCreateCategory error
 	errDeleteCategory error
@@ -309,7 +310,7 @@ type stubTaxonomySvc struct {
 	errDeleteTag      error
 }
 
-func (s *stubTaxonomySvc) CreateCategory(ctx context.Context, input domain.CreateCategoryInput) (domain.Category, error) {
+func (s *stubTaxonomySvc) CreateCategory(ctx context.Context, input taxdomain.CreateCategoryInput) (taxdomain.Category, error) {
 	s.categoryInput = input
 	return s.categoryResult, s.errCreateCategory
 }
@@ -319,7 +320,7 @@ func (s *stubTaxonomySvc) DeleteCategory(ctx context.Context, slug string) error
 	return s.errDeleteCategory
 }
 
-func (s *stubTaxonomySvc) CreateTag(ctx context.Context, input domain.CreateTagInput) (domain.Tag, error) {
+func (s *stubTaxonomySvc) CreateTag(ctx context.Context, input taxdomain.CreateTagInput) (taxdomain.Tag, error) {
 	s.tagInput = input
 	return s.tagResult, s.errCreateTag
 }

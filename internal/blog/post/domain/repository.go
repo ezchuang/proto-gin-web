@@ -1,6 +1,10 @@
-package domain
+package postdomain
 
-import "context"
+import (
+	"context"
+
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
+)
 
 // PostRepository abstracts persistence operations for posts and their relations.
 type PostRepository interface {
@@ -19,6 +23,6 @@ type PostRepository interface {
 	AddTagToPost(ctx context.Context, slug, tagSlug string) error
 	RemoveTagFromPost(ctx context.Context, slug, tagSlug string) error
 
-	ListCategoriesByPostSlug(ctx context.Context, slug string) ([]Category, error)
-	ListTagsByPostSlug(ctx context.Context, slug string) ([]Tag, error)
+	ListCategoriesByPostSlug(ctx context.Context, slug string) ([]taxdomain.Category, error)
+	ListTagsByPostSlug(ctx context.Context, slug string) ([]taxdomain.Tag, error)
 }

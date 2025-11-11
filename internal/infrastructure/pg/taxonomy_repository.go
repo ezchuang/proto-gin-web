@@ -3,10 +3,10 @@ package pg
 import (
 	"context"
 
-	"proto-gin-web/internal/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
-// TaxonomyRepository implements domain.TaxonomyRepository backed by pgx queries.
+// TaxonomyRepository implements taxdomain.TaxonomyRepository backed by pgx queries.
 type TaxonomyRepository struct {
 	queries *Queries
 }
@@ -16,14 +16,14 @@ func NewTaxonomyRepository(queries *Queries) *TaxonomyRepository {
 	return &TaxonomyRepository{queries: queries}
 }
 
-var _ domain.TaxonomyRepository = (*TaxonomyRepository)(nil)
+var _ taxdomain.TaxonomyRepository = (*TaxonomyRepository)(nil)
 
-func (r *TaxonomyRepository) CreateCategory(ctx context.Context, input domain.CreateCategoryInput) (domain.Category, error) {
+func (r *TaxonomyRepository) CreateCategory(ctx context.Context, input taxdomain.CreateCategoryInput) (taxdomain.Category, error) {
 	row, err := r.queries.CreateCategory(ctx, CreateCategoryParams{Name: input.Name, Slug: input.Slug})
 	if err != nil {
-		return domain.Category{}, err
+		return taxdomain.Category{}, err
 	}
-	return domain.Category{
+	return taxdomain.Category{
 		ID:   row.ID,
 		Name: row.Name,
 		Slug: row.Slug,
@@ -34,12 +34,12 @@ func (r *TaxonomyRepository) DeleteCategory(ctx context.Context, slug string) er
 	return r.queries.DeleteCategoryBySlug(ctx, slug)
 }
 
-func (r *TaxonomyRepository) CreateTag(ctx context.Context, input domain.CreateTagInput) (domain.Tag, error) {
+func (r *TaxonomyRepository) CreateTag(ctx context.Context, input taxdomain.CreateTagInput) (taxdomain.Tag, error) {
 	row, err := r.queries.CreateTag(ctx, CreateTagParams{Name: input.Name, Slug: input.Slug})
 	if err != nil {
-		return domain.Tag{}, err
+		return taxdomain.Tag{}, err
 	}
-	return domain.Tag{
+	return taxdomain.Tag{
 		ID:   row.ID,
 		Name: row.Name,
 		Slug: row.Slug,

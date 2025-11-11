@@ -6,7 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"proto-gin-web/internal/application/admincontent"
-	"proto-gin-web/internal/domain"
+	postdomain "proto-gin-web/internal/blog/post/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 	"proto-gin-web/internal/interfaces/http/view/responder"
 )
 
@@ -70,7 +71,7 @@ func createPostHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
 		}
 
 		cover := body.CoverURL
-		input := domain.CreatePostInput{
+		input := postdomain.CreatePostInput{
 			Title:       body.Title,
 			Slug:        body.Slug,
 			Summary:     body.Summary,
@@ -111,7 +112,7 @@ func updatePostHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
 			return
 		}
 		cover := body.CoverURL
-		input := domain.UpdatePostInput{
+		input := postdomain.UpdatePostInput{
 			Slug:      slug,
 			Title:     body.Title,
 			Summary:   body.Summary,
@@ -237,7 +238,7 @@ func createCategoryHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		category, err := contentSvc.CreateCategory(c.Request.Context(), domain.CreateCategoryInput{
+		category, err := contentSvc.CreateCategory(c.Request.Context(), taxdomain.CreateCategoryInput{
 			Name: body.Name,
 			Slug: body.Slug,
 		})
@@ -283,7 +284,7 @@ func createTagHandler(contentSvc *admincontent.Service) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusBadRequest, err.Error())
 			return
 		}
-		tag, err := contentSvc.CreateTag(c.Request.Context(), domain.CreateTagInput{
+		tag, err := contentSvc.CreateTag(c.Request.Context(), taxdomain.CreateTagInput{
 			Name: body.Name,
 			Slug: body.Slug,
 		})
