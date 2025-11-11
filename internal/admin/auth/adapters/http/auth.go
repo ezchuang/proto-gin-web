@@ -9,13 +9,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
-func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
 		presenter.AdminLoginPage(c, cfg, c.Query("error"))
 	})
@@ -26,13 +26,13 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminSer
 		isForm := view.WantsHTMLResponse(c)
 
 		ctx := c.Request.Context()
-		account, err := adminSvc.Login(ctx, domain.AdminLoginInput{
+		account, err := adminSvc.Login(ctx, authdomain.AdminLoginInput{
 			Email:    emailInput,
 			Password: password,
 		})
 		if err != nil {
-			normalized := domain.NormalizeEmail(emailInput)
-			if errors.Is(err, domain.ErrAdminInvalidCredentials) {
+			normalized := authdomain.NormalizeEmail(emailInput)
+			if errors.Is(err, authdomain.ErrAdminInvalidCredentials) {
 				slog.Warn("admin login failed",
 					slog.String("user", normalized),
 					slog.String("ip", c.ClientIP()))
@@ -129,7 +129,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminSer
 		}
 
 		ctx := c.Request.Context()
-		created, err := adminSvc.Register(ctx, domain.AdminRegisterInput{
+		created, err := adminSvc.Register(ctx, authdomain.AdminRegisterInput{
 			Email:           req.Email,
 			Password:        req.Password,
 			ConfirmPassword: req.Confirm,
@@ -140,16 +140,16 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc domain.AdminSer
 				msg    = "internal server error"
 			)
 			switch {
-			case errors.Is(err, domain.ErrAdminInvalidEmail):
+			case errors.Is(err, authdomain.ErrAdminInvalidEmail):
 				status = http.StatusBadRequest
 				msg = "invalid email address"
-			case errors.Is(err, domain.ErrAdminPasswordTooShort):
+			case errors.Is(err, authdomain.ErrAdminPasswordTooShort):
 				status = http.StatusBadRequest
 				msg = "password must be at least 8 characters"
-			case errors.Is(err, domain.ErrAdminPasswordMismatch):
+			case errors.Is(err, authdomain.ErrAdminPasswordMismatch):
 				status = http.StatusBadRequest
 				msg = "passwords do not match"
-			case errors.Is(err, domain.ErrAdminEmailExists):
+			case errors.Is(err, authdomain.ErrAdminEmailExists):
 				status = http.StatusConflict
 				msg = "account already exists"
 				slog.Warn("admin registration insert failed",

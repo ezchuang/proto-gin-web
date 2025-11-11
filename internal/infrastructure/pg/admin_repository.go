@@ -6,10 +6,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"proto-gin-web/internal/domain"
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 )
 
-// AdminAccountRepository implements domain.AdminRepository using pgx Queries.
+// AdminAccountRepository implements authdomain.AdminRepository using pgx Queries.
 type AdminAccountRepository struct {
 	queries *Queries
 }
@@ -19,20 +19,20 @@ func NewAdminAccountRepository(queries *Queries) *AdminAccountRepository {
 	return &AdminAccountRepository{queries: queries}
 }
 
-var _ domain.AdminRepository = (*AdminAccountRepository)(nil)
+var _ authdomain.AdminRepository = (*AdminAccountRepository)(nil)
 
-func (r *AdminAccountRepository) GetByEmail(ctx context.Context, email string) (domain.StoredAdmin, error) {
+func (r *AdminAccountRepository) GetByEmail(ctx context.Context, email string) (authdomain.StoredAdmin, error) {
 	user, err := r.queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.StoredAdmin{}, domain.ErrAdminNotFound
+			return authdomain.StoredAdmin{}, authdomain.ErrAdminNotFound
 		}
-		return domain.StoredAdmin{}, err
+		return authdomain.StoredAdmin{}, err
 	}
 	return mapStoredAdmin(user), nil
 }
 
-func (r *AdminAccountRepository) Create(ctx context.Context, params domain.AdminCreateParams) (domain.StoredAdmin, error) {
+func (r *AdminAccountRepository) Create(ctx context.Context, params authdomain.AdminCreateParams) (authdomain.StoredAdmin, error) {
 	roleID := params.RoleID
 	user, err := r.queries.CreateUser(ctx, CreateUserParams{
 		Email:        params.Email,
@@ -42,14 +42,14 @@ func (r *AdminAccountRepository) Create(ctx context.Context, params domain.Admin
 	})
 	if err != nil {
 		if errors.Is(err, ErrEmailAlreadyExists) {
-			return domain.StoredAdmin{}, domain.ErrAdminEmailExists
+			return authdomain.StoredAdmin{}, authdomain.ErrAdminEmailExists
 		}
-		return domain.StoredAdmin{}, err
+		return authdomain.StoredAdmin{}, err
 	}
 	return mapStoredAdmin(user), nil
 }
 
-func (r *AdminAccountRepository) UpdateProfile(ctx context.Context, email string, params domain.AdminProfileUpdateParams) (domain.StoredAdmin, error) {
+func (r *AdminAccountRepository) UpdateProfile(ctx context.Context, email string, params authdomain.AdminProfileUpdateParams) (authdomain.StoredAdmin, error) {
 	user, err := r.queries.UpdateUserProfile(ctx, UpdateUserProfileParams{
 		Email:        email,
 		DisplayName:  params.DisplayName,
@@ -57,31 +57,31 @@ func (r *AdminAccountRepository) UpdateProfile(ctx context.Context, email string
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.StoredAdmin{}, domain.ErrAdminNotFound
+			return authdomain.StoredAdmin{}, authdomain.ErrAdminNotFound
 		}
-		return domain.StoredAdmin{}, err
+		return authdomain.StoredAdmin{}, err
 	}
 	return mapStoredAdmin(user), nil
 }
 
-func (r *AdminAccountRepository) FindRoleByName(ctx context.Context, name string) (domain.AdminRole, error) {
+func (r *AdminAccountRepository) FindRoleByName(ctx context.Context, name string) (authdomain.AdminRole, error) {
 	role, err := r.queries.GetRoleByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.AdminRole{}, domain.ErrAdminRoleNotFound
+			return authdomain.AdminRole{}, authdomain.ErrAdminRoleNotFound
 		}
-		return domain.AdminRole{}, err
+		return authdomain.AdminRole{}, err
 	}
-	return domain.AdminRole{ID: role.ID, Name: role.Name}, nil
+	return authdomain.AdminRole{ID: role.ID, Name: role.Name}, nil
 }
 
-func mapStoredAdmin(u User) domain.StoredAdmin {
+func mapStoredAdmin(u User) authdomain.StoredAdmin {
 	var roleID *int64
 	if u.RoleID.Valid {
 		roleID = ptr(u.RoleID.Int64)
 	}
-	return domain.StoredAdmin{
-		Admin: domain.Admin{
+	return authdomain.StoredAdmin{
+		Admin: authdomain.Admin{
 			ID:          u.ID,
 			Email:       u.Email,
 			DisplayName: u.DisplayName,

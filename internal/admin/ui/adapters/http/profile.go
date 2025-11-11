@@ -9,13 +9,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
 	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
-func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc domain.AdminService) {
+func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc authdomain.AdminService) {
 	group.GET("/profile", func(c *gin.Context) {
 		isForm := view.WantsHTMLResponse(c)
 		email, err := c.Cookie("admin_email")
@@ -31,7 +31,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 		ctx := c.Request.Context()
 		profile, err := adminSvc.GetProfile(ctx, email)
 		if err != nil {
-			if errors.Is(err, domain.ErrAdminNotFound) {
+			if errors.Is(err, authdomain.ErrAdminNotFound) {
 				slog.Warn("admin profile not found",
 					slog.String("user", email),
 					slog.String("ip", c.ClientIP()))
@@ -71,7 +71,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 		ctx := c.Request.Context()
 		current, err := adminSvc.GetProfile(ctx, email)
 		if err != nil {
-			if errors.Is(err, domain.ErrAdminNotFound) {
+			if errors.Is(err, authdomain.ErrAdminNotFound) {
 				if isForm {
 					c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("account not found"))
 				} else {
@@ -120,18 +120,18 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 			return
 		}
 
-		updated, err := adminSvc.UpdateProfile(ctx, current.Email, domain.AdminProfileInput{
+		updated, err := adminSvc.UpdateProfile(ctx, current.Email, authdomain.AdminProfileInput{
 			DisplayName:     req.DisplayName,
 			Password:        req.Password,
 			ConfirmPassword: req.Confirm,
 		})
 		if err != nil {
 			switch {
-			case errors.Is(err, domain.ErrAdminDisplayNameRequired):
+			case errors.Is(err, authdomain.ErrAdminDisplayNameRequired):
 				handleProfileError(http.StatusBadRequest, "display name is required")
-			case errors.Is(err, domain.ErrAdminPasswordMismatch):
+			case errors.Is(err, authdomain.ErrAdminPasswordMismatch):
 				handleProfileError(http.StatusBadRequest, "passwords do not match")
-			case errors.Is(err, domain.ErrAdminPasswordTooShort):
+			case errors.Is(err, authdomain.ErrAdminPasswordTooShort):
 				handleProfileError(http.StatusBadRequest, "password must be at least 8 characters")
 			default:
 				slog.Error("admin profile update failed",

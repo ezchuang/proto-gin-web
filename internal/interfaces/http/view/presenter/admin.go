@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/domain"
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 	"proto-gin-web/internal/infrastructure/platform"
 	"proto-gin-web/internal/interfaces/http/view"
 )
@@ -21,7 +21,7 @@ func AdminDashboard(c *gin.Context, cfg platform.Config, user string, registered
 	}))
 }
 
-func AdminProfilePage(c *gin.Context, cfg platform.Config, profile domain.Admin, updated bool, errMsg string) {
+func AdminProfilePage(c *gin.Context, cfg platform.Config, profile authdomain.Admin, updated bool, errMsg string) {
 	view.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", view.WithAdminContext(c, gin.H{
 		"Title":           "Account Settings",
 		"SiteName":        cfg.SiteName,
