@@ -10,14 +10,14 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 	bf "github.com/russross/blackfriday/v2"
 
+	postview "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomain.PostService) {
 	r.GET("/", func(c *gin.Context) {
-		presenter.PublicLanding(c, cfg)
+		postview.PublicLanding(c, cfg)
 	})
 
 	r.GET("/posts", func(c *gin.Context) {
@@ -48,7 +48,7 @@ func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomai
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
-		presenter.PublicPosts(c, cfg, rows, page, size)
+		postview.PublicPosts(c, cfg, rows, page, size)
 	})
 
 	r.GET("/posts/:slug", func(c *gin.Context) {
@@ -68,6 +68,6 @@ func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomai
 		unsafe := bf.Run([]byte(md))
 		safe := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
 
-		presenter.PublicPostDetail(c, cfg, result, template.HTML(string(safe)))
+		postview.PublicPostDetail(c, cfg, result, template.HTML(string(safe)))
 	})
 }

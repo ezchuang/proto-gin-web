@@ -8,7 +8,7 @@ import (
 	"proto-gin-web/internal/application/admincontent"
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
-	"proto-gin-web/internal/interfaces/http/view/responder"
+	"proto-gin-web/internal/platform/http/responder"
 )
 
 // AdminCreatePostRequest describes the payload to create a post.

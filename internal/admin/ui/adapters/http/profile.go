@@ -10,14 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view"
-	"proto-gin-web/internal/interfaces/http/view/presenter"
+	platformview "proto-gin-web/internal/platform/http/view"
 )
 
 func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc authdomain.AdminService) {
 	group.GET("/profile", func(c *gin.Context) {
-		isForm := view.WantsHTMLResponse(c)
+		isForm := platformview.WantsHTMLResponse(c)
 		email, err := c.Cookie("admin_email")
 		if err != nil || email == "" {
 			if isForm {
@@ -53,11 +53,11 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 			return
 		}
 
-		presenter.AdminProfilePage(c, cfg, profile, c.Query("updated") == "1", c.Query("error"))
+		adminview.AdminProfilePage(c, cfg, profile, c.Query("updated") == "1", c.Query("error"))
 	})
 
 	group.POST("/profile", func(c *gin.Context) {
-		isForm := view.WantsHTMLResponse(c)
+		isForm := platformview.WantsHTMLResponse(c)
 		email, err := c.Cookie("admin_email")
 		if err != nil || email == "" {
 			if isForm {
@@ -109,7 +109,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 
 		handleProfileError := func(status int, message string) {
 			if isForm {
-				presenter.AdminProfileError(c, cfg, current.Email, req.DisplayName, message, status)
+				adminview.AdminProfileError(c, cfg, current.Email, req.DisplayName, message, status)
 			} else {
 				c.JSON(status, gin.H{"ok": false, "error": message})
 			}

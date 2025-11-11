@@ -7,11 +7,11 @@ import (
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view"
+	platformview "proto-gin-web/internal/platform/http/view"
 )
 
 func AdminDashboard(c *gin.Context, cfg platform.Config, user string, registered bool) {
-	view.RenderHTML(c, http.StatusOK, "admin_dashboard.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, http.StatusOK, "admin_dashboard.tmpl", platformview.WithAdminContext(c, gin.H{
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
 		"Env":             cfg.Env,
@@ -22,7 +22,7 @@ func AdminDashboard(c *gin.Context, cfg platform.Config, user string, registered
 }
 
 func AdminProfilePage(c *gin.Context, cfg platform.Config, profile authdomain.Admin, updated bool, errMsg string) {
-	view.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Account Settings",
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -35,7 +35,7 @@ func AdminProfilePage(c *gin.Context, cfg platform.Config, profile authdomain.Ad
 }
 
 func AdminProfileError(c *gin.Context, cfg platform.Config, email, displayName, errMsg string, status int) {
-	view.RenderHTML(c, status, "admin_profile.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, status, "admin_profile.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Account Settings",
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,

@@ -1,17 +1,17 @@
 package api
 
-import "proto-gin-web/internal/interfaces/http/view/presenter"
+import presenters "proto-gin-web/internal/blog/post/adapters/view"
 
 // postListResponse documents the JSON envelope returned by /api/posts.
 type postListResponse struct {
-	Ok   bool                   `json:"ok"`
-	Data []presenter.PublicPost `json:"data"`
+	Ok   bool                    `json:"ok"`
+	Data []presenters.PublicPost `json:"data"`
 }
 
 // postResponse documents the JSON envelope returned by /api/posts/{slug}.
 type postResponse struct {
-	Ok   bool                              `json:"ok"`
-	Data presenter.PublicPostWithRelations `json:"data"`
+	Ok   bool                               `json:"ok"`
+	Data presenters.PublicPostWithRelations `json:"data"`
 }
 
 // errorResponse documents the JSON error envelope.

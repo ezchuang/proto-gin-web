@@ -3,8 +3,8 @@ package adminuihttp
 import (
 	"github.com/gin-gonic/gin"
 
+	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view/presenter"
 )
 
 func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
@@ -13,6 +13,6 @@ func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
 		if v, err := c.Cookie("admin_user"); err == nil && v != "" {
 			userName = v
 		}
-		presenter.AdminDashboard(c, cfg, userName, c.Query("registered") == "1")
+		adminview.AdminDashboard(c, cfg, userName, c.Query("registered") == "1")
 	})
 }

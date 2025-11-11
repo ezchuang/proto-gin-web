@@ -8,14 +8,14 @@ import (
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view"
+	platformview "proto-gin-web/internal/platform/http/view"
 	"proto-gin-web/internal/platform/seo"
 )
 
 // PublicLanding renders the site landing page.
 func PublicLanding(c *gin.Context, cfg platform.Config) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
-	view.RenderHTML(c, http.StatusOK, "index.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, http.StatusOK, "index.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Index",
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -31,7 +31,7 @@ func PublicLanding(c *gin.Context, cfg platform.Config) {
 // PublicPosts renders the paginated posts list.
 func PublicPosts(c *gin.Context, cfg platform.Config, posts []postdomain.Post, page, size int64) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
-	view.RenderHTML(c, http.StatusOK, "posts.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, http.StatusOK, "posts.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Posts",
 		"Env":             cfg.Env,
 		"BaseURL":         cfg.BaseURL,
@@ -49,7 +49,7 @@ func PublicPostDetail(c *gin.Context, cfg platform.Config, post postdomain.PostW
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).
 		WithPage(post.Post.Title, post.Post.Summary, cfg.BaseURL+"/posts/"+post.Post.Slug, post.Post.CoverURL)
 	m.Type = "article"
-	view.RenderHTML(c, http.StatusOK, "post.tmpl", view.WithAdminContext(c, gin.H{
+	platformview.RenderHTML(c, http.StatusOK, "post.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           post.Post.Title,
 		"Summary":         post.Post.Summary,
 		"CoverURL":        post.Post.CoverURL,

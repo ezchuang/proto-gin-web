@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	presenters "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	"proto-gin-web/internal/interfaces/http/view/presenter"
-	"proto-gin-web/internal/interfaces/http/view/responder"
+	"proto-gin-web/internal/platform/http/responder"
 )
 
 // RegisterRoutes attaches JSON endpoints for posts.
@@ -52,7 +52,7 @@ func listPostsHandler(postSvc postdomain.PostService) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusInternalServerError, err.Error())
 			return
 		}
-		responder.JSONSuccess(c, http.StatusOK, presenter.BuildPublicPosts(rows))
+		responder.JSONSuccess(c, http.StatusOK, presenters.BuildPublicPosts(rows))
 	}
 }
 
@@ -72,6 +72,6 @@ func getPostHandler(postSvc postdomain.PostService) gin.HandlerFunc {
 			responder.JSONError(c, http.StatusNotFound, "post not found")
 			return
 		}
-		responder.JSONSuccess(c, http.StatusOK, presenter.BuildPublicPostWithRelations(row))
+		responder.JSONSuccess(c, http.StatusOK, presenters.BuildPublicPostWithRelations(row))
 	}
 }

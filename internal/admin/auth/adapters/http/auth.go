@@ -10,20 +10,20 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/http/view"
-	"proto-gin-web/internal/interfaces/http/view/presenter"
+	platformview "proto-gin-web/internal/platform/http/view"
 )
 
 func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
-		presenter.AdminLoginPage(c, cfg, c.Query("error"))
+		adminview.AdminLoginPage(c, cfg, c.Query("error"))
 	})
 
 	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
 		emailInput := c.PostForm("u")
 		password := c.PostForm("p")
-		isForm := view.WantsHTMLResponse(c)
+		isForm := platformview.WantsHTMLResponse(c)
 
 		ctx := c.Request.Context()
 		account, err := adminSvc.Login(ctx, authdomain.AdminLoginInput{
@@ -81,7 +81,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
 		c.SetCookie("admin_user", "", -1, "/", "", secureCookie, true)
 		c.SetCookie("admin_email", "", -1, "/", "", secureCookie, true)
-		if view.WantsHTMLResponse(c) {
+		if platformview.WantsHTMLResponse(c) {
 			c.Redirect(http.StatusFound, "/admin/login")
 			return
 		}
@@ -89,11 +89,11 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 	})
 
 	r.GET("/admin/register", func(c *gin.Context) {
-		presenter.AdminRegisterPage(c, cfg, c.Query("error"))
+		adminview.AdminRegisterPage(c, cfg, c.Query("error"))
 	})
 
 	r.POST("/admin/register", registerLimiter, func(c *gin.Context) {
-		isForm := view.WantsHTMLResponse(c)
+		isForm := platformview.WantsHTMLResponse(c)
 
 		type registerRequest struct {
 			Email    string `json:"email" form:"u"`
