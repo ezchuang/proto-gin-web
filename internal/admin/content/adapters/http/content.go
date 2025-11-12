@@ -67,7 +67,7 @@ func createPostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 	return func(c *gin.Context) {
 		var body AdminCreatePostRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
-			responder.JSONError(c, http.StatusBadRequest, err.Error())
+			responder.JSONError(c, http.StatusBadRequest, "invalid payload")
 			return
 		}
 
@@ -85,7 +85,7 @@ func createPostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 
 		row, err := contentSvc.CreatePost(c.Request.Context(), input)
 		if err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to create post")
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, row)
@@ -110,7 +110,7 @@ func updatePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 		slug := c.Param("slug")
 		var body AdminUpdatePostRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
-			responder.JSONError(c, http.StatusBadRequest, err.Error())
+			responder.JSONError(c, http.StatusBadRequest, "invalid payload")
 			return
 		}
 		cover := body.CoverURL
@@ -125,7 +125,7 @@ func updatePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 
 		row, err := contentSvc.UpdatePost(c.Request.Context(), input)
 		if err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to update post")
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, row)
@@ -145,7 +145,7 @@ func deletePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 	return func(c *gin.Context) {
 		slug := c.Param("slug")
 		if err := contentSvc.DeletePost(c.Request.Context(), slug); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to delete post")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -164,7 +164,7 @@ func deletePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 func addCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.AddCategory(c.Request.Context(), c.Param("slug"), c.Param("cat")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to add category")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -183,7 +183,7 @@ func addCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc
 func removeCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.RemoveCategory(c.Request.Context(), c.Param("slug"), c.Param("cat")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to remove category")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -202,7 +202,7 @@ func removeCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 func addTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.AddTag(c.Request.Context(), c.Param("slug"), c.Param("tag")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to add tag")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -221,7 +221,7 @@ func addTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 func removeTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.RemoveTag(c.Request.Context(), c.Param("slug"), c.Param("tag")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to remove tag")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -243,7 +243,7 @@ func createCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 	return func(c *gin.Context) {
 		var body AdminTaxonomyRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
-			responder.JSONError(c, http.StatusBadRequest, err.Error())
+			responder.JSONError(c, http.StatusBadRequest, "invalid payload")
 			return
 		}
 		category, err := contentSvc.CreateCategory(c.Request.Context(), taxdomain.CreateCategoryInput{
@@ -251,7 +251,7 @@ func createCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 			Slug: body.Slug,
 		})
 		if err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to create category")
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, category)
@@ -269,7 +269,7 @@ func createCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 func deleteCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.DeleteCategory(c.Request.Context(), c.Param("slug")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to delete category")
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -291,7 +291,7 @@ func createTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body AdminTaxonomyRequest
 		if err := c.ShouldBindJSON(&body); err != nil {
-			responder.JSONError(c, http.StatusBadRequest, err.Error())
+			responder.JSONError(c, http.StatusBadRequest, "invalid payload")
 			return
 		}
 		tag, err := contentSvc.CreateTag(c.Request.Context(), taxdomain.CreateTagInput{
@@ -299,7 +299,7 @@ func createTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 			Slug: body.Slug,
 		})
 		if err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to create tag")
 			return
 		}
 		responder.JSONSuccess(c, http.StatusOK, tag)
@@ -317,7 +317,7 @@ func createTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 func deleteTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if err := contentSvc.DeleteTag(c.Request.Context(), c.Param("slug")); err != nil {
-			responder.JSONError(c, http.StatusInternalServerError, err.Error())
+			responder.JSONError(c, http.StatusInternalServerError, "failed to delete tag")
 			return
 		}
 		c.Status(http.StatusNoContent)
