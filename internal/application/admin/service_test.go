@@ -39,6 +39,15 @@ func (m *mockAdminRepo) GetByEmail(ctx context.Context, email string) (authdomai
 	return authdomain.StoredAdmin{}, authdomain.ErrAdminNotFound
 }
 
+func (m *mockAdminRepo) GetByID(ctx context.Context, id int64) (authdomain.StoredAdmin, error) {
+	for _, admin := range m.adminByEmail {
+		if admin.ID == id {
+			return admin, nil
+		}
+	}
+	return authdomain.StoredAdmin{}, authdomain.ErrAdminNotFound
+}
+
 func (m *mockAdminRepo) Create(ctx context.Context, params authdomain.AdminCreateParams) (authdomain.StoredAdmin, error) {
 	if m.createErr != nil {
 		return authdomain.StoredAdmin{}, m.createErr

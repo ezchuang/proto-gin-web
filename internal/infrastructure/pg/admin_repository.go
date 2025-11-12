@@ -32,6 +32,17 @@ func (r *AdminAccountRepository) GetByEmail(ctx context.Context, email string) (
 	return mapStoredAdmin(user), nil
 }
 
+func (r *AdminAccountRepository) GetByID(ctx context.Context, id int64) (authdomain.StoredAdmin, error) {
+	user, err := r.queries.GetUserByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return authdomain.StoredAdmin{}, authdomain.ErrAdminNotFound
+		}
+		return authdomain.StoredAdmin{}, err
+	}
+	return mapStoredAdmin(user), nil
+}
+
 func (r *AdminAccountRepository) Create(ctx context.Context, params authdomain.AdminCreateParams) (authdomain.StoredAdmin, error) {
 	roleID := params.RoleID
 	user, err := r.queries.CreateUser(ctx, CreateUserParams{

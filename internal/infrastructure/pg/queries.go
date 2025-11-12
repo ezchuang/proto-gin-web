@@ -267,6 +267,16 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return u, nil
 }
 
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+	const stmt = `SELECT id, email, display_name, password_hash, role_id, created_at FROM app_user WHERE id = $1`
+	row := q.pool.QueryRow(ctx, stmt, id)
+	var u User
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &u.PasswordHash, &u.RoleID, &u.CreatedAt); err != nil {
+		return User{}, err
+	}
+	return u, nil
+}
+
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	const stmt = `INSERT INTO app_user (email, display_name, password_hash, role_id) VALUES ($1, $2, $3, $4) RETURNING id, email, display_name, password_hash, role_id, created_at`
 	var role any
