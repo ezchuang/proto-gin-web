@@ -7,15 +7,21 @@
   <p class="success">Welcome aboard! Your administrator account is ready.</p>
   {{ end }}
   <p>Signed in as {{ .User | html }}.</p>
-  <ul>
-    <li><a href="/admin/posts">Manage posts via API</a></li>
-    <li><a href="/admin/ui/posts">Open Admin UI</a></li>
-    <li><a href="/admin/ui/posts/new">Create post (UI)</a></li>
-    <li>
-      <form method="post" action="/admin/logout" class="logout-form">
-        <button type="submit" class="button button--link">Log out</button>
-      </form>
-    </li>
-  </ul>
+  <section>
+    <h3>Features</h3>
+    {{/* <div class="quick-links"> */}}
+    <div>
+      <a class="chip-link" href="/admin/ui/posts">Manage Posts</a>
+      <a class="chip-link" href="/admin/ui/posts/new">Create post</a>
+      <a class="chip-link" href="/admin/profile">Profile & Password</a>
+    </div>
+  </section>
+
+  <section>
+    <h3></h3>
+    <form method="post" action="/admin/logout" class="logout-form">
+      <button type="submit" class="button button--logout">Log out</button>
+    </form>
+  </section>
 </section>
 {{ end }}

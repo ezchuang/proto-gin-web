@@ -214,6 +214,34 @@ small {
   border-color: var(--color-border);
 }
 
+.button--logout {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+  box-shadow: none;
+}
+
+.button--logout:hover,
+.button--logout:focus-visible {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #7f1d1d;
+}
+
+.button--logout-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+.button--logout-link:hover,
+.button--logout-link:focus-visible {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
 .button--ghost:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -241,6 +269,12 @@ small {
   font-size: 0.95rem;
 }
 
+.quick-links__notice {
+  margin: 0.75rem 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
 .button--pill {
   border-radius: 999px;
   padding-inline: 0.8rem;
@@ -253,20 +287,6 @@ small {
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
-}
-
-.button--link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--color-accent);
-  box-shadow: none;
-}
-
-.button--link:hover,
-.button--link:focus-visible {
-  color: var(--color-accent-hover);
-  text-decoration: underline;
 }
 
 .logout-form {
