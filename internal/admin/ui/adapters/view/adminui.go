@@ -19,6 +19,8 @@ func AdminPostsPage(c *gin.Context, cfg platform.Config, posts []postdomain.Post
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
 		"Posts":           posts,
+		"Error":           c.Query("error"),
+		"Success":         c.Query("success"),
 	}))
 }
 
@@ -31,6 +33,8 @@ func AdminPostFormNew(c *gin.Context, cfg platform.Config) {
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
 		"IsNew":           true,
+		"Error":           c.Query("error"),
+		"Success":         c.Query("success"),
 	}))
 }
 
@@ -46,5 +50,7 @@ func AdminPostFormEdit(c *gin.Context, cfg platform.Config, result postdomain.Po
 		"Post":            result.Post,
 		"Categories":      result.Categories,
 		"Tags":            result.Tags,
+		"Error":           c.Query("error"),
+		"Success":         c.Query("success"),
 	}))
 }

@@ -3,6 +3,12 @@
 {{ define "content" }}
 <section>
   <h2>Admin · Posts</h2>
+  {{ if .Error }}
+  <div class="alert alert--error">{{ .Error | html }}</div>
+  {{ end }}
+  {{ if .Success }}
+  <div class="alert alert--success">{{ .Success | html }}</div>
+  {{ end }}
   <p class="chip-link"><a href="/admin/ui/posts/new">New Post</a></p>
   {{ if .Posts }}
   <ul>

@@ -3,6 +3,12 @@
 {{ define "content" }}
 <section>
   <h2>{{ if .IsNew }}New Post{{ else }}Edit Post{{ end }}</h2>
+  {{ if .Error }}
+  <div class="alert alert--error">{{ .Error | html }}</div>
+  {{ end }}
+  {{ if .Success }}
+  <div class="alert alert--success">{{ .Success | html }}</div>
+  {{ end }}
   <form method="post" enctype="multipart/form-data" action="{{ if .IsNew }}/admin/ui/posts/new{{ else }}/admin/ui/posts/{{ .Post.Slug }}{{ end }}">
     <p>
       <label>Title<br>

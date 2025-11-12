@@ -3,8 +3,10 @@ package adminuihttp
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,7 +34,8 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 			ctx := c.Request.Context()
 			rows, err := svc.ListPosts(ctx, 50)
 			if err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				logAdminUIError(c, "list posts", err)
+				c.String(http.StatusInternalServerError, "internal server error")
 				return
 			}
 			adminview.AdminPostsPage(c, cfg, rows)
@@ -51,7 +54,7 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 
 			coverURL, err := resolveCoverInput(c)
 			if err != nil {
-				c.String(http.StatusBadRequest, err.Error())
+				redirectWithError(c, "/admin/ui/posts/new", err.Error(), err)
 				return
 			}
 
@@ -71,10 +74,10 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 				AuthorID:  profile.ID,
 			}
 			if _, err := svc.CreatePost(c.Request.Context(), params); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/new", "failed to create post", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts")
+			redirectWithSuccess(c, "/admin/ui/posts", "post created")
 		})
 
 		admin.GET("/posts/:slug/edit", func(c *gin.Context) {
@@ -90,7 +93,7 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 		admin.POST("/posts/:slug", func(c *gin.Context) {
 			coverURL, err := resolveCoverInput(c)
 			if err != nil {
-				c.String(http.StatusBadRequest, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+c.Param("slug")+"/edit", err.Error(), err)
 				return
 			}
 			params := adminuisvc.UpdatePostParams{
@@ -102,56 +105,56 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 				Status:    c.DefaultPostForm("status", "draft"),
 			}
 			if _, err := svc.UpdatePost(c.Request.Context(), params); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+params.Slug+"/edit", "failed to update post", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+params.Slug+"/edit")
+			redirectWithSuccess(c, "/admin/ui/posts/"+params.Slug+"/edit", "post updated")
 		})
 
 		admin.POST("/posts/:slug/delete", func(c *gin.Context) {
 			if err := svc.DeletePost(c.Request.Context(), c.Param("slug")); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts", "failed to delete post", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts")
+			redirectWithSuccess(c, "/admin/ui/posts", "post deleted")
 		})
 
 		admin.POST("/posts/:slug/categories/add", func(c *gin.Context) {
 			slug := c.Param("slug")
 			cat := c.PostForm("category_slug")
 			if err := svc.AddCategory(c.Request.Context(), slug, cat); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+slug+"/edit", "failed to add category", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
+			redirectWithSuccess(c, "/admin/ui/posts/"+slug+"/edit", "category added")
 		})
 		admin.POST("/posts/:slug/categories/remove", func(c *gin.Context) {
 			slug := c.Param("slug")
 			cat := c.PostForm("category_slug")
 			if err := svc.RemoveCategory(c.Request.Context(), slug, cat); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+slug+"/edit", "failed to remove category", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
+			redirectWithSuccess(c, "/admin/ui/posts/"+slug+"/edit", "category removed")
 		})
 
 		admin.POST("/posts/:slug/tags/add", func(c *gin.Context) {
 			slug := c.Param("slug")
 			tag := c.PostForm("tag_slug")
 			if err := svc.AddTag(c.Request.Context(), slug, tag); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+slug+"/edit", "failed to add tag", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
+			redirectWithSuccess(c, "/admin/ui/posts/"+slug+"/edit", "tag added")
 		})
 		admin.POST("/posts/:slug/tags/remove", func(c *gin.Context) {
 			slug := c.Param("slug")
 			tag := c.PostForm("tag_slug")
 			if err := svc.RemoveTag(c.Request.Context(), slug, tag); err != nil {
-				c.String(http.StatusInternalServerError, err.Error())
+				redirectWithError(c, "/admin/ui/posts/"+slug+"/edit", "failed to remove tag", err)
 				return
 			}
-			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
+			redirectWithSuccess(c, "/admin/ui/posts/"+slug+"/edit", "tag removed")
 		})
 	}
 }
@@ -184,6 +187,38 @@ func handleAdminProfileError(c *gin.Context, err error) {
 	c.String(status, message)
 }
 
+func redirectWithError(c *gin.Context, path, message string, err error) {
+	logAdminUIError(c, message, err)
+	c.Redirect(http.StatusFound, addFlashQuery(path, "error", message))
+}
+
+func redirectWithSuccess(c *gin.Context, path, message string) {
+	c.Redirect(http.StatusFound, addFlashQuery(path, "success", message))
+}
+
+func addFlashQuery(path, key, message string) string {
+	if key == "" || message == "" {
+		return path
+	}
+	u, err := url.Parse(path)
+	if err != nil {
+		return path
+	}
+	values := u.Query()
+	values.Set(key, message)
+	u.RawQuery = values.Encode()
+	return u.String()
+}
+
+func logAdminUIError(c *gin.Context, context string, err error) {
+	if err == nil {
+		return
+	}
+	slog.Default().Error("admin ui: "+context,
+		slog.String("path", c.FullPath()),
+		slog.Any("err", err))
+}
+
 const (
 	coverUploadDir      = "web/static/uploads"
 	maxCoverUploadBytes = 5 << 20
@@ -206,7 +241,8 @@ func resolveCoverInput(c *gin.Context) (string, error) {
 		return saveCoverUpload(c, file)
 	}
 	if err != nil && !errors.Is(err, http.ErrMissingFile) {
-		return "", err
+		logAdminUIError(c, "read cover upload", err)
+		return "", errors.New("failed to read cover file")
 	}
 	return strings.TrimSpace(c.PostForm("cover_url")), nil
 }
@@ -217,12 +253,14 @@ func saveCoverUpload(c *gin.Context, file *multipart.FileHeader) (string, error)
 		return "", fmt.Errorf("unsupported cover format: %s", ext)
 	}
 	if err := os.MkdirAll(coverUploadDir, 0o755); err != nil {
-		return "", err
+		logAdminUIError(c, "create cover upload dir", err)
+		return "", errors.New("failed to save cover file")
 	}
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	destPath := filepath.Join(coverUploadDir, filename)
 	if err := c.SaveUploadedFile(file, destPath); err != nil {
-		return "", err
+		logAdminUIError(c, "save cover upload", err)
+		return "", errors.New("failed to save cover file")
 	}
 	return "/static/uploads/" + filename, nil
 }
