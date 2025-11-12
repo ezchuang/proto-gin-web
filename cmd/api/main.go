@@ -47,9 +47,7 @@ func main() {
 	postSvc := postusecase.NewService(postRepo)
 	adminRepo := appdb.NewAdminAccountRepository(queries)
 	adminSvc := adminusecase.NewService(adminRepo, adminusecase.Config{
-		AdminRoleName:  "admin",
-		LegacyUser:     cfg.AdminUser,
-		LegacyPassword: cfg.AdminPass,
+		AdminRoleName: "admin",
 	})
 	taxonomyRepo := appdb.NewTaxonomyRepository(queries)
 	taxonomySvc := taxonomyusecase.NewService(taxonomyRepo)

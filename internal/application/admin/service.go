@@ -23,8 +23,6 @@ const (
 // Config exposes optional knobs impacting admin behaviour.
 type Config struct {
 	AdminRoleName     string
-	LegacyUser        string
-	LegacyPassword    string
 	PasswordMinLength int
 }
 
@@ -57,9 +55,6 @@ func (s *Service) Login(ctx context.Context, input authdomain.AdminLoginInput) (
 
 	stored, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, authdomain.ErrAdminNotFound) && s.legacyMatches(email, password) {
-			return s.legacyAdmin(email), nil
-		}
 		if errors.Is(err, authdomain.ErrAdminNotFound) {
 			return authdomain.Admin{}, authdomain.ErrAdminInvalidCredentials
 		}
@@ -172,24 +167,6 @@ func (s *Service) UpdateProfile(ctx context.Context, email string, input authdom
 		return authdomain.Admin{}, err
 	}
 	return stored.Admin, nil
-}
-
-func (s *Service) legacyMatches(email, password string) bool {
-	if s.cfg.LegacyUser == "" || s.cfg.LegacyPassword == "" {
-		return false
-	}
-	return strings.EqualFold(email, s.cfg.LegacyUser) && password == s.cfg.LegacyPassword
-}
-
-func (s *Service) legacyAdmin(email string) authdomain.Admin {
-	display := strings.TrimSpace(s.cfg.LegacyUser)
-	if display == "" {
-		display = email
-	}
-	return authdomain.Admin{
-		Email:       email,
-		DisplayName: display,
-	}
 }
 
 func hashArgon2idPassword(password string) (string, error) {

@@ -16,10 +16,6 @@ type Config struct {
 	BaseURL         string
 	SiteName        string
 	SiteDescription string
-
-	// Admin basic credentials (stub)
-	AdminUser string
-	AdminPass string
 }
 
 func Load() Config {
@@ -35,8 +31,6 @@ func Load() Config {
 		BaseURL:         getEnv("BASE_URL", "http://localhost:8080"),
 		SiteName:        getEnv("SITE_NAME", "Prototype"),
 		SiteDescription: getEnv("SITE_DESCRIPTION", "Gin + SSR + SQLC prototype"),
-		AdminUser:       getEnv("ADMIN_USER", "admin"),
-		AdminPass:       getEnv("ADMIN_PASS", "changeme"),
 	}
 }
 

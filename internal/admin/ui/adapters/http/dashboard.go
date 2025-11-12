@@ -9,7 +9,7 @@ import (
 
 func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
 	group.GET("", func(c *gin.Context) {
-		userName := cfg.AdminUser
+		userName := "Admin"
 		if v, err := c.Cookie("admin_user"); err == nil && v != "" {
 			userName = v
 		}

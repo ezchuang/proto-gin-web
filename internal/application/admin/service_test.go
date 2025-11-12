@@ -122,26 +122,6 @@ func TestService_Login_InvalidCredentials(t *testing.T) {
 	}
 }
 
-func TestService_Login_LegacyFallback(t *testing.T) {
-	repo := newMockAdminRepo()
-	repo.getErr = authdomain.ErrAdminNotFound
-	svc := NewService(repo, Config{
-		LegacyUser:     "legacy@example.com",
-		LegacyPassword: "legacy",
-	})
-
-	admin, err := svc.Login(context.Background(), authdomain.AdminLoginInput{
-		Email:    "legacy@example.com",
-		Password: "legacy",
-	})
-	if err != nil {
-		t.Fatalf("expected legacy login to succeed: %v", err)
-	}
-	if admin.Email != "legacy@example.com" {
-		t.Fatalf("unexpected legacy admin email %s", admin.Email)
-	}
-}
-
 func TestService_Register_Validation(t *testing.T) {
 	svc := NewService(newMockAdminRepo(), Config{})
 	_, err := svc.Register(context.Background(), authdomain.AdminRegisterInput{
