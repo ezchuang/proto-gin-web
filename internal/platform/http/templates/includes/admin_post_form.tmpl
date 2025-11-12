@@ -11,7 +11,7 @@
     </p>
     <p>
       <label>Slug<br>
-        <input type="text" name="slug" value="{{ if .Post }}{{ .Post.Slug }}{{ end }}" {{ if not .IsNew }}readonly{{ end }} required>
+        <input type="text" id="post-slug" name="slug" value="{{ if .Post }}{{ .Post.Slug }}{{ end }}" {{ if not .IsNew }}readonly{{ end }} required>
       </label>
     </p>
     <p>
@@ -45,10 +45,11 @@
         <textarea name="content_md" rows="12" style="width:100%">{{ if .Post }}{{ .Post.ContentMD }}{{ end }}</textarea>
       </label>
     </p>
-    <p>
-      <button type="submit">{{ if .IsNew }}Create{{ else }}Save{{ end }}</button>
+    <p class="form-actions">
+      <button type="submit" class="button">{{ if .IsNew }}Create{{ else }}Save{{ end }}</button>
+      <button type="button" id="preview-button" class="button button--ghost" title="Enter a slug to preview" disabled>Preview</button>
       {{ if not .IsNew }}
-      <button type="submit" formaction="/admin/ui/posts/{{ .Post.Slug }}/delete" formmethod="post" onclick="return confirm('Delete this post?')">Delete</button>
+      <button type="submit" class="button button--ghost" formaction="/admin/ui/posts/{{ .Post.Slug }}/delete" formmethod="post" onclick="return confirm('Delete this post?')">Delete</button>
       {{ end }}
     </p>
   </form>
@@ -60,7 +61,7 @@
     {{ range .Categories }}
       <form method="post" action="/admin/ui/posts/{{ $.Post.Slug }}/categories/remove" style="display:inline">
         <input type="hidden" name="category_slug" value="{{ .Slug }}">
-        <button>{{ .Name }} ✕</button>
+        <button type="submit" class="button button--ghost button--pill">{{ .Name }} ✕</button>
       </form>
     {{ else }}
       <em>None</em>
@@ -68,7 +69,7 @@
   </p>
   <form method="post" action="/admin/ui/posts/{{ .Post.Slug }}/categories/add">
     <input type="text" name="category_slug" placeholder="category-slug">
-    <button type="submit">Add Category</button>
+    <button type="submit" class="button">Add Category</button>
   </form>
 
   <h3>Tags</h3>
@@ -76,7 +77,7 @@
     {{ range .Tags }}
       <form method="post" action="/admin/ui/posts/{{ $.Post.Slug }}/tags/remove" style="display:inline">
         <input type="hidden" name="tag_slug" value="{{ .Slug }}">
-        <button>{{ .Name }} ✕</button>
+        <button type="submit" class="button button--ghost button--pill">{{ .Name }} ✕</button>
       </form>
     {{ else }}
       <em>None</em>
@@ -84,10 +85,36 @@
   </p>
   <form method="post" action="/admin/ui/posts/{{ .Post.Slug }}/tags/add">
     <input type="text" name="tag_slug" placeholder="tag-slug">
-    <button type="submit">Add Tag</button>
+    <button type="submit" class="button">Add Tag</button>
   </form>
   {{ end }}
 
+  <script>
+  (function () {
+    const slugInput = document.getElementById("post-slug");
+    const previewBtn = document.getElementById("preview-button");
+    if (!slugInput || !previewBtn) {
+      return;
+    }
+
+    const update = () => {
+      const slug = (slugInput.value || "").trim();
+      previewBtn.disabled = slug.length === 0;
+      previewBtn.title = slug.length ? "Preview /posts/" + slug : "Enter a slug to preview";
+    };
+
+    previewBtn.addEventListener("click", () => {
+      const slug = (slugInput.value || "").trim();
+      if (!slug) {
+        return;
+      }
+      window.open("/posts/" + slug, "_blank", "noopener,noreferrer");
+    });
+
+    slugInput.addEventListener("input", update);
+    update();
+  })();
+  </script>
 </section>
 {{ end }}
 

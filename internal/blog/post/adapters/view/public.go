@@ -15,7 +15,7 @@ import (
 // PublicLanding renders the site landing page.
 func PublicLanding(c *gin.Context, cfg platform.Config) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
-	platformview.RenderHTML(c, http.StatusOK, "index.tmpl", platformview.WithAdminContext(c, gin.H{
+	data := gin.H{
 		"Title":           "Index",
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -24,8 +24,17 @@ func PublicLanding(c *gin.Context, cfg platform.Config) {
 		"DocsURL":         "https://gin-gonic.com/en/docs/",
 		"PostsURL":        "/posts",
 		"APIPostsURL":     "/api/posts?limit=10&offset=0",
+		"AdminUIURL":      "/admin/ui/posts",
+		"AdminNewPostURL": "/admin/ui/posts/new",
+		"LivezURL":        "/livez",
+		"ReadyzURL":       "/readyz",
+		"SwaggerURL":      "",
 		"MetaTags":        template.HTML(m.Tags()),
-	}))
+	}
+	if cfg.Env != "production" {
+		data["SwaggerURL"] = "/swagger/index.html"
+	}
+	platformview.RenderHTML(c, http.StatusOK, "index.tmpl", platformview.WithAdminContext(c, data))
 }
 
 // PublicPosts renders the paginated posts list.

@@ -9,11 +9,28 @@
     <li>Environment: <code>{{ .Env | html }}</code></li>
     <li>Base URL: <code>{{ .BaseURL | html }}</code></li>
   </ul>
-  <p>
-    <a href="{{ .DocsURL | html }}" target="_blank" rel="noreferrer noopener">Gin Documentation</a>  · 
-    <a href="{{ .PostsURL | html }}">View Posts</a>  · 
-    <a href="{{ .APIPostsURL | html }}">Posts API</a>
-  </p>
-  <p>Health probe: <code>/livez</code> · Readiness: <code>/readyz</code></p>
+  {{ if .AdminUser }}
+  <h3>Health Check</h3>
+  <div class="quick-links">
+    <a class="chip-link" href="{{ .LivezURL | html }}" target="_blank" rel="noreferrer noopener">Livez</a>
+    <a class="chip-link" href="{{ .ReadyURL | html }}" target="_blank" rel="noreferrer noopener">Readyz</a>
+  </div>
+  <h3>Features</h3>
+  <div class="quick-links">
+    <a class="chip-link" href="{{ .PostsURL | html }}">Public Posts</a>
+    <a class="chip-link" href="{{ .AdminUIURL | html }}">Admin UI</a>
+    <a class="chip-link" href="{{ .AdminNewPostURL | html }}">New Admin Post</a>
+  </div>
+  <h3>Quick Links</h3>
+  <div class="quick-links">
+    <a class="chip-link" href="{{ .APIPostsURL | html }}" target="_blank" rel="noreferrer noopener">Posts API</a>
+    {{ if .SwaggerURL }}
+    <a class="chip-link" href="{{ .SwaggerURL | html }}" target="_blank" rel="noreferrer noopener">Swagger UI</a>
+    {{ end }}
+    <a class="chip-link" href="{{ .DocsURL | html }}" target="_blank" rel="noreferrer noopener">Gin Documentation</a>
+  </div>
+  {{ else }}
+  <p class="muted">Login to unlock admin quick links.</p>
+  {{ end }}
 </section>
 {{ end }}
