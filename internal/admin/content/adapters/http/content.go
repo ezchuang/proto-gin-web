@@ -57,6 +57,7 @@ func RegisterRoutes(group *gin.RouterGroup, contentSvc *admincontentusecase.Serv
 // @Tags         Admin
 // @Accept       json
 // @Produce      json
+// @Security     AdminCookieAuth
 // @Param        payload  body      AdminCreatePostRequest  true  "Post payload"
 // @Success      200      {object}  admincontentusecase.AdminPostResponse
 // @Failure      400      {object}  admincontentusecase.AdminErrorResponse
@@ -97,6 +98,7 @@ func createPostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 // @Tags         Admin
 // @Accept       json
 // @Produce      json
+// @Security     AdminCookieAuth
 // @Param        slug     path      string                   true  "Post slug"
 // @Param        payload  body      AdminUpdatePostRequest   true  "Post payload"
 // @Success      200      {object}  admincontentusecase.AdminPostResponse
@@ -134,6 +136,7 @@ func updatePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 // @Summary      Delete a post
 // @Description  Deletes a post identified by slug.
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Post slug"
 // @Success      204  {string}  string  ""
 // @Failure      500  {object}  admincontentusecase.AdminErrorResponse
@@ -152,6 +155,7 @@ func deletePostHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc 
 // addCategoryHandler godoc
 // @Summary      Attach a category to a post
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Post slug"
 // @Param        cat   path  string  true  "Category slug"
 // @Success      204 {string} string ""
@@ -170,6 +174,7 @@ func addCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc
 // removeCategoryHandler godoc
 // @Summary      Remove a category from a post
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Post slug"
 // @Param        cat   path  string  true  "Category slug"
 // @Success      204 {string} string ""
@@ -188,6 +193,7 @@ func removeCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 // addTagHandler godoc
 // @Summary      Attach a tag to a post
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Post slug"
 // @Param        tag   path  string  true  "Tag slug"
 // @Success      204 {string} string ""
@@ -206,6 +212,7 @@ func addTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 // removeTagHandler godoc
 // @Summary      Remove a tag from a post
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Post slug"
 // @Param        tag   path  string  true  "Tag slug"
 // @Success      204 {string} string ""
@@ -226,6 +233,7 @@ func removeTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 // @Tags         Admin
 // @Accept       json
 // @Produce      json
+// @Security     AdminCookieAuth
 // @Param        payload  body      AdminTaxonomyRequest  true  "Category payload"
 // @Success      200      {object}  admincontentusecase.AdminCategoryResponse
 // @Failure      400      {object}  admincontentusecase.AdminErrorResponse
@@ -253,6 +261,7 @@ func createCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 // deleteCategoryHandler godoc
 // @Summary      Delete category
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Category slug"
 // @Success      204  {string} string ""
 // @Failure      500  {object}  admincontentusecase.AdminErrorResponse
@@ -272,6 +281,7 @@ func deleteCategoryHandler(contentSvc *admincontentusecase.Service) gin.HandlerF
 // @Tags         Admin
 // @Accept       json
 // @Produce      json
+// @Security     AdminCookieAuth
 // @Param        payload  body      AdminTaxonomyRequest  true  "Tag payload"
 // @Success      200      {object}  admincontentusecase.AdminTagResponse
 // @Failure      400      {object}  admincontentusecase.AdminErrorResponse
@@ -299,6 +309,7 @@ func createTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 // deleteTagHandler godoc
 // @Summary      Delete tag
 // @Tags         Admin
+// @Security     AdminCookieAuth
 // @Param        slug  path  string  true  "Tag slug"
 // @Success      204  {string} string ""
 // @Failure      500  {object}  admincontentusecase.AdminErrorResponse

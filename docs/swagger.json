@@ -11,6 +11,13 @@
         "version": "1.0"
     },
     "basePath": "/",
+    "securityDefinitions": {
+        "AdminCookieAuth": {
+            "type": "apiKey",
+            "name": "admin_email",
+            "in": "cookie"
+        }
+    },
     "paths": {
         "/admin/categories": {
             "post": {
@@ -24,6 +31,11 @@
                     "Admin"
                 ],
                 "summary": "Create category",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Category payload",
@@ -63,6 +75,11 @@
                     "Admin"
                 ],
                 "summary": "Delete category",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -101,6 +118,11 @@
                     "Admin"
                 ],
                 "summary": "Create a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Post payload",
@@ -147,6 +169,11 @@
                     "Admin"
                 ],
                 "summary": "Update a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -192,6 +219,11 @@
                     "Admin"
                 ],
                 "summary": "Delete a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -223,6 +255,11 @@
                     "Admin"
                 ],
                 "summary": "Attach a category to a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -259,6 +296,11 @@
                     "Admin"
                 ],
                 "summary": "Remove a category from a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -297,6 +339,11 @@
                     "Admin"
                 ],
                 "summary": "Attach a tag to a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -333,6 +380,11 @@
                     "Admin"
                 ],
                 "summary": "Remove a tag from a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -377,6 +429,11 @@
                     "Admin"
                 ],
                 "summary": "Create tag",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Tag payload",
@@ -416,6 +473,11 @@
                     "Admin"
                 ],
                 "summary": "Delete tag",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
