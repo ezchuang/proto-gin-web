@@ -3,7 +3,7 @@
 {{ define "content" }}
 <section>
   <h2>{{ if .IsNew }}New Post{{ else }}Edit Post{{ end }}</h2>
-  <form method="post" action="{{ if .IsNew }}/admin/ui/posts/new{{ else }}/admin/ui/posts/{{ .Post.Slug }}{{ end }}">
+  <form method="post" enctype="multipart/form-data" action="{{ if .IsNew }}/admin/ui/posts/new{{ else }}/admin/ui/posts/{{ .Post.Slug }}{{ end }}">
     <p>
       <label>Title<br>
         <input type="text" name="title" value="{{ if .Post }}{{ .Post.Title }}{{ end }}" required>
@@ -21,8 +21,14 @@
     </p>
     <p>
       <label>Cover URL<br>
-        <input type="text" name="cover_url" value="{{ if .Post }}{{ .Post.CoverURL }}{{ end }}" placeholder="/static/cover-...svg">
+        <input type="text" name="cover_url" value="{{ if .Post }}{{ .Post.CoverURL }}{{ end }}" placeholder="https://example.com/cover.jpg">
       </label>
+    </p>
+    <p>
+      <label>Or Upload Cover<br>
+        <input type="file" name="cover_file" accept="image/png,image/jpeg,image/webp,image/gif">
+      </label>
+      <span class="form-note">Optional. JPG/PNG/WebP/GIF up to 5&nbsp;MB.</span>
     </p>
     <p>
       <label>Status<br>
@@ -35,10 +41,13 @@
         </select>
       </label>
     </p>
-    <p>
-      <label>Author ID<br>
-        <input type="number" name="author_id" value="{{ if .Post }}{{ .Post.AuthorID }}{{ else }}1{{ end }}">
-      </label>
+    <p class="form-note">
+      <strong>Author</strong><br>
+      {{ if .IsNew }}
+      <span>{{ if .AdminUser }}{{ .AdminUser | html }}{{ else }}Current admin{{ end }} (auto-assigned)</span>
+      {{ else }}
+      <span>ID #{{ .Post.AuthorID }} (kept)</span>
+      {{ end }}
     </p>
     <p>
       <label>Content (Markdown)<br>

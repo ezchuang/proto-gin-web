@@ -1,11 +1,18 @@
 package adminuihttp
 
 import (
+	"errors"
+	"fmt"
+	"mime/multipart"
 	"net/http"
-	"strconv"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	adminuisvc "proto-gin-web/internal/admin/ui/app"
 	"proto-gin-web/internal/infrastructure/platform"
@@ -13,7 +20,7 @@ import (
 )
 
 // RegisterUIRoutes mounts legacy SSR pages that still live inside the admin context.
-func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Service) {
+func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")
@@ -36,22 +43,32 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Servic
 		})
 
 		admin.POST("/posts/new", func(c *gin.Context) {
+			profile, err := currentAdminProfile(c, adminSvc)
+			if err != nil {
+				handleAdminProfileError(c, err)
+				return
+			}
+
+			coverURL, err := resolveCoverInput(c)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+				return
+			}
+
 			title := c.PostForm("title")
 			slug := c.PostForm("slug")
 			summary := c.PostForm("summary")
 			content := c.PostForm("content_md")
-			cover := c.PostForm("cover_url")
 			status := c.DefaultPostForm("status", "draft")
-			authorStr := c.DefaultPostForm("author_id", "1")
-			authorID, _ := strconv.ParseInt(authorStr, 10, 64)
+
 			params := adminuisvc.CreatePostParams{
 				Title:     title,
 				Slug:      slug,
 				Summary:   summary,
 				ContentMD: content,
-				CoverURL:  cover,
+				CoverURL:  coverURL,
 				Status:    status,
-				AuthorID:  authorID,
+				AuthorID:  profile.ID,
 			}
 			if _, err := svc.CreatePost(c.Request.Context(), params); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
@@ -71,12 +88,17 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Servic
 		})
 
 		admin.POST("/posts/:slug", func(c *gin.Context) {
+			coverURL, err := resolveCoverInput(c)
+			if err != nil {
+				c.String(http.StatusBadRequest, err.Error())
+				return
+			}
 			params := adminuisvc.UpdatePostParams{
 				Slug:      c.Param("slug"),
 				Title:     c.PostForm("title"),
 				Summary:   c.PostForm("summary"),
 				ContentMD: c.PostForm("content_md"),
-				CoverURL:  c.PostForm("cover_url"),
+				CoverURL:  coverURL,
 				Status:    c.DefaultPostForm("status", "draft"),
 			}
 			if _, err := svc.UpdatePost(c.Request.Context(), params); err != nil {
@@ -132,4 +154,75 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, svc *adminuisvc.Servic
 			c.Redirect(http.StatusFound, "/admin/ui/posts/"+slug+"/edit")
 		})
 	}
+}
+
+var errMissingAdminEmail = errors.New("admin session missing email")
+
+func currentAdminProfile(c *gin.Context, adminSvc authdomain.AdminService) (authdomain.Admin, error) {
+	email, err := c.Cookie("admin_email")
+	if err != nil {
+		return authdomain.Admin{}, errMissingAdminEmail
+	}
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return authdomain.Admin{}, errMissingAdminEmail
+	}
+	return adminSvc.GetProfile(c.Request.Context(), email)
+}
+
+func handleAdminProfileError(c *gin.Context, err error) {
+	status := http.StatusInternalServerError
+	message := "failed to resolve admin session"
+	switch {
+	case errors.Is(err, errMissingAdminEmail):
+		status = http.StatusUnauthorized
+		message = "unauthorized"
+	case errors.Is(err, authdomain.ErrAdminNotFound):
+		status = http.StatusUnauthorized
+		message = "admin profile not found"
+	}
+	c.String(status, message)
+}
+
+const (
+	coverUploadDir      = "web/static/uploads"
+	maxCoverUploadBytes = 5 << 20
+)
+
+var allowedCoverExt = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".gif":  true,
+	".webp": true,
+}
+
+func resolveCoverInput(c *gin.Context) (string, error) {
+	file, err := c.FormFile("cover_file")
+	if err == nil && file != nil && file.Size > 0 {
+		if file.Size > maxCoverUploadBytes {
+			return "", fmt.Errorf("cover file exceeds %d MB", maxCoverUploadBytes>>20)
+		}
+		return saveCoverUpload(c, file)
+	}
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		return "", err
+	}
+	return strings.TrimSpace(c.PostForm("cover_url")), nil
+}
+
+func saveCoverUpload(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if !allowedCoverExt[ext] {
+		return "", fmt.Errorf("unsupported cover format: %s", ext)
+	}
+	if err := os.MkdirAll(coverUploadDir, 0o755); err != nil {
+		return "", err
+	}
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	destPath := filepath.Join(coverUploadDir, filename)
+	if err := c.SaveUploadedFile(file, destPath); err != nil {
+		return "", err
+	}
+	return "/static/uploads/" + filename, nil
 }

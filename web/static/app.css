@@ -289,6 +289,17 @@ small {
   align-items: center;
 }
 
+.form-note {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+}
+
+.form-note strong {
+  display: inline-block;
+  color: var(--color-text);
+  margin-bottom: 0.15rem;
+}
+
 .logout-form {
   margin: 0;
   display: inline;

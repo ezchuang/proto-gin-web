@@ -79,8 +79,15 @@ make down
 - DB: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`
 - App: `APP_ENV` (development/production), `PORT` (default 8080)
 - SEO: `BASE_URL`, `SITE_NAME`, `SITE_DESCRIPTION`
-- Admin: `ADMIN_USER`, `ADMIN_PASS`
 - Compose: `HOST_POSTGRES_PORT`, `HOST_APP_PORT`
+
+### Sample Accounts
+Database migrations seed two demo admins and both Argon2 hashes resolve to the plain text password `password`.
+
+| Email               | Role  | Password |
+|---------------------|-------|----------|
+| `admin@example.com` | admin | `password` |
+| `demo@example.com`  | admin | `password` |
 
 ## Feature Summary
 - SSR templates: `/`, `/posts` (pagination/filter/sort), `/posts/:slug`
