@@ -10,8 +10,8 @@ import (
 func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
 	group.GET("", func(c *gin.Context) {
 		userName := "Admin"
-		if v, err := c.Cookie("admin_user"); err == nil && v != "" {
-			userName = v
+		if profile, ok := adminProfileFromContext(c); ok && profile.DisplayName != "" {
+			userName = profile.DisplayName
 		}
 		adminview.AdminDashboard(c, cfg, userName, c.Query("registered") == "1")
 	})

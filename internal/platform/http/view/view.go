@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 )
 
 // RenderHTML renders a view with the provided data.
@@ -18,6 +20,16 @@ func RenderHTML(c *gin.Context, status int, name string, data gin.H) {
 func WithAdminContext(c *gin.Context, data gin.H) gin.H {
 	if data == nil {
 		data = gin.H{}
+	}
+	if profile, ok := c.Get("admin_profile"); ok {
+		if admin, ok := profile.(authdomain.Admin); ok {
+			if admin.DisplayName != "" {
+				data["AdminUser"] = admin.DisplayName
+			}
+			if admin.Email != "" {
+				data["AdminEmail"] = admin.Email
+			}
+		}
 	}
 	if adminUser, err := c.Cookie("admin_user"); err == nil && adminUser != "" {
 		data["AdminUser"] = adminUser

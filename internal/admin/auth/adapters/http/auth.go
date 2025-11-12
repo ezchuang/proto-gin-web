@@ -1,6 +1,7 @@
 package authhttp
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -10,12 +11,18 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	"proto-gin-web/internal/infrastructure/platform"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, loginLimiter, registerLimiter gin.HandlerFunc) {
+const (
+	sessionCookieMaxAge  = 30 * 60
+	rememberCookieMaxAge = 30 * 24 * 60 * 60
+)
+
+func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
 		adminview.AdminLoginPage(c, cfg, c.Query("error"))
 	})
@@ -23,6 +30,7 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 	r.POST("/admin/login", loginLimiter, func(c *gin.Context) {
 		emailInput := c.PostForm("u")
 		password := c.PostForm("p")
+		remember := wantsRememberMe(c)
 		isForm := platformview.WantsHTMLResponse(c)
 
 		ctx := c.Request.Context()
@@ -60,11 +68,26 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 		if accountLabel == "" {
 			accountLabel = account.Email
 		}
-		secureCookie := cfg.Env == "production"
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
-		c.SetCookie("admin_user", accountLabel, 3600, "/", "", secureCookie, true)
-		c.SetCookie("admin_email", account.Email, 3600, "/", "", secureCookie, true)
+		session, err := sessionMgr.IssueSession(ctx, account)
+		if err != nil {
+			slog.Error("admin session issuance failed",
+				slog.String("user", account.Email),
+				slog.Any("err", err))
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "internal server error"})
+			return
+		}
+		setSessionCookies(c, cfg, session, accountLabel, account.Email)
+		if remember {
+			if secret, tokenErr := sessionMgr.CreateRememberToken(ctx, account.ID, normalizeDeviceInfo(c.GetHeader("User-Agent"))); tokenErr != nil {
+				slog.Error("admin remember token issue failed",
+					slog.String("user", account.Email),
+					slog.Any("err", tokenErr))
+			} else {
+				setRememberCookie(c, cfg, secret)
+			}
+		} else {
+			clearRememberState(ctx, c, cfg, sessionMgr)
+		}
 		slog.Info("admin login succeeded",
 			slog.String("user", account.Email),
 			slog.String("ip", c.ClientIP()))
@@ -76,11 +99,23 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 	})
 
 	r.POST("/admin/logout", func(c *gin.Context) {
-		secureCookie := cfg.Env == "production"
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("admin", "", -1, "/", "", secureCookie, true)
-		c.SetCookie("admin_user", "", -1, "/", "", secureCookie, true)
-		c.SetCookie("admin_email", "", -1, "/", "", secureCookie, true)
+		ctx := c.Request.Context()
+		allDevices := c.PostForm("all_devices") == "1" || c.Query("all_devices") == "1"
+		sessionID, _ := c.Cookie(cfg.SessionCookieName)
+		if sessionID != "" {
+			if allDevices {
+				if session, err := sessionMgr.ValidateSession(ctx, sessionID); err == nil {
+					_ = sessionMgr.DestroyAllSessions(ctx, session.Profile.ID)
+					_ = sessionMgr.DeleteRememberTokensByUser(ctx, session.Profile.ID)
+				}
+			} else {
+				_ = sessionMgr.DestroySession(ctx, sessionID)
+			}
+		}
+		if !allDevices {
+			clearRememberState(ctx, c, cfg, sessionMgr)
+		}
+		clearSessionCookies(c, cfg)
 		if platformview.WantsHTMLResponse(c) {
 			c.Redirect(http.StatusFound, "/admin/login")
 			return
@@ -173,11 +208,16 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 			slog.String("user", created.Email),
 			slog.String("ip", c.ClientIP()))
 
-		secureCookie := cfg.Env == "production"
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("admin", "1", 3600, "/", "", secureCookie, true)
-		c.SetCookie("admin_user", created.DisplayName, 3600, "/", "", secureCookie, true)
-		c.SetCookie("admin_email", created.Email, 3600, "/", "", secureCookie, true)
+		session, err := sessionMgr.IssueSession(ctx, created)
+		if err != nil {
+			slog.Error("admin session issuance failed",
+				slog.String("user", created.Email),
+				slog.Any("err", err))
+			c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "internal server error"})
+			return
+		}
+		setSessionCookies(c, cfg, session, created.DisplayName, created.Email)
+		clearRememberState(ctx, c, cfg, sessionMgr)
 
 		if isForm {
 			c.Redirect(http.StatusFound, "/admin?registered=1")
@@ -191,4 +231,70 @@ func RegisterRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Admi
 			"status": "registered",
 		})
 	})
+}
+
+func wantsRememberMe(c *gin.Context) bool {
+	v := c.PostForm("remember")
+	return v == "1" || strings.EqualFold(v, "on") || strings.EqualFold(v, "true")
+}
+
+func setSessionCookies(c *gin.Context, cfg platform.Config, session authdomain.AdminSession, displayName, email string) {
+	secureCookie := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	maxAge := sessionCookieMaxAge
+	c.SetCookie(cfg.SessionCookieName, session.ID, maxAge, "/", "", secureCookie, true)
+	c.SetCookie("admin", "1", maxAge, "/", "", secureCookie, true)
+	c.SetCookie("admin_user", displayName, maxAge, "/", "", secureCookie, true)
+	c.SetCookie("admin_email", email, maxAge, "/", "", secureCookie, true)
+}
+
+func clearSessionCookies(c *gin.Context, cfg platform.Config) {
+	secureCookie := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	for _, name := range []string{cfg.SessionCookieName, "admin", "admin_user", "admin_email"} {
+		c.SetCookie(name, "", -1, "/", "", secureCookie, true)
+	}
+	clearRememberCookie(c, cfg)
+}
+
+func setRememberCookie(c *gin.Context, cfg platform.Config, secret authsession.RememberTokenSecret) {
+	secureCookie := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	value := secret.Selector + ":" + secret.Validator
+	maxAge := rememberCookieMaxAge
+	c.SetCookie(cfg.RememberCookieName, value, maxAge, "/", "", secureCookie, true)
+}
+
+func clearRememberCookie(c *gin.Context, cfg platform.Config) {
+	secureCookie := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie(cfg.RememberCookieName, "", -1, "/", "", secureCookie, true)
+}
+
+func clearRememberState(ctx context.Context, c *gin.Context, cfg platform.Config, mgr *authsession.Manager) {
+	selector, _ := readRememberSelector(c, cfg)
+	if selector != "" {
+		_ = mgr.DeleteRememberToken(ctx, selector)
+	}
+	clearRememberCookie(c, cfg)
+}
+
+func readRememberSelector(c *gin.Context, cfg platform.Config) (string, string) {
+	value, err := c.Cookie(cfg.RememberCookieName)
+	if err != nil || value == "" {
+		return "", ""
+	}
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
+}
+
+func normalizeDeviceInfo(userAgent string) string {
+	ua := strings.TrimSpace(userAgent)
+	if len(ua) > 255 {
+		return ua[:255]
+	}
+	return ua
 }
