@@ -4,12 +4,16 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 )
 
 type requestIDKey struct{}
@@ -161,3 +165,51 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 
 // NOTE: For high-traffic endpoints, consider replacing this mutex-backed map with a sharded map,
 // atomic counters, or a dedicated rate-limiting backend (e.g., Redis) to avoid contention.
+
+type adminProfileKey struct{}
+
+// AdminAuth validates the admin session cookie and surfaces the admin profile in context.
+func AdminAuth(adminSvc authdomain.AdminService) gin.HandlerFunc {
+	logger := slog.Default()
+	return func(c *gin.Context) {
+		email, err := c.Cookie("admin_email")
+		if err != nil || strings.TrimSpace(email) == "" {
+			abortUnauthorized(c)
+			return
+		}
+		profile, err := adminSvc.GetProfile(c.Request.Context(), strings.TrimSpace(email))
+		if err != nil {
+			if errors.Is(err, authdomain.ErrAdminNotFound) {
+				logger.Warn("admin auth profile missing",
+					slog.String("email", email),
+					slog.String("request_id", GetRequestID(c)))
+			} else {
+				logger.Error("admin auth lookup failed",
+					slog.Any("err", err),
+					slog.String("request_id", GetRequestID(c)))
+			}
+			abortUnauthorized(c)
+			return
+		}
+		ctx := context.WithValue(c.Request.Context(), adminProfileKey{}, profile)
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	}
+}
+
+// AdminProfileFromContext extracts the authenticated admin profile when AdminAuth ran.
+func AdminProfileFromContext(c *gin.Context) (authdomain.Admin, bool) {
+	if v := c.Request.Context().Value(adminProfileKey{}); v != nil {
+		if profile, ok := v.(authdomain.Admin); ok {
+			return profile, true
+		}
+	}
+	return authdomain.Admin{}, false
+}
+
+func abortUnauthorized(c *gin.Context) {
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+		"error":      "unauthorized",
+		"request_id": GetRequestID(c),
+	})
+}
