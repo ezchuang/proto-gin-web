@@ -163,7 +163,7 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 	}
 }
 
-// NOTE: For high-traffic endpoints, consider replacing this mutex-backed map with a sharded map,
+// TODO: For high-traffic endpoints, consider replacing this mutex-backed map with a sharded map,
 // atomic counters, or a dedicated rate-limiting backend (e.g., Redis) to avoid contention.
 
 type adminProfileKey struct{}
