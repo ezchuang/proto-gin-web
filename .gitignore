@@ -13,6 +13,8 @@ db/flyway/
 Thumbs.db
 .idea/
 .vscode/
+.VSCodeCounter/
+
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
@@ -39,12 +41,6 @@ profile.cov
 go.work
 go.work.sum
 
-# env file
-.env
-
-# Editor/IDE
-# .idea/
-# .vscode/
 
 # Uploaded assets
 web/static/uploads/*
