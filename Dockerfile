@@ -24,7 +24,7 @@ ENV APP_ENV=production
 
 COPY --from=builder /out/server /app/server
 COPY web /app/web
-COPY internal/interfaces/http/templates /app/internal/interfaces/http/templates
+COPY internal/platform/http/templates /app/internal/platform/http/templates
 
 EXPOSE 8080
 
