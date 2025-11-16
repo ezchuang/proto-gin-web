@@ -255,7 +255,7 @@ func refreshSessionCookies(c *gin.Context, cfg platform.Config, sessionID string
 	c.SetSameSite(http.SameSiteStrictMode)
 	maxAge := defaultSessionCookieAge
 	c.SetCookie(cfg.SessionCookieName, sessionID, maxAge, "/", "", secure, true)
-	// c.SetCookie("admin", "1", maxAge, "/", "", secure, true)
+	// Lightweight display info cookies help SSR templates show current admin context without extra lookups.
 	c.SetCookie("admin_user", profile.DisplayName, maxAge, "/", "", secure, true)
 	c.SetCookie("admin_email", profile.Email, maxAge, "/", "", secure, true)
 }

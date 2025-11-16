@@ -1,118 +1,151 @@
-﻿# Proto Gin Web (Blog Starter Template)
+# Proto Gin Web
 
-Go + Gin blog starter prototypes. It showcases clean layering (Clean-ish), sqlc + pgx typed queries, SSR + SEO hooks, modular usecases and routing, connection pooling, structured logging, and readiness checks.
+Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragmatic template that shows how to wire clean-ish layering, sqlc/pgx repositories, Redis-backed admin sessions (with remember-me), modular routing, Swagger, and Docker-first workflows. Use it as a reference or seed for small/medium services.
 
-## Core Features
-- Go 1.24 (toolchain go1.25) with Gin router and middleware (Request-ID, structured logging, cache-control)
-- PostgreSQL 16 (Docker), pgx v5 + sqlc typed query package, Flyway migrations
-- SSR pages: home, post list, post detail with template helper `timefmt`
-- SEO endpoints: `robots.txt`, `sitemap.xml`, `rss.xml` plus extendable SEO stubs
-- Health probes: `/livez` for liveness, `/readyz` to verify DB connectivity
-- Admin sample: Redis-backed admin sessions + remember-me, login/logout, post CRUD, category/tag management and relations
+---
 
-## Project Layout
-```plaintext
-proto─gin─web/
-├─ cmd/
-|   └─ api/main.go
-├─ db/
-|   ├─ migrations/
-|   └─ queries/
+## Highlights
+
+- **Go 1.24 / toolchain go1.25** with Gin router, middleware (Request-ID, slog logger, recovery, IP rate limiter) and HTML templates.
+- **PostgreSQL 16 + sqlc + pgx v5** for typed queries, repository interfaces, and Flyway migrations.
+- **Redis session store + remember-me tokens** guarded by Argon2id passwords, cookie hardening, and session/device revocation helpers.
+- **Clean architecture contexts** (`admin`, `blog`, `platform`, `infrastructure`) keeping domain/app/adapters boundaries explicit.
+- **Public + admin surfaces**: SEO routes (`robots.txt`, `sitemap.xml`, `rss.xml`), `/livez` + `/readyz`, `/api/posts`, admin JSON APIs, and legacy admin UI.
+- **Dev experience**: Make targets, Docker Compose services (Postgres, Redis, API), swagger generation, and structured logging to stdout/file.
+
+---
+
+## Architecture Overview
+
+| Context | Responsibilities | Key Paths |
+|---------|------------------|-----------|
+| `internal/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI | `internal/admin/auth`, `internal/admin/content`, `internal/admin/ui` |
+| `internal/application` | Use cases/interfaces for admin, post, taxonomy domains | `internal/application/{admin,post,taxonomy}` |
+| `internal/blog` | Public pages + API + SEO + taxonomy models | `internal/blog/post`, `internal/blog/taxonomy` |
+| `internal/infrastructure` | pgx repositories, Redis session store, platform config/logger/feed helpers | `internal/infrastructure/{pg,redis,platform,feed}` |
+| `internal/platform/http` | Router, middleware, template loader, responder, SEO helpers | `internal/platform/http` |
+
+### Directory Layout (excerpt)
+
+```
+proto-gin-web/
+├─ cmd/api/main.go
+├─ db/{migrations,queries}
 ├─ internal/
-|   ├─ admin/
-|   |   ├─ auth/{domain,adapters/http}
-|   |   ├─ content/{app,adapters/http}
-|   |   └─ ui/{app,adapters/http,adapters/view}
-|   ├─ blog/
-|   |   ├─ post/{domain,adapters/api,adapters/public,adapters/view}
-|   |   └─ taxonomy/domain
-|   ├─ infrastructure/
-|   |   ├─ pg/
-|   |   └─ platform/
-|   ├─ platform/
-|   |   ├─ http/{middleware,templates,view}
-|   |   └─ seo/
-|   └─ interfaces/
-|       └─ auth/            (legacy cookie middleware)
-├─ web/static/
+│  ├─ admin/{auth,content,ui}
+│  ├─ application/{admin,post,taxonomy}
+│  ├─ blog/post/{domain,adapters}
+│  ├─ infrastructure/{pg,redis,platform}
+│  └─ platform/http/{middleware,templates,view,seo}
+├─ docs/          # swag output
+├─ web/static/    # css + demo assets + uploads
 ├─ Dockerfile
-├─ docker─compose.yml
+├─ docker-compose.yml
 ├─ Makefile
 └─ sqlc.yaml
 ```
 
+---
+
+## Features
+
+### Public
+- `GET /` landing page, `GET /posts` (pagination/filter/sort), `GET /posts/:slug`.
+- SEO: `GET /robots.txt`, `GET /sitemap.xml`, `GET /rss.xml`.
+- Health probes: `GET /livez`, `GET /readyz`.
+- JSON API: `GET /api/posts?limit=&offset=&category=&tag=&sort=`, `GET /api/posts/:slug`.
+
+### Admin API
+- Auth: `POST /admin/login`, `POST /admin/logout`, `POST /admin/register`, `GET/POST /admin/profile`.
+- Content: `POST /admin/posts`, `PUT /admin/posts/:slug`, `DELETE /admin/posts/:slug`.
+- Taxonomy: `POST /admin/categories`, `DELETE /admin/categories/:slug`, `POST /admin/tags`, `DELETE /admin/tags/:slug`.
+- Relations: `POST/DELETE /admin/posts/:slug/categories/:cat`, `POST/DELETE /admin/posts/:slug/tags/:tag`.
+
+### Security & Observability
+- Argon2id hashing, input normalization, remember-me split tokens stored in Postgres.
+- Redis session store with per-user session sets, TTL refresh (`Touch`), and device revocation.
+- Middleware stack: security headers, Request-ID, slog-based logger, panic recovery, rate limiter.
+- Swagger docs available under `/swagger/index.html` in non-production envs.
+
+---
+
 ## Getting Started
-1. Start database & run migrations
-   ```bash
-   make db-up
-   make migrate
-   ```
-2. Generate sqlc code
-   ```bash
-   make sqlc-docker    # or `make sqlc`
-   ```
-3. Install dependencies & run the app
-   ```bash
-   make deps
-   make run            # http://localhost:8080
-   ```
-4. 產生/更新 Swagger 文件
-   ```bash
-   go install github.com/swaggo/swag/cmd/swag@latest
-   swag init -g cmd/api/main.go -o docs
-   ```
-   開發環境可透過 `http://localhost:8080/swagger/index.html` 查看文件（production 預設不開放）。
+
+### Prerequisites
+- Go 1.24+ (toolchain go1.25 recommended)
+- Docker + Docker Compose
+
+### Local Run
+```bash
+make db-up          # start postgres
+make migrate        # flyway migrations
+make sqlc-docker    # or make sqlc
+make deps
+make run            # http://localhost:8080
+```
 
 ### Docker Workflow
 ```bash
-make up
-make logs
-make down
+make up             # build+start api + db
+make logs           # tail api/db logs
+make down           # stop & remove volumes
 ```
 
-## Useful Make Targets
-- db: `db-up`, `db-psql`, `migrate`, `migrate-info`, `migrate-repair`
-- codegen: `sqlc`, `sqlc-docker`
-- app lifecycle: `deps`, `run`, `build`, `up`, `logs`, `down`
+### Swagger Docs
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+swag init -g cmd/api/main.go -o docs
+# visit http://localhost:8080/swagger/index.html (non-production)
+```
+
+---
 
 ## Environment Variables
-- DB: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT`
-- Redis sessions: `REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`
-- App: `APP_ENV` (development/production), `PORT` (default 8080)
-- Cookies: `ADMIN_SESSION_COOKIE`, `ADMIN_REMEMBER_COOKIE`
-- SEO: `BASE_URL`, `SITE_NAME`, `SITE_DESCRIPTION`
-- Compose: `HOST_POSTGRES_PORT`, `HOST_APP_PORT`, `HOST_REDIS_PORT`
 
-### Sample Accounts
-Database migrations seed two demo admins and both Argon2 hashes resolve to the plain text password `password`.
+| Category | Variables |
+|----------|-----------|
+| Database | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST`, `POSTGRES_PORT` |
+| Redis    | `REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB` |
+| App      | `APP_ENV` (`development`/`production`), `PORT` (default `8080`), `BASE_URL`, `SITE_NAME`, `SITE_DESCRIPTION` |
+| Cookies  | `ADMIN_SESSION_COOKIE`, `ADMIN_REMEMBER_COOKIE` |
+| Compose  | `HOST_POSTGRES_PORT`, `HOST_APP_PORT`, `HOST_REDIS_PORT` |
 
-| Email               | Role  | Password |
-|---------------------|-------|----------|
-| `admin@example.com` | admin | `password` |
-| `demo@example.com`  | admin | `password` |
+Configure via `.env` (copy `.env.example`) or environment overrides.
 
-## Feature Summary
-- SSR templates: `/`, `/posts` (pagination/filter/sort), `/posts/:slug`
-- SEO: `/robots.txt`, `/sitemap.xml`, `/rss.xml`
-- API: `GET /api/posts?category=&tag=&sort=&limit=&offset=`
-- Admin sample:
-  - Auth: POST `/admin/login`, POST `/admin/logout`
-  - Posts: POST `/admin/posts`, PUT `/admin/posts/:slug`, DELETE `/admin/posts/:slug`
-  - Categories: POST `/admin/categories`, DELETE `/admin/categories/:slug`
-  - Tags: POST `/admin/tags`, DELETE `/admin/tags/:slug`
-  - Relations: POST/DELETE `/admin/posts/:slug/categories/:cat`, POST/DELETE `/admin/posts/:slug/tags/:tag`
+---
 
-## Architecture Notes
-- `internal/admin/*` + `internal/blog/*` follow context modules (`domain`, `app`, `adapters`, `view`) to keep DDD/CA seams explicit; legacy SSR admin UI is now housed in `internal/admin/ui/adapters/http`.
-- `internal/platform/http` owns the router, middleware, templates, and now enforces Redis-backed admin sessions plus remember-me recovery.
-- `internal/infrastructure/{pg,platform}` provide persistence implementations and config/logging bootstrap shared across contexts.
-- `db/queries` + `sqlc`: SQL -> typed accessors
-- Observability: Request-ID middleware, structured slog logging, cache-control helper, readiness probe
+## Sample Admin Accounts
+
+Database seeds create two demo admins (password = `password`):
+
+| Email               | Role  |
+|---------------------|-------|
+| `admin@example.com` | admin |
+| `demo@example.com`  | admin |
+
+Use them for UI/API testing.
+
+---
+
+## Make Targets Cheat Sheet
+
+| Category | Targets |
+|----------|---------|
+| Database | `db-up`, `db-psql`, `migrate`, `migrate-info`, `migrate-repair`, `db-down` |
+| Codegen  | `sqlc`, `sqlc-docker` |
+| App      | `deps`, `run`, `build`, `up`, `logs`, `down`, `api-build`, `clean` |
+
+---
 
 ## Roadmap Ideas
-- Session hardening: device metadata, audit logs, admin session management UI
-- Editorial workflow & versioning (post revision workflow)
-- Full-text search (tsvector)
-- Asset pipeline: fingerprint + minify static files, tighten CDN/Nginx caching
-- Observability: metrics, tracing, error tracking
-- Alternative persistence (e.g. GORM layer) for comparison
+
+- Admin session hardening: device metadata, audit logs, self-service session management.
+- Editorial workflow: drafts, revisions, publishing queues.
+- Search: PostgreSQL full-text or external search service.
+- Asset pipeline: hashing/minify static files, CDN cache hints.
+- Enhanced observability: metrics, tracing, error tracking integrations.
+- Alternate persistence layer (e.g., GORM) for comparison/testing.
+
+---
+
+MIT Licensed. Use, fork, and adapt as needed.

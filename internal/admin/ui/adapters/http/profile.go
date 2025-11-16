@@ -150,6 +150,7 @@ func refreshAdminCookies(c *gin.Context, cfg platform.Config, admin authdomain.A
 	secureCookie := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	maxAge := 30 * 60
+	// Keep the "friendly" cookies in sync so SSR templates and JS can read the latest admin name/email.
 	c.SetCookie("admin_user", admin.DisplayName, maxAge, "/", "", secureCookie, true)
 	c.SetCookie("admin_email", admin.Email, maxAge, "/", "", secureCookie, true)
 }
