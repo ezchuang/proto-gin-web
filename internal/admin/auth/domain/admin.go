@@ -24,6 +24,14 @@ var (
 	ErrAdminDisplayNameRequired = errors.New("admin: display name is required")
 	// ErrAdminRoleNotFound indicates the role lookup failed.
 	ErrAdminRoleNotFound = errors.New("admin: role not found")
+	// ErrAdminSessionNotFound indicates the session was missing or expired.
+	ErrAdminSessionNotFound = errors.New("admin: session not found")
+	// ErrAdminSessionExpired indicates the session exceeded its absolute lifetime.
+	ErrAdminSessionExpired = errors.New("admin: session expired")
+	// ErrAdminRememberTokenNotFound indicates the remember-me selector was not found.
+	ErrAdminRememberTokenNotFound = errors.New("admin: remember token not found")
+	// ErrAdminRememberTokenInvalid indicates the validator failed constant-time comparison.
+	ErrAdminRememberTokenInvalid = errors.New("admin: remember token invalid")
 )
 
 // Admin represents public administrator information.
@@ -84,6 +92,7 @@ type AdminProfileInput struct {
 // AdminRepository abstracts persistence concerns for admin accounts.
 type AdminRepository interface {
 	GetByEmail(ctx context.Context, email string) (StoredAdmin, error)
+	GetByID(ctx context.Context, id int64) (StoredAdmin, error)
 	Create(ctx context.Context, params AdminCreateParams) (StoredAdmin, error)
 	UpdateProfile(ctx context.Context, email string, params AdminProfileUpdateParams) (StoredAdmin, error)
 	FindRoleByName(ctx context.Context, role string) (AdminRole, error)
@@ -94,10 +103,48 @@ type AdminService interface {
 	Login(ctx context.Context, input AdminLoginInput) (Admin, error)
 	Register(ctx context.Context, input AdminRegisterInput) (Admin, error)
 	GetProfile(ctx context.Context, email string) (Admin, error)
+	GetProfileByID(ctx context.Context, id int64) (Admin, error)
 	UpdateProfile(ctx context.Context, email string, input AdminProfileInput) (Admin, error)
 }
 
 // NormalizeEmail lowercases and trims an email.
 func NormalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
+}
+
+// AdminSession captures authenticated session data stored in Redis.
+type AdminSession struct {
+	ID             string
+	Profile        Admin
+	IssuedAt       time.Time
+	AbsoluteExpiry time.Time
+}
+
+// SessionStore persists admin sessions.
+type SessionStore interface {
+	Save(ctx context.Context, session AdminSession, ttl time.Duration) error
+	Get(ctx context.Context, id string) (AdminSession, error)
+	Touch(ctx context.Context, session AdminSession, ttl time.Duration) error
+	Delete(ctx context.Context, id string) error
+	DeleteByUser(ctx context.Context, userID int64) error
+}
+
+// RememberToken stores opaque split-token metadata.
+type RememberToken struct {
+	Selector      string
+	ValidatorHash string
+	UserID        int64
+	DeviceInfo    string
+	ExpiresAt     time.Time
+	LastUsedAt    time.Time
+	Revoked       bool
+}
+
+// RememberTokenRepository persists remember tokens.
+type RememberTokenRepository interface {
+	Insert(ctx context.Context, token RememberToken) error
+	GetBySelector(ctx context.Context, selector string) (RememberToken, error)
+	Update(ctx context.Context, token RememberToken) error
+	Delete(ctx context.Context, selector string) error
+	DeleteByUser(ctx context.Context, userID int64) error
 }

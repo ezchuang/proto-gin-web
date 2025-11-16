@@ -32,5 +32,14 @@
     </fieldset>
     <button type="submit">Save Changes</button>
   </form>
+  <hr />
+  <section class="form form--stack">
+    <h3>Active Sessions</h3>
+    <p>Force sign out on every other device and browser.</p>
+    <form method="post" action="/admin/logout">
+      <input type="hidden" name="all_devices" value="1" />
+      <button type="submit" class="button button--logout">Log out everywhere</button>
+    </form>
+  </section>
 </section>
 {{ end }}

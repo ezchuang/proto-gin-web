@@ -131,6 +131,18 @@ func (s *Service) GetProfile(ctx context.Context, email string) (authdomain.Admi
 	return stored.Admin, nil
 }
 
+// GetProfileByID fetches an admin by identifier.
+func (s *Service) GetProfileByID(ctx context.Context, id int64) (authdomain.Admin, error) {
+	if id <= 0 {
+		return authdomain.Admin{}, authdomain.ErrAdminNotFound
+	}
+	stored, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return authdomain.Admin{}, err
+	}
+	return stored.Admin, nil
+}
+
 // UpdateProfile updates display name and optionally password.
 func (s *Service) UpdateProfile(ctx context.Context, email string, input authdomain.AdminProfileInput) (authdomain.Admin, error) {
 	normalized := authdomain.NormalizeEmail(email)

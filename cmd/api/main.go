@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 
+	authsession "proto-gin-web/internal/admin/auth/session"
 	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminuiusecase "proto-gin-web/internal/admin/ui/app"
 	adminusecase "proto-gin-web/internal/application/admin"
@@ -19,6 +21,7 @@ import (
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	"proto-gin-web/internal/infrastructure/platform"
+	redisstore "proto-gin-web/internal/infrastructure/redis"
 	httpapp "proto-gin-web/internal/platform/http"
 )
 
@@ -43,18 +46,31 @@ func main() {
 	defer pool.Close()
 
 	queries := appdb.New(pool)
+	rememberRepo := appdb.NewRememberTokenRepository(pool)
 	postRepo := appdb.NewPostRepository(pool)
 	postSvc := postusecase.NewService(postRepo)
 	adminRepo := appdb.NewAdminAccountRepository(queries)
 	adminSvc := adminusecase.NewService(adminRepo, adminusecase.Config{
 		AdminRoleName: "admin",
 	})
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cfg.RedisAddr,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Error("failed to initialize redis client", slog.Any("err", err))
+		os.Exit(1)
+	}
+	defer redisClient.Close()
+	sessionStore := redisstore.NewAdminSessionStore(redisClient)
+	sessionManager := authsession.NewManager(sessionStore, rememberRepo, authsession.Config{})
 	taxonomyRepo := appdb.NewTaxonomyRepository(queries)
 	taxonomySvc := taxonomyusecase.NewService(taxonomyRepo)
 	adminContentSvc := admincontentusecase.NewService(postSvc, taxonomySvc)
 	adminUISvc := adminuiusecase.NewService(postSvc)
 
-	r := httpapp.NewRouter(cfg, postSvc, adminSvc, adminContentSvc, adminUISvc)
+	r := httpapp.NewRouter(cfg, postSvc, adminSvc, adminContentSvc, adminUISvc, sessionManager)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

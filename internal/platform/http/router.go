@@ -12,6 +12,7 @@ import (
 
 	swaggerdocs "proto-gin-web/docs"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authsession "proto-gin-web/internal/admin/auth/session"
 	contenthttp "proto-gin-web/internal/admin/content/adapters/http"
 	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
@@ -24,7 +25,7 @@ import (
 )
 
 // NewRouter wires middleware, templates, and routes.
-func NewRouter(cfg platform.Config, postSvc postdomain.PostService, adminSvc authdomain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service) *gin.Engine {
+func NewRouter(cfg platform.Config, postSvc postdomain.PostService, adminSvc authdomain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -63,11 +64,12 @@ func NewRouter(cfg platform.Config, postSvc postdomain.PostService, adminSvc aut
 	apiroutes.RegisterRoutes(r, postSvc)
 	loginLimiter := NewIPRateLimiter(5, time.Minute)
 	registerLimiter := NewIPRateLimiter(3, time.Minute)
-	adminroutes.RegisterRoutes(r, cfg, adminSvc, loginLimiter, registerLimiter)
+	sessionGuard := AdminAuth(cfg, sessionMgr, adminSvc)
+	adminroutes.RegisterRoutes(r, cfg, adminSvc, sessionMgr, loginLimiter, registerLimiter, sessionGuard)
 	apiGroup := r.Group("/admin")
-	apiGroup.Use(AdminAuth(adminSvc))
+	apiGroup.Use(sessionGuard)
 	contenthttp.RegisterRoutes(apiGroup, adminContentSvc)
-	adminroutes.RegisterUIRoutes(r, cfg, adminSvc, adminUISvc)
+	adminroutes.RegisterUIRoutes(r, cfg, adminSvc, adminUISvc, sessionMgr, sessionGuard)
 	if cfg.Env != "production" {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}

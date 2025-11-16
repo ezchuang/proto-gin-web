@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authsession "proto-gin-web/internal/admin/auth/session"
+	"proto-gin-web/internal/infrastructure/platform"
 )
 
 type requestIDKey struct{}
@@ -168,23 +170,22 @@ func NewIPRateLimiter(maxRequests int, window time.Duration) gin.HandlerFunc {
 
 type adminProfileKey struct{}
 
+const (
+	defaultSessionCookieAge  = 30 * 60
+	defaultRememberCookieAge = 30 * 24 * 60 * 60
+)
+
 // AdminAuth validates the admin session cookie and surfaces the admin profile in context.
-func AdminAuth(adminSvc authdomain.AdminService) gin.HandlerFunc {
+func AdminAuth(cfg platform.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) gin.HandlerFunc {
 	logger := slog.Default()
 	return func(c *gin.Context) {
-		email, err := c.Cookie("admin_email")
-		if err != nil || strings.TrimSpace(email) == "" {
-			abortUnauthorized(c)
-			return
-		}
-		profile, err := adminSvc.GetProfile(c.Request.Context(), strings.TrimSpace(email))
+		profile, err := resolveAdminSession(c, cfg, sessionMgr, adminSvc)
 		if err != nil {
-			if errors.Is(err, authdomain.ErrAdminNotFound) {
-				logger.Warn("admin auth profile missing",
-					slog.String("email", email),
+			if errors.Is(err, authdomain.ErrAdminSessionNotFound) {
+				logger.Warn("admin auth session missing",
 					slog.String("request_id", GetRequestID(c)))
 			} else {
-				logger.Error("admin auth lookup failed",
+				logger.Error("admin auth resolution failed",
 					slog.Any("err", err),
 					slog.String("request_id", GetRequestID(c)))
 			}
@@ -193,6 +194,7 @@ func AdminAuth(adminSvc authdomain.AdminService) gin.HandlerFunc {
 		}
 		ctx := context.WithValue(c.Request.Context(), adminProfileKey{}, profile)
 		c.Request = c.Request.WithContext(ctx)
+		c.Set("admin_profile", profile)
 		c.Next()
 	}
 }
@@ -205,6 +207,96 @@ func AdminProfileFromContext(c *gin.Context) (authdomain.Admin, bool) {
 		}
 	}
 	return authdomain.Admin{}, false
+}
+
+func resolveAdminSession(c *gin.Context, cfg platform.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) (authdomain.Admin, error) {
+	ctx := c.Request.Context()
+	if sessionID, err := c.Cookie(cfg.SessionCookieName); err == nil && strings.TrimSpace(sessionID) != "" {
+		session, sessErr := sessionMgr.ValidateSession(ctx, strings.TrimSpace(sessionID))
+		if sessErr == nil {
+			refreshSessionCookies(c, cfg, session.ID, session.Profile)
+			return session.Profile, nil
+		}
+		if errors.Is(sessErr, authdomain.ErrAdminSessionExpired) || errors.Is(sessErr, authdomain.ErrAdminSessionNotFound) {
+			wipeSessionCookie(c, cfg)
+		} else if sessErr != nil {
+			return authdomain.Admin{}, sessErr
+		}
+	}
+	selector, validator := readRememberCookie(c, cfg)
+	if selector == "" || validator == "" {
+		return authdomain.Admin{}, authdomain.ErrAdminSessionNotFound
+	}
+	token, secret, err := sessionMgr.ValidateRememberToken(ctx, selector, validator, normalizeDeviceInfo(c.Request.UserAgent()))
+	if err != nil {
+		wipeRememberCookie(c, cfg)
+		if errors.Is(err, authdomain.ErrAdminRememberTokenInvalid) || errors.Is(err, authdomain.ErrAdminRememberTokenNotFound) {
+			return authdomain.Admin{}, authdomain.ErrAdminSessionNotFound
+		}
+		return authdomain.Admin{}, err
+	}
+	profile, err := adminSvc.GetProfileByID(ctx, token.UserID)
+	if err != nil {
+		_ = sessionMgr.DeleteRememberToken(ctx, token.Selector)
+		wipeRememberCookie(c, cfg)
+		return authdomain.Admin{}, err
+	}
+	newSession, err := sessionMgr.IssueSession(ctx, profile)
+	if err != nil {
+		return authdomain.Admin{}, err
+	}
+	refreshSessionCookies(c, cfg, newSession.ID, profile)
+	writeRememberCookie(c, cfg, secret)
+	return profile, nil
+}
+
+func refreshSessionCookies(c *gin.Context, cfg platform.Config, sessionID string, profile authdomain.Admin) {
+	secure := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	maxAge := defaultSessionCookieAge
+	c.SetCookie(cfg.SessionCookieName, sessionID, maxAge, "/", "", secure, true)
+	// c.SetCookie("admin", "1", maxAge, "/", "", secure, true)
+	c.SetCookie("admin_user", profile.DisplayName, maxAge, "/", "", secure, true)
+	c.SetCookie("admin_email", profile.Email, maxAge, "/", "", secure, true)
+}
+
+func wipeSessionCookie(c *gin.Context, cfg platform.Config) {
+	secure := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie(cfg.SessionCookieName, "", -1, "/", "", secure, true)
+}
+
+func readRememberCookie(c *gin.Context, cfg platform.Config) (string, string) {
+	value, err := c.Cookie(cfg.RememberCookieName)
+	if err != nil || value == "" {
+		return "", ""
+	}
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], parts[1]
+}
+
+func writeRememberCookie(c *gin.Context, cfg platform.Config, secret authsession.RememberTokenSecret) {
+	secure := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	maxAge := defaultRememberCookieAge
+	c.SetCookie(cfg.RememberCookieName, secret.Selector+":"+secret.Validator, maxAge, "/", "", secure, true)
+}
+
+func wipeRememberCookie(c *gin.Context, cfg platform.Config) {
+	secure := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	c.SetCookie(cfg.RememberCookieName, "", -1, "/", "", secure, true)
+}
+
+func normalizeDeviceInfo(userAgent string) string {
+	ua := strings.TrimSpace(userAgent)
+	if len(ua) > 255 {
+		return ua[:255]
+	}
+	return ua
 }
 
 func abortUnauthorized(c *gin.Context) {

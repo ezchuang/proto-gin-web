@@ -15,20 +15,20 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	adminuisvc "proto-gin-web/internal/admin/ui/app"
 	"proto-gin-web/internal/infrastructure/platform"
-	"proto-gin-web/internal/interfaces/auth"
 )
 
 // RegisterUIRoutes mounts legacy SSR pages that still live inside the admin context.
-func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service) {
+func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service, sessionMgr *authsession.Manager, sessionGuard gin.HandlerFunc) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")
 	})
 
-	admin := r.Group("/admin/ui", auth.AdminRequired())
+	admin := r.Group("/admin/ui", sessionGuard)
 	{
 		admin.GET("/posts", func(c *gin.Context) {
 			ctx := c.Request.Context()
@@ -46,9 +46,9 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 		})
 
 		admin.POST("/posts/new", func(c *gin.Context) {
-			profile, err := currentAdminProfile(c, adminSvc)
-			if err != nil {
-				handleAdminProfileError(c, err)
+			profile, ok := adminProfileFromContext(c)
+			if !ok {
+				handleAdminProfileError(c, errMissingAdminEmail)
 				return
 			}
 
@@ -161,16 +161,13 @@ func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.Ad
 
 var errMissingAdminEmail = errors.New("admin session missing email")
 
-func currentAdminProfile(c *gin.Context, adminSvc authdomain.AdminService) (authdomain.Admin, error) {
-	email, err := c.Cookie("admin_email")
-	if err != nil {
-		return authdomain.Admin{}, errMissingAdminEmail
+func adminProfileFromContext(c *gin.Context) (authdomain.Admin, bool) {
+	if v, ok := c.Get("admin_profile"); ok {
+		if profile, ok := v.(authdomain.Admin); ok {
+			return profile, true
+		}
 	}
-	email = strings.TrimSpace(email)
-	if email == "" {
-		return authdomain.Admin{}, errMissingAdminEmail
-	}
-	return adminSvc.GetProfile(c.Request.Context(), email)
+	return authdomain.Admin{}, false
 }
 
 func handleAdminProfileError(c *gin.Context, err error) {

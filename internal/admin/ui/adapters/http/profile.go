@@ -10,45 +10,21 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	"proto-gin-web/internal/infrastructure/platform"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc authdomain.AdminService) {
+func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager) {
 	group.GET("/profile", func(c *gin.Context) {
 		isForm := platformview.WantsHTMLResponse(c)
-		email, err := c.Cookie("admin_email")
-		if err != nil || email == "" {
+		profile, ok := adminProfileFromContext(c)
+		if !ok {
 			if isForm {
 				c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("please login first"))
 			} else {
 				c.JSON(http.StatusUnauthorized, gin.H{"ok": false, "error": "unauthorized"})
-			}
-			return
-		}
-
-		ctx := c.Request.Context()
-		profile, err := adminSvc.GetProfile(ctx, email)
-		if err != nil {
-			if errors.Is(err, authdomain.ErrAdminNotFound) {
-				slog.Warn("admin profile not found",
-					slog.String("user", email),
-					slog.String("ip", c.ClientIP()))
-				if isForm {
-					c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("account not found"))
-				} else {
-					c.JSON(http.StatusNotFound, gin.H{"ok": false, "error": "account not found"})
-				}
-				return
-			}
-			slog.Error("admin profile lookup failed",
-				slog.String("user", email),
-				slog.Any("err", err))
-			if isForm {
-				c.Redirect(http.StatusFound, "/admin/profile?error="+url.QueryEscape("internal server error"))
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"ok": false, "error": "internal server error"})
 			}
 			return
 		}
@@ -58,8 +34,8 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 
 	group.POST("/profile", func(c *gin.Context) {
 		isForm := platformview.WantsHTMLResponse(c)
-		email, err := c.Cookie("admin_email")
-		if err != nil || email == "" {
+		sessionProfile, ok := adminProfileFromContext(c)
+		if !ok {
 			if isForm {
 				c.Redirect(http.StatusFound, "/admin/login?error="+url.QueryEscape("please login first"))
 			} else {
@@ -69,7 +45,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 		}
 
 		ctx := c.Request.Context()
-		current, err := adminSvc.GetProfile(ctx, email)
+		current, err := adminSvc.GetProfile(ctx, sessionProfile.Email)
 		if err != nil {
 			if errors.Is(err, authdomain.ErrAdminNotFound) {
 				if isForm {
@@ -80,7 +56,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 				return
 			}
 			slog.Error("admin profile lookup failed",
-				slog.String("user", email),
+				slog.String("user", sessionProfile.Email),
 				slog.Any("err", err))
 			if isForm {
 				c.Redirect(http.StatusFound, "/admin/profile?error="+url.QueryEscape("internal server error"))
@@ -142,10 +118,14 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 			return
 		}
 
-		secureCookie := cfg.Env == "production"
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("admin_user", updated.DisplayName, 3600, "/", "", secureCookie, true)
-		c.SetCookie("admin_email", updated.Email, 3600, "/", "", secureCookie, true)
+		refreshAdminCookies(c, cfg, updated)
+		if sessionID, cookieErr := c.Cookie(cfg.SessionCookieName); cookieErr == nil && sessionID != "" {
+			if err := sessionMgr.RefreshSessionProfile(ctx, sessionID, updated); err != nil {
+				slog.Warn("admin session refresh failed",
+					slog.String("user", updated.Email),
+					slog.Any("err", err))
+			}
+		}
 
 		slog.Info("admin profile updated",
 			slog.String("user", updated.Email),
@@ -164,4 +144,12 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 			},
 		})
 	})
+}
+
+func refreshAdminCookies(c *gin.Context, cfg platform.Config, admin authdomain.Admin) {
+	secureCookie := cfg.Env == "production"
+	c.SetSameSite(http.SameSiteStrictMode)
+	maxAge := 30 * 60
+	c.SetCookie("admin_user", admin.DisplayName, maxAge, "/", "", secureCookie, true)
+	c.SetCookie("admin_email", admin.Email, maxAge, "/", "", secureCookie, true)
 }

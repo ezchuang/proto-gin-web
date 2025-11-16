@@ -17,6 +17,13 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7
+    container_name: proto_redis
+    restart: unless-stopped
+    ports:
+      - "${HOST_REDIS_PORT:-6379}:6379"
+
   api:
     build:
       context: .
@@ -25,6 +32,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       APP_ENV: ${APP_ENV:-development}
       PORT: 8080
@@ -36,6 +45,9 @@ services:
       BASE_URL: http://localhost:${HOST_APP_PORT:-8080}
       SITE_NAME: ${SITE_NAME:-Proto}
       SITE_DESCRIPTION: ${SITE_DESCRIPTION:-Gin + SSR + SQLC prototype}
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
     ports:
       - "${HOST_APP_PORT:-8080}:8080"
     restart: unless-stopped
