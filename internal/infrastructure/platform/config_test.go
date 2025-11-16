@@ -8,7 +8,6 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("PORT", "")
 	t.Setenv("POSTGRES_USER", "")
 	t.Setenv("BASE_URL", "")
-	t.Setenv("ADMIN_USER", "")
 
 	cfg := Load()
 
@@ -24,9 +23,6 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.BaseURL != "http://localhost:8080" {
 		t.Fatalf("expected default BaseURL 'http://localhost:8080', got %q", cfg.BaseURL)
 	}
-	if cfg.AdminUser != "admin" {
-		t.Fatalf("expected default AdminUser 'admin', got %q", cfg.AdminUser)
-	}
 }
 
 func TestLoadOverrides(t *testing.T) {
@@ -34,7 +30,6 @@ func TestLoadOverrides(t *testing.T) {
 	t.Setenv("PORT", "9090")
 	t.Setenv("POSTGRES_USER", "tester")
 	t.Setenv("BASE_URL", "https://example.com")
-	t.Setenv("ADMIN_USER", "root")
 
 	cfg := Load()
 
@@ -49,8 +44,5 @@ func TestLoadOverrides(t *testing.T) {
 	}
 	if cfg.BaseURL != "https://example.com" {
 		t.Fatalf("expected BaseURL override 'https://example.com', got %q", cfg.BaseURL)
-	}
-	if cfg.AdminUser != "root" {
-		t.Fatalf("expected AdminUser override 'root', got %q", cfg.AdminUser)
 	}
 }

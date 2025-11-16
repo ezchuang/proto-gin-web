@@ -1,0 +1,135 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>{{ if .IsNew }}New Post{{ else }}Edit Post{{ end }}</h2>
+  {{ if .Error }}
+  <div class="alert alert--error">{{ .Error | html }}</div>
+  {{ end }}
+  {{ if .Success }}
+  <div class="alert alert--success">{{ .Success | html }}</div>
+  {{ end }}
+  <form method="post" enctype="multipart/form-data" action="{{ if .IsNew }}/admin/ui/posts/new{{ else }}/admin/ui/posts/{{ .Post.Slug }}{{ end }}">
+    <p>
+      <label>Title<br>
+        <input type="text" name="title" value="{{ if .Post }}{{ .Post.Title }}{{ end }}" required>
+      </label>
+    </p>
+    <p>
+      <label>Slug<br>
+        <input type="text" id="post-slug" name="slug" value="{{ if .Post }}{{ .Post.Slug }}{{ end }}" {{ if not .IsNew }}readonly{{ end }} required>
+      </label>
+    </p>
+    <p>
+      <label>Summary<br>
+        <input type="text" name="summary" value="{{ if .Post }}{{ .Post.Summary }}{{ end }}">
+      </label>
+    </p>
+    <p>
+      <label>Cover URL<br>
+        <input type="text" name="cover_url" value="{{ if .Post }}{{ .Post.CoverURL }}{{ end }}" placeholder="https://example.com/cover.jpg">
+      </label>
+    </p>
+    <p>
+      <label>Or Upload Cover<br>
+        <input type="file" name="cover_file" accept="image/png,image/jpeg,image/webp,image/gif">
+      </label>
+      <span class="form-note">Optional. JPG/PNG/WebP/GIF up to 5&nbsp;MB.</span>
+    </p>
+    <p>
+      <label>Status<br>
+        <select name="status">
+          {{ $s := "" }}
+          {{ if .Post }}{{ $s = .Post.Status }}{{ end }}
+          <option value="draft" {{ if eq $s "draft" }}selected{{ end }}>draft</option>
+          <option value="published" {{ if eq $s "published" }}selected{{ end }}>published</option>
+          <option value="archived" {{ if eq $s "archived" }}selected{{ end }}>archived</option>
+        </select>
+      </label>
+    </p>
+    <p class="form-note">
+      <strong>Author</strong><br>
+      {{ if .IsNew }}
+      <span>{{ if .AdminUser }}{{ .AdminUser | html }}{{ else }}Current admin{{ end }} (auto-assigned)</span>
+      {{ else }}
+      <span>ID #{{ .Post.AuthorID }} (kept)</span>
+      {{ end }}
+    </p>
+    <p>
+      <label>Content (Markdown)<br>
+        <textarea name="content_md" rows="12" style="width:100%">{{ if .Post }}{{ .Post.ContentMD }}{{ end }}</textarea>
+      </label>
+    </p>
+    <p class="form-actions">
+      <button type="submit" class="button">{{ if .IsNew }}Create{{ else }}Save{{ end }}</button>
+      <button type="button" id="preview-button" class="button button--ghost" title="Enter a slug to preview" disabled>Preview</button>
+      {{ if not .IsNew }}
+      <button type="submit" class="button button--ghost" formaction="/admin/ui/posts/{{ .Post.Slug }}/delete" formmethod="post" onclick="return confirm('Delete this post?')">Delete</button>
+      {{ end }}
+    </p>
+  </form>
+
+  {{ if not .IsNew }}
+  <hr>
+  <h3>Categories</h3>
+  <p>
+    {{ range .Categories }}
+      <form method="post" action="/admin/ui/posts/{{ $.Post.Slug }}/categories/remove" style="display:inline">
+        <input type="hidden" name="category_slug" value="{{ .Slug }}">
+        <button type="submit" class="button button--ghost button--pill">{{ .Name }} ✕</button>
+      </form>
+    {{ else }}
+      <em>None</em>
+    {{ end }}
+  </p>
+  <form method="post" action="/admin/ui/posts/{{ .Post.Slug }}/categories/add">
+    <input type="text" name="category_slug" placeholder="category-slug">
+    <button type="submit" class="button">Add Category</button>
+  </form>
+
+  <h3>Tags</h3>
+  <p>
+    {{ range .Tags }}
+      <form method="post" action="/admin/ui/posts/{{ $.Post.Slug }}/tags/remove" style="display:inline">
+        <input type="hidden" name="tag_slug" value="{{ .Slug }}">
+        <button type="submit" class="button button--ghost button--pill">{{ .Name }} ✕</button>
+      </form>
+    {{ else }}
+      <em>None</em>
+    {{ end }}
+  </p>
+  <form method="post" action="/admin/ui/posts/{{ .Post.Slug }}/tags/add">
+    <input type="text" name="tag_slug" placeholder="tag-slug">
+    <button type="submit" class="button">Add Tag</button>
+  </form>
+  {{ end }}
+
+  <script>
+  (function () {
+    const slugInput = document.getElementById("post-slug");
+    const previewBtn = document.getElementById("preview-button");
+    if (!slugInput || !previewBtn) {
+      return;
+    }
+
+    const update = () => {
+      const slug = (slugInput.value || "").trim();
+      previewBtn.disabled = slug.length === 0;
+      previewBtn.title = slug.length ? "Preview /posts/" + slug : "Enter a slug to preview";
+    };
+
+    previewBtn.addEventListener("click", () => {
+      const slug = (slugInput.value || "").trim();
+      if (!slug) {
+        return;
+      }
+      window.open("/posts/" + slug, "_blank", "noopener,noreferrer");
+    });
+
+    slugInput.addEventListener("input", update);
+    update();
+  })();
+  </script>
+</section>
+{{ end }}
+

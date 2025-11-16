@@ -5,28 +5,28 @@ import (
 	"errors"
 	"strings"
 
-	"proto-gin-web/internal/domain"
+	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
 // Service implements domain.TaxonomyService with validation and repository delegation.
 type Service struct {
-	repo domain.TaxonomyRepository
+	repo taxdomain.TaxonomyRepository
 }
 
-var _ domain.TaxonomyService = (*Service)(nil)
+var _ taxdomain.TaxonomyService = (*Service)(nil)
 
 // NewService creates a taxonomy service.
-func NewService(repo domain.TaxonomyRepository) *Service {
+func NewService(repo taxdomain.TaxonomyRepository) *Service {
 	return &Service{repo: repo}
 }
 
 // CreateCategory validates input and persists a new category.
-func (s *Service) CreateCategory(ctx context.Context, input domain.CreateCategoryInput) (domain.Category, error) {
+func (s *Service) CreateCategory(ctx context.Context, input taxdomain.CreateCategoryInput) (taxdomain.Category, error) {
 	normalized, err := normalizeNameSlug(input.Name, input.Slug)
 	if err != nil {
-		return domain.Category{}, err
+		return taxdomain.Category{}, err
 	}
-	return s.repo.CreateCategory(ctx, domain.CreateCategoryInput{
+	return s.repo.CreateCategory(ctx, taxdomain.CreateCategoryInput{
 		Name: normalized.name,
 		Slug: normalized.slug,
 	})
@@ -41,12 +41,12 @@ func (s *Service) DeleteCategory(ctx context.Context, slug string) error {
 }
 
 // CreateTag validates input and persists a new tag.
-func (s *Service) CreateTag(ctx context.Context, input domain.CreateTagInput) (domain.Tag, error) {
+func (s *Service) CreateTag(ctx context.Context, input taxdomain.CreateTagInput) (taxdomain.Tag, error) {
 	normalized, err := normalizeNameSlug(input.Name, input.Slug)
 	if err != nil {
-		return domain.Tag{}, err
+		return taxdomain.Tag{}, err
 	}
-	return s.repo.CreateTag(ctx, domain.CreateTagInput{
+	return s.repo.CreateTag(ctx, taxdomain.CreateTagInput{
 		Name: normalized.name,
 		Slug: normalized.slug,
 	})
