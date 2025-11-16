@@ -1,0 +1,26 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Administrator Sign In</h2>
+  {{ if .Error }}
+  <p class="error">{{ .Error | html }}</p>
+  {{ end }}
+  <form method="post" action="/admin/login" class="form">
+    <label>
+      Email address
+      <input type="email" name="u" required autocomplete="username" />
+    </label>
+    <label>
+      Password
+      <input type="password" name="p" required autocomplete="current-password" />
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" name="remember" value="1" />
+      Keep me signed in on this device
+    </label>
+    <button type="submit">Sign in</button>
+  </form>
+  <p><a href="/admin/register">Need an account?</a></p>
+</section>
+{{ end }}

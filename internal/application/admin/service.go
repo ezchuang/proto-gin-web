@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/crypto/argon2"
 
-	"proto-gin-web/internal/domain"
+	authdomain "proto-gin-web/internal/admin/auth/domain"
 )
 
 const (
@@ -23,21 +23,19 @@ const (
 // Config exposes optional knobs impacting admin behaviour.
 type Config struct {
 	AdminRoleName     string
-	LegacyUser        string
-	LegacyPassword    string
 	PasswordMinLength int
 }
 
 // Service implements admin use cases.
 type Service struct {
-	repo domain.AdminRepository
+	repo authdomain.AdminRepository
 	cfg  Config
 }
 
-var _ domain.AdminService = (*Service)(nil)
+var _ authdomain.AdminService = (*Service)(nil)
 
 // NewService creates an admin service backed by a repository.
-func NewService(repo domain.AdminRepository, cfg Config) *Service {
+func NewService(repo authdomain.AdminRepository, cfg Config) *Service {
 	if cfg.AdminRoleName == "" {
 		cfg.AdminRoleName = defaultAdminRoleName
 	}
@@ -48,103 +46,112 @@ func NewService(repo domain.AdminRepository, cfg Config) *Service {
 }
 
 // Login authenticates an admin account.
-func (s *Service) Login(ctx context.Context, input domain.AdminLoginInput) (domain.Admin, error) {
-	email := domain.NormalizeEmail(input.Email)
+func (s *Service) Login(ctx context.Context, input authdomain.AdminLoginInput) (authdomain.Admin, error) {
+	email := authdomain.NormalizeEmail(input.Email)
 	password := strings.TrimSpace(input.Password)
 	if email == "" || password == "" {
-		return domain.Admin{}, domain.ErrAdminInvalidCredentials
+		return authdomain.Admin{}, authdomain.ErrAdminInvalidCredentials
 	}
 
 	stored, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, domain.ErrAdminNotFound) && s.legacyMatches(email, password) {
-			return s.legacyAdmin(email), nil
+		if errors.Is(err, authdomain.ErrAdminNotFound) {
+			return authdomain.Admin{}, authdomain.ErrAdminInvalidCredentials
 		}
-		if errors.Is(err, domain.ErrAdminNotFound) {
-			return domain.Admin{}, domain.ErrAdminInvalidCredentials
-		}
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
 	}
 
 	ok, verifyErr := verifyArgon2idHash(stored.PasswordHash, password)
 	if verifyErr != nil {
-		return domain.Admin{}, verifyErr
+		return authdomain.Admin{}, verifyErr
 	}
 	if !ok {
-		return domain.Admin{}, domain.ErrAdminInvalidCredentials
+		return authdomain.Admin{}, authdomain.ErrAdminInvalidCredentials
 	}
 	return stored.Admin, nil
 }
 
 // Register provisions a new admin account.
-func (s *Service) Register(ctx context.Context, input domain.AdminRegisterInput) (domain.Admin, error) {
-	email := domain.NormalizeEmail(input.Email)
+func (s *Service) Register(ctx context.Context, input authdomain.AdminRegisterInput) (authdomain.Admin, error) {
+	email := authdomain.NormalizeEmail(input.Email)
 	if email == "" || !isLikelyEmail(email) {
-		return domain.Admin{}, domain.ErrAdminInvalidEmail
+		return authdomain.Admin{}, authdomain.ErrAdminInvalidEmail
 	}
 	password := strings.TrimSpace(input.Password)
 	confirm := strings.TrimSpace(input.ConfirmPassword)
 	if password == "" || confirm == "" {
-		return domain.Admin{}, domain.ErrAdminPasswordTooShort
+		return authdomain.Admin{}, authdomain.ErrAdminPasswordTooShort
 	}
 	if len(password) < s.cfg.PasswordMinLength {
-		return domain.Admin{}, domain.ErrAdminPasswordTooShort
+		return authdomain.Admin{}, authdomain.ErrAdminPasswordTooShort
 	}
 	if password != confirm {
-		return domain.Admin{}, domain.ErrAdminPasswordMismatch
+		return authdomain.Admin{}, authdomain.ErrAdminPasswordMismatch
 	}
 
 	if _, err := s.repo.GetByEmail(ctx, email); err == nil {
-		return domain.Admin{}, domain.ErrAdminEmailExists
-	} else if !errors.Is(err, domain.ErrAdminNotFound) {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, authdomain.ErrAdminEmailExists
+	} else if !errors.Is(err, authdomain.ErrAdminNotFound) {
+		return authdomain.Admin{}, err
 	}
 
 	role, err := s.repo.FindRoleByName(ctx, s.cfg.AdminRoleName)
 	if err != nil {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
 	}
 
 	hash, err := hashArgon2idPassword(password)
 	if err != nil {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
 	}
 
 	display := deriveDisplayName(email)
-	stored, err := s.repo.Create(ctx, domain.AdminCreateParams{
+	stored, err := s.repo.Create(ctx, authdomain.AdminCreateParams{
 		Email:        email,
 		DisplayName:  display,
 		PasswordHash: hash,
 		RoleID:       role.ID,
 	})
 	if err != nil {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
 	}
 	return stored.Admin, nil
 }
 
 // GetProfile fetches admin profile details.
-func (s *Service) GetProfile(ctx context.Context, email string) (domain.Admin, error) {
-	normalized := domain.NormalizeEmail(email)
+func (s *Service) GetProfile(ctx context.Context, email string) (authdomain.Admin, error) {
+	normalized := authdomain.NormalizeEmail(email)
 	if normalized == "" {
-		return domain.Admin{}, domain.ErrAdminNotFound
+		return authdomain.Admin{}, authdomain.ErrAdminNotFound
 	}
 	stored, err := s.repo.GetByEmail(ctx, normalized)
 	if err != nil {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
+	}
+	return stored.Admin, nil
+}
+
+// GetProfileByID fetches an admin by identifier.
+func (s *Service) GetProfileByID(ctx context.Context, id int64) (authdomain.Admin, error) {
+	if id <= 0 {
+		return authdomain.Admin{}, authdomain.ErrAdminNotFound
+	}
+	stored, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return authdomain.Admin{}, err
 	}
 	return stored.Admin, nil
 }
 
 // UpdateProfile updates display name and optionally password.
-func (s *Service) UpdateProfile(ctx context.Context, email string, input domain.AdminProfileInput) (domain.Admin, error) {
-	normalized := domain.NormalizeEmail(email)
+func (s *Service) UpdateProfile(ctx context.Context, email string, input authdomain.AdminProfileInput) (authdomain.Admin, error) {
+	normalized := authdomain.NormalizeEmail(email)
 	if normalized == "" {
-		return domain.Admin{}, domain.ErrAdminNotFound
+		return authdomain.Admin{}, authdomain.ErrAdminNotFound
 	}
 	display := strings.TrimSpace(input.DisplayName)
 	if display == "" {
-		return domain.Admin{}, domain.ErrAdminDisplayNameRequired
+		return authdomain.Admin{}, authdomain.ErrAdminDisplayNameRequired
 	}
 
 	var passwordHash *string
@@ -152,44 +159,26 @@ func (s *Service) UpdateProfile(ctx context.Context, email string, input domain.
 	confirm := strings.TrimSpace(input.ConfirmPassword)
 	if pass != "" || confirm != "" {
 		if pass != confirm {
-			return domain.Admin{}, domain.ErrAdminPasswordMismatch
+			return authdomain.Admin{}, authdomain.ErrAdminPasswordMismatch
 		}
 		if len(pass) < s.cfg.PasswordMinLength {
-			return domain.Admin{}, domain.ErrAdminPasswordTooShort
+			return authdomain.Admin{}, authdomain.ErrAdminPasswordTooShort
 		}
 		hash, err := hashArgon2idPassword(pass)
 		if err != nil {
-			return domain.Admin{}, err
+			return authdomain.Admin{}, err
 		}
 		passwordHash = &hash
 	}
 
-	stored, err := s.repo.UpdateProfile(ctx, normalized, domain.AdminProfileUpdateParams{
+	stored, err := s.repo.UpdateProfile(ctx, normalized, authdomain.AdminProfileUpdateParams{
 		DisplayName:  display,
 		PasswordHash: passwordHash,
 	})
 	if err != nil {
-		return domain.Admin{}, err
+		return authdomain.Admin{}, err
 	}
 	return stored.Admin, nil
-}
-
-func (s *Service) legacyMatches(email, password string) bool {
-	if s.cfg.LegacyUser == "" || s.cfg.LegacyPassword == "" {
-		return false
-	}
-	return strings.EqualFold(email, s.cfg.LegacyUser) && password == s.cfg.LegacyPassword
-}
-
-func (s *Service) legacyAdmin(email string) domain.Admin {
-	display := strings.TrimSpace(s.cfg.LegacyUser)
-	if display == "" {
-		display = email
-	}
-	return domain.Admin{
-		Email:       email,
-		DisplayName: display,
-	}
 }
 
 func hashArgon2idPassword(password string) (string, error) {

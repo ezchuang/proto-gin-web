@@ -14,6 +14,13 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
+    "securityDefinitions": {
+        "AdminCookieAuth": {
+            "type": "apiKey",
+            "name": "admin_email",
+            "in": "cookie"
+        }
+    },
     "paths": {
         "/admin/categories": {
             "post": {
@@ -27,6 +34,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Create category",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Category payload",
@@ -66,6 +78,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Delete category",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -104,6 +121,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Create a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Post payload",
@@ -150,6 +172,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Update a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -195,6 +222,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Delete a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -226,6 +258,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Attach a category to a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -262,6 +299,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Remove a category from a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -300,6 +342,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Attach a tag to a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -336,6 +383,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Remove a tag from a post",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",
@@ -380,6 +432,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Create tag",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "description": "Tag payload",
@@ -419,6 +476,11 @@ const docTemplate = `{
                     "Admin"
                 ],
                 "summary": "Delete tag",
+                "security": [
+                    {
+                        "AdminCookieAuth": []
+                    }
+                ],
                 "parameters": [
                     {
                         "type": "string",

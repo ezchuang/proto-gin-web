@@ -1,0 +1,47 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>{{ .SiteName | html }}</h2>
+  <p>Welcome{{ if .User }}, {{ .User | html }}{{ end }}</p>
+  <p>{{ .SiteDescription | html }}</p>
+  <ul>
+    <li>Environment: <code>{{ .Env | html }}</code></li>
+    <li>Base URL: <code>{{ .BaseURL | html }}</code></li>
+  </ul>
+  <section>
+    <h3>Health Check</h3>
+    <div class="quick-links">
+      <a class="chip-link" href="{{ .LivezURL | html }}" target="_blank" rel="noreferrer noopener">Livez</a>
+      <a class="chip-link" href="{{ .ReadyzURL | html }}" target="_blank" rel="noreferrer noopener">Readyz</a>
+    </div>
+  </section>
+
+  <section>
+    <h3>Features</h3>
+    <div class="quick-links">
+      <a class="chip-link" href="{{ .PostsURL | html }}">Public Posts</a>
+      {{ if .AdminUser }}
+      <a class="chip-link" href="/admin">Admin Dashboard</a>
+      <a class="chip-link" href="{{ .AdminUIURL | html }}">Manage Posts</a>
+      <a class="chip-link" href="{{ .AdminNewPostURL | html }}">Create post</a>
+      <a class="chip-link" href="/admin/profile">Profile & Password</a>
+      {{ end }}
+    </div>
+    {{ if not .AdminUser }}
+    <p class="quick-links__notice">Login to unlock admin quick links.</p>
+    {{ end }}
+  </section>
+
+  <section>
+    <h3>Quick Links</h3>
+    <div class="quick-links">
+      <a class="chip-link" href="{{ .APIPostsURL | html }}" target="_blank" rel="noreferrer noopener">Posts API</a>
+      {{ if .SwaggerURL }}
+      <a class="chip-link" href="{{ .SwaggerURL | html }}" target="_blank" rel="noreferrer noopener">Swagger UI</a>
+      {{ end }}
+      <a class="chip-link" href="{{ .DocsURL | html }}" target="_blank" rel="noreferrer noopener">Gin Documentation</a>
+    </div>
+  </section>
+</section>
+{{ end }}

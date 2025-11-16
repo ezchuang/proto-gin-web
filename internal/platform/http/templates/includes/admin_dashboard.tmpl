@@ -1,0 +1,27 @@
+{{ template "layout" . }}
+
+{{ define "content" }}
+<section>
+  <h2>Admin Dashboard</h2>
+  {{ if .Registered }}
+  <p class="success">Welcome aboard! Your administrator account is ready.</p>
+  {{ end }}
+  <p>Signed in as {{ .User | html }}.</p>
+  <section>
+    <h3>Features</h3>
+    {{/* <div class="quick-links"> */}}
+    <div>
+      <a class="chip-link" href="/admin/ui/posts">Manage Posts</a>
+      <a class="chip-link" href="/admin/ui/posts/new">Create post</a>
+      <a class="chip-link" href="/admin/profile">Profile & Password</a>
+    </div>
+  </section>
+
+  <section>
+    <h3></h3>
+    <form method="post" action="/admin/logout" class="logout-form">
+      <button type="submit" class="button button--logout">Log out</button>
+    </form>
+  </section>
+</section>
+{{ end }}
