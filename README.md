@@ -9,8 +9,8 @@ Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragm
 - **Go 1.24 / toolchain go1.25** with Gin router, middleware (Request-ID, slog logger, recovery, IP rate limiter) and HTML templates.
 - **PostgreSQL 16 + sqlc + pgx v5** for typed queries, repository interfaces, and Flyway migrations.
 - **Redis session store + remember-me tokens** guarded by Argon2id passwords, cookie hardening, and session/device revocation helpers.
-- **Clean architecture contexts** (`admin`, `blog`, `platform`, `infrastructure`) keeping domain/app/adapters boundaries explicit.
-- **Public + admin surfaces**: SEO routes (`robots.txt`, `sitemap.xml`, `rss.xml`), `/livez` + `/readyz`, `/api/posts`, admin JSON APIs, and legacy admin UI.
+- **Clean architecture + DDD contexts** (`admin`, `blog`, `platform`, `infrastructure`) keeping domain/app/adapters boundaries explicit.
+- **Public + admin surfaces**: SEO routes (`robots.txt`, `sitemap.xml`, `rss.xml`), `/livez` + `/readyz`, `/api/posts`, admin JSON APIs, and legacy admin UI (kept for demo/backward compatibility).
 - **Dev experience**: Make targets, Docker Compose services (Postgres, Redis, API), swagger generation, and structured logging to stdout/file.
 
 ---
@@ -19,7 +19,7 @@ Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragm
 
 | Context | Responsibilities | Key Paths |
 |---------|------------------|-----------|
-| `internal/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI | `internal/admin/auth`, `internal/admin/content`, `internal/admin/ui` |
+| `internal/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI (demo) | `internal/admin/auth`, `internal/admin/content`, `internal/admin/ui` |
 | `internal/application` | Use cases/interfaces for admin, post, taxonomy domains | `internal/application/{admin,post,taxonomy}` |
 | `internal/blog` | Public pages + API + SEO + taxonomy models | `internal/blog/post`, `internal/blog/taxonomy` |
 | `internal/infrastructure` | pgx repositories, Redis session store, platform config/logger/feed helpers | `internal/infrastructure/{pg,redis,platform,feed}` |
@@ -139,12 +139,8 @@ Use them for UI/API testing.
 
 ## Roadmap Ideas
 
-- Admin session hardening: device metadata, audit logs, self-service session management.
-- Editorial workflow: drafts, revisions, publishing queues.
-- Search: PostgreSQL full-text or external search service.
-- Asset pipeline: hashing/minify static files, CDN cache hints.
-- Enhanced observability: metrics, tracing, error tracking integrations.
-- Alternate persistence layer (e.g., GORM) for comparison/testing.
+- API/UI separation: run the Go backend purely as JSON APIs while a decoupled front-end (SPA or SSR) consumes them.
+- GORM data layer: offer optional repositories implemented with GORM (grom) alongside the existing sqlc/pgx stack for comparison.
 
 ---
 
