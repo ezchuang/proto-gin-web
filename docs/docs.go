@@ -17,8 +17,9 @@ const docTemplate = `{
     "securityDefinitions": {
         "AdminCookieAuth": {
             "type": "apiKey",
-            "name": "admin_email",
-            "in": "cookie"
+            "name": "admin_session",
+            "in": "cookie",
+            "description": "Swagger UI \u7121\u6cd5\u81ea\u52d5\u767b\u5165\u6216\u5beb\u5165 cookie\uff0c\u8acb\u53e6\u958b\u5206\u9801\u622a\u5230 /admin/login \u767b\u5165\u5f97\u5230 admin_session cookie \u5f8c\u518d\u8fd4\u56de Swagger \u767c\u9001\u8acb\u6c42\u3002"
         }
     },
     "paths": {
@@ -878,7 +879,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "1.1.2",
 	Host:             "",
 	BasePath:         "/",
 	Schemes:          []string{"http", "https"},

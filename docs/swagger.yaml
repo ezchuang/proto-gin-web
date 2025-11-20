@@ -2,8 +2,9 @@ basePath: /
 securityDefinitions:
   AdminCookieAuth:
     type: apiKey
-    name: admin_email
+    name: admin_session
     in: cookie
+    description: Swagger UI 無法自動登入或寫入 cookie，請另開分頁到網站入口登入，完成登入取得 admin_session cookie 後再回到 Swagger 使用受保護 API。
 definitions:
   admin.AdminCategoryResponse:
     properties:
@@ -197,7 +198,7 @@ info:
   contact: {}
   description: Public endpoints for blog content plus admin content APIs.
   title: Proto Gin Web API
-  version: "1.0"
+  version: "1.1.2"
 paths:
   /admin/categories:
     post:
