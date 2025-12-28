@@ -65,6 +65,7 @@ proto-gin-web/
 - Argon2id hashing, input normalization, remember-me split tokens stored in Postgres.
 - Redis session store with per-user session sets, TTL refresh (`Touch`), and device revocation.
 - Middleware stack: security headers, Request-ID, slog-based logger, panic recovery, rate limiter.
+- IP rate limiter is in-memory (single instance) and resets on restart; use Redis for distributed limits.
 - Swagger docs available under `/swagger/index.html` in non-production envs.
 
 ---
@@ -97,6 +98,7 @@ go install github.com/swaggo/swag/cmd/swag@latest
 swag init -g cmd/api/main.go -o docs
 # visit http://localhost:8080/swagger/index.html (non-production)
 ```
+Swagger route is enabled only when `APP_ENV != production`.
 
 ---
 
@@ -140,7 +142,7 @@ Use them for UI/API testing.
 ## Roadmap Ideas
 
 - API/UI separation: run the Go backend purely as JSON APIs while a decoupled front-end (SPA or SSR) consumes them.
-- GORM data layer: offer optional repositories implemented with GORM (grom) alongside the existing sqlc/pgx stack for comparison.
+- GORM data layer: offer optional repositories implemented with GORM (gorm) alongside the existing sqlc/pgx stack for comparison.
 
 ---
 
