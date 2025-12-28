@@ -1,4 +1,4 @@
-.PHONY: db-up db-down db-logs db-psql migrate migrate-info migrate-repair clean deps build run sqlc sqlc-docker up down logs api-build
+.PHONY: db-up db-down db-logs db-psql redis-up redis-down redis-logs migrate migrate-info migrate-repair clean deps build run sqlc sqlc-docker up down logs api-build
 
 # Use docker compose for orchestration
 DC := docker compose
@@ -14,6 +14,15 @@ db-logs:
 
 db-psql:
 	$(DC) exec db psql -U $$POSTGRES_USER -d $$POSTGRES_DB
+
+redis-up:
+	$(DC) up -d redis
+
+redis-down:
+	$(DC) stop redis
+
+redis-logs:
+	$(DC) logs -f redis
 
 migrate:
 	$(DC) run --rm flyway
