@@ -8,6 +8,8 @@ import (
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 )
 
+const cspNonceContextKey = "csp_nonce"
+
 // RenderHTML renders a view with the provided data.
 func RenderHTML(c *gin.Context, status int, name string, data gin.H) {
 	if data == nil {
@@ -36,6 +38,11 @@ func WithAdminContext(c *gin.Context, data gin.H) gin.H {
 	}
 	if adminEmail, err := c.Cookie("admin_email"); err == nil && adminEmail != "" {
 		data["AdminEmail"] = adminEmail
+	}
+	if nonce, ok := c.Get(cspNonceContextKey); ok {
+		if nonceValue, ok := nonce.(string); ok && nonceValue != "" {
+			data["CSPNonce"] = nonceValue
+		}
 	}
 	return data
 }

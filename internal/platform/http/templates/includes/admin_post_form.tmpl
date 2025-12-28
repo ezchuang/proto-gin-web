@@ -104,7 +104,7 @@
   </form>
   {{ end }}
 
-  <script>
+  <script{{ if .CSPNonce }} nonce="{{ .CSPNonce }}"{{ end }}>
   (function () {
     const slugInput = document.getElementById("post-slug");
     const previewBtn = document.getElementById("preview-button");

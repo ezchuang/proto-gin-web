@@ -15,7 +15,7 @@
     <meta property="og:url" content="{{ .BaseURL }}" />
     <meta property="og:site_name" content="{{ .SiteName }}" />
     {{ end }}
-    <script type="application/ld+json">
+    <script type="application/ld+json"{{ if .CSPNonce }} nonce="{{ .CSPNonce }}"{{ end }}>
     {
       "@context": "https://schema.org",
       "@type": "WebSite",

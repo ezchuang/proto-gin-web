@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"log/slog"
@@ -21,6 +22,7 @@ import (
 type requestIDKey struct{}
 
 const requestIDContextKey = "request_id"
+const cspNonceContextKey = "csp_nonce"
 
 // RequestID assigns/propagates a request identifier for tracing across logs and responses.
 func RequestID() gin.HandlerFunc {
@@ -105,14 +107,41 @@ func generateRequestID() string {
 	return hex.EncodeToString(b[:])
 }
 
+func generateCSPNonce() string {
+	buf := make([]byte, 16)
+	if _, err := rand.Read(buf); err != nil {
+		return ""
+	}
+	return base64.RawStdEncoding.EncodeToString(buf)
+}
+
+func buildCSP(nonce string) string {
+	directives := []string{
+		"default-src 'self'",
+		"base-uri 'self'",
+		"frame-ancestors 'none'",
+		"object-src 'none'",
+		"script-src 'self' 'nonce-" + nonce + "'",
+		"style-src 'self' 'unsafe-inline'",
+		"img-src 'self' https: data:",
+		"form-action 'self'",
+	}
+	return strings.Join(directives, "; ")
+}
+
 // SecurityHeaders adds common security-focused headers to every response.
 func SecurityHeaders() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		h := c.Writer.Header()
-		// CSP 暫時關閉以便 Swagger 等內嵌腳本正常運作。
-		// if _, ok := h["Content-Security-Policy"]; !ok {
-		// 	h.Set("Content-Security-Policy", "default-src 'self'; frame-ancestors 'none'; base-uri 'self'")
-		// }
+		nonce := generateCSPNonce()
+		if nonce != "" {
+			c.Set(cspNonceContextKey, nonce)
+		}
+		if nonce != "" && !strings.HasPrefix(c.Request.URL.Path, "/swagger") {
+			if _, ok := h["Content-Security-Policy"]; !ok {
+				h.Set("Content-Security-Policy", buildCSP(nonce))
+			}
+		}
 		h.Set("X-Frame-Options", "DENY")
 		h.Set("X-Content-Type-Options", "nosniff")
 		h.Set("Referrer-Policy", "same-origin")
