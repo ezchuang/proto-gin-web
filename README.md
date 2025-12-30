@@ -1,4 +1,4 @@
-# Proto Gin Web
+﻿# Proto Gin Web
 
 Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragmatic template that shows how to wire clean-ish layering, sqlc/pgx repositories, Redis-backed admin sessions (with remember-me), modular routing, Swagger, and Docker-first workflows. Use it as a reference or seed for small/medium services.
 
@@ -19,9 +19,9 @@ Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragm
 
 | Context | Responsibilities | Key Paths |
 |---------|------------------|-----------|
-| `internal/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI (demo) | `internal/admin/auth`, `internal/admin/content`, `internal/admin/ui` |
+| `internal/contexts/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI (demo) | `internal/contexts/admin/auth`, `internal/contexts/admin/content`, `internal/contexts/admin/ui` |
 | `internal/application` | Use cases/interfaces for admin, post, taxonomy domains | `internal/application/{admin,post,taxonomy}` |
-| `internal/blog` | Public pages + API + SEO + taxonomy models | `internal/blog/post`, `internal/blog/taxonomy` |
+| `internal/contexts/blog` | Public pages + API + SEO + taxonomy models | `internal/contexts/blog/post`, `internal/contexts/blog/taxonomy` |
 | `internal/infrastructure` | pgx repositories, Redis session store, platform config/logger/feed helpers | `internal/infrastructure/{pg,redis,platform,feed}` |
 | `internal/platform/http` | Router, middleware, template loader, responder, SEO helpers | `internal/platform/http` |
 
@@ -147,3 +147,4 @@ Use them for UI/API testing.
 ---
 
 MIT Licensed. Use, fork, and adapt as needed.
+

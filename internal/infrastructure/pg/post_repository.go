@@ -1,12 +1,12 @@
-package pg
+﻿package pg
 
 import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	postdomain "proto-gin-web/internal/blog/post/domain"
-	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
+	postdomain "proto-gin-web/internal/contexts/blog/post/domain"
+	taxdomain "proto-gin-web/internal/contexts/blog/taxonomy/domain"
 )
 
 // PostRepository provides a postdomain.PostRepository backed by pgx queries.
@@ -174,3 +174,4 @@ func mapTags(tags []Tag) []taxdomain.Tag {
 	}
 	return out
 }
+

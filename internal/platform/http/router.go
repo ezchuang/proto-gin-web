@@ -11,15 +11,15 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	swaggerdocs "proto-gin-web/docs"
-	authsession "proto-gin-web/internal/admin/auth/session"
-	contenthttp "proto-gin-web/internal/admin/content/adapters/http"
-	admincontentusecase "proto-gin-web/internal/admin/content/app"
-	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
-	adminuiusecase "proto-gin-web/internal/admin/ui/app"
-	adminusecase "proto-gin-web/internal/admin/auth/app"
-	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
-	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
-	postusecase "proto-gin-web/internal/blog/post/app"
+	authsession "proto-gin-web/internal/contexts/admin/auth/session"
+	contenthttp "proto-gin-web/internal/contexts/admin/content/adapters/http"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/app"
+	adminroutes "proto-gin-web/internal/contexts/admin/ui/adapters/http"
+	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/app"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
+	apiroutes "proto-gin-web/internal/contexts/blog/post/adapters/api"
+	publicroutes "proto-gin-web/internal/contexts/blog/post/adapters/public"
+	postusecase "proto-gin-web/internal/contexts/blog/post/app"
 	"proto-gin-web/internal/platform/config"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
@@ -92,6 +92,7 @@ func hostFromBaseURL(base string) string {
 	}
 	return trimmed
 }
+
 
 
 

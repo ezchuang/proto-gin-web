@@ -1,4 +1,4 @@
-package pg
+﻿package pg
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 )
 
 // AdminAccountRepository implements authdomain.AdminRepository using pgx Queries.
@@ -106,3 +106,4 @@ func mapStoredAdmin(u User) authdomain.StoredAdmin {
 func ptr[T any](v T) *T {
 	return &v
 }
+

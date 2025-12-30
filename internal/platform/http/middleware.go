@@ -14,9 +14,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
-	authsession "proto-gin-web/internal/admin/auth/session"
-	adminusecase "proto-gin-web/internal/admin/auth/app"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
+	authsession "proto-gin-web/internal/contexts/admin/auth/session"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
 	"proto-gin-web/internal/platform/config"
 	"proto-gin-web/internal/platform/http/ctxkeys"
 )
@@ -335,5 +335,6 @@ func abortUnauthorized(c *gin.Context) {
 		"request_id": GetRequestID(c),
 	})
 }
+
 
 
