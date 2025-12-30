@@ -1,4 +1,4 @@
-package pg
+﻿package pg
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 )
 
 // RememberTokenRepository persists split-token metadata in Postgres.
@@ -122,3 +122,4 @@ func nullIfEmpty(s string) any {
 	}
 	return s
 }
+

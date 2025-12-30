@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/redis/go-redis/v9"
 
-	authsession "proto-gin-web/internal/admin/auth/session"
-	admincontentusecase "proto-gin-web/internal/admin/content/app"
-	adminuiusecase "proto-gin-web/internal/admin/ui/app"
-	adminusecase "proto-gin-web/internal/application/admin"
-	postusecase "proto-gin-web/internal/application/post"
-	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
+	authsession "proto-gin-web/internal/contexts/admin/auth/session"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/usecase"
+	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/usecase"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
+	taxonomyusecase "proto-gin-web/internal/contexts/blog/taxonomy/usecase"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	platformlog "proto-gin-web/internal/infrastructure/platform"
 	redisstore "proto-gin-web/internal/infrastructure/redis"
@@ -101,3 +101,8 @@ func main() {
 	}
 	log.Info("server stopped")
 }
+
+
+
+
+

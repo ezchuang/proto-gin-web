@@ -1,11 +1,11 @@
-package view
+﻿package view
 
 import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 	"proto-gin-web/internal/platform/http/ctxkeys"
 )
 
@@ -55,3 +55,4 @@ func WantsHTMLResponse(c *gin.Context) bool {
 	accept := c.GetHeader("Accept")
 	return strings.Contains(accept, "text/html")
 }
+

@@ -1,4 +1,4 @@
-package redisstore
+﻿package redisstore
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 )
 
 // AdminSessionStore implements authdomain.SessionStore using Redis.
@@ -139,3 +139,4 @@ func (s *AdminSessionStore) sessionKey(id string) string {
 func (s *AdminSessionStore) userSessionsKey(userID int64) string {
 	return fmt.Sprintf("%s:user:%d:sessions", s.keyPrefix, userID)
 }
+
