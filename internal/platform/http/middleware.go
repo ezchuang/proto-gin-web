@@ -1,4 +1,4 @@
-package http
+﻿package http
 
 import (
 	"context"
@@ -14,15 +14,16 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
-	authsession "proto-gin-web/internal/admin/auth/session"
-	"proto-gin-web/internal/infrastructure/platform"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
+	authsession "proto-gin-web/internal/contexts/admin/auth/session"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
+	"proto-gin-web/internal/platform/config"
+	"proto-gin-web/internal/platform/http/ctxkeys"
 )
 
 type requestIDKey struct{}
 
 const requestIDContextKey = "request_id"
-const cspNonceContextKey = "csp_nonce"
 
 // RequestID assigns/propagates a request identifier for tracing across logs and responses.
 func RequestID() gin.HandlerFunc {
@@ -135,7 +136,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		h := c.Writer.Header()
 		nonce := generateCSPNonce()
 		if nonce != "" {
-			c.Set(cspNonceContextKey, nonce)
+			c.Set(ctxkeys.CSPNonce, nonce)
 		}
 		if nonce != "" && !strings.HasPrefix(c.Request.URL.Path, "/swagger") {
 			if _, ok := h["Content-Security-Policy"]; !ok {
@@ -205,7 +206,7 @@ const (
 )
 
 // AdminAuth validates the admin session cookie and surfaces the admin profile in context.
-func AdminAuth(cfg platform.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) gin.HandlerFunc {
+func AdminAuth(cfg config.Config, sessionMgr *authsession.Manager, adminSvc adminusecase.AdminService) gin.HandlerFunc {
 	logger := slog.Default()
 	return func(c *gin.Context) {
 		profile, err := resolveAdminSession(c, cfg, sessionMgr, adminSvc)
@@ -238,7 +239,7 @@ func AdminProfileFromContext(c *gin.Context) (authdomain.Admin, bool) {
 	return authdomain.Admin{}, false
 }
 
-func resolveAdminSession(c *gin.Context, cfg platform.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) (authdomain.Admin, error) {
+func resolveAdminSession(c *gin.Context, cfg config.Config, sessionMgr *authsession.Manager, adminSvc adminusecase.AdminService) (authdomain.Admin, error) {
 	ctx := c.Request.Context()
 	if sessionID, err := c.Cookie(cfg.SessionCookieName); err == nil && strings.TrimSpace(sessionID) != "" {
 		session, sessErr := sessionMgr.ValidateSession(ctx, strings.TrimSpace(sessionID))
@@ -279,7 +280,7 @@ func resolveAdminSession(c *gin.Context, cfg platform.Config, sessionMgr *authse
 	return profile, nil
 }
 
-func refreshSessionCookies(c *gin.Context, cfg platform.Config, sessionID string, profile authdomain.Admin) {
+func refreshSessionCookies(c *gin.Context, cfg config.Config, sessionID string, profile authdomain.Admin) {
 	secure := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	maxAge := defaultSessionCookieAge
@@ -289,13 +290,13 @@ func refreshSessionCookies(c *gin.Context, cfg platform.Config, sessionID string
 	c.SetCookie("admin_email", profile.Email, maxAge, "/", "", secure, true)
 }
 
-func wipeSessionCookie(c *gin.Context, cfg platform.Config) {
+func wipeSessionCookie(c *gin.Context, cfg config.Config) {
 	secure := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie(cfg.SessionCookieName, "", -1, "/", "", secure, true)
 }
 
-func readRememberCookie(c *gin.Context, cfg platform.Config) (string, string) {
+func readRememberCookie(c *gin.Context, cfg config.Config) (string, string) {
 	value, err := c.Cookie(cfg.RememberCookieName)
 	if err != nil || value == "" {
 		return "", ""
@@ -307,14 +308,14 @@ func readRememberCookie(c *gin.Context, cfg platform.Config) (string, string) {
 	return parts[0], parts[1]
 }
 
-func writeRememberCookie(c *gin.Context, cfg platform.Config, secret authsession.RememberTokenSecret) {
+func writeRememberCookie(c *gin.Context, cfg config.Config, secret authsession.RememberTokenSecret) {
 	secure := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	maxAge := defaultRememberCookieAge
 	c.SetCookie(cfg.RememberCookieName, secret.Selector+":"+secret.Validator, maxAge, "/", "", secure, true)
 }
 
-func wipeRememberCookie(c *gin.Context, cfg platform.Config) {
+func wipeRememberCookie(c *gin.Context, cfg config.Config) {
 	secure := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	c.SetCookie(cfg.RememberCookieName, "", -1, "/", "", secure, true)
@@ -334,3 +335,7 @@ func abortUnauthorized(c *gin.Context) {
 		"request_id": GetRequestID(c),
 	})
 }
+
+
+
+

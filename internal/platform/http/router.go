@@ -1,4 +1,4 @@
-package http
+﻿package http
 
 import (
 	"html/template"
@@ -11,21 +11,21 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	swaggerdocs "proto-gin-web/docs"
-	authdomain "proto-gin-web/internal/admin/auth/domain"
-	authsession "proto-gin-web/internal/admin/auth/session"
-	contenthttp "proto-gin-web/internal/admin/content/adapters/http"
-	admincontentusecase "proto-gin-web/internal/admin/content/app"
-	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
-	adminuiusecase "proto-gin-web/internal/admin/ui/app"
-	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
-	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
-	postdomain "proto-gin-web/internal/blog/post/domain"
-	"proto-gin-web/internal/infrastructure/platform"
+	authsession "proto-gin-web/internal/contexts/admin/auth/session"
+	contenthttp "proto-gin-web/internal/contexts/admin/content/adapters/http"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/usecase"
+	adminroutes "proto-gin-web/internal/contexts/admin/ui/adapters/http"
+	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/usecase"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
+	apiroutes "proto-gin-web/internal/contexts/blog/post/adapters/api"
+	publicroutes "proto-gin-web/internal/contexts/blog/post/adapters/public"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
+	"proto-gin-web/internal/platform/config"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
 
 // NewRouter wires middleware, templates, and routes.
-func NewRouter(cfg platform.Config, postSvc postdomain.PostService, adminSvc authdomain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
+func NewRouter(cfg config.Config, postSvc postusecase.PostService, adminSvc adminusecase.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -92,3 +92,8 @@ func hostFromBaseURL(base string) string {
 	}
 	return trimmed
 }
+
+
+
+
+

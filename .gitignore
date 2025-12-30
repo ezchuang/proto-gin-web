@@ -45,3 +45,7 @@ go.work.sum
 # Uploaded assets
 web/static/uploads/*
 !web/static/uploads/.gitkeep
+
+# Local docs
+docs/comm/
+docs/interview/DEMO.md

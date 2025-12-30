@@ -1,14 +1,13 @@
-package view
+﻿package view
 
 import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
-	authdomain "proto-gin-web/internal/admin/auth/domain"
+	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
+	"proto-gin-web/internal/platform/http/ctxkeys"
 )
-
-const cspNonceContextKey = "csp_nonce"
 
 // RenderHTML renders a view with the provided data.
 func RenderHTML(c *gin.Context, status int, name string, data gin.H) {
@@ -39,7 +38,7 @@ func WithAdminContext(c *gin.Context, data gin.H) gin.H {
 	if adminEmail, err := c.Cookie("admin_email"); err == nil && adminEmail != "" {
 		data["AdminEmail"] = adminEmail
 	}
-	if nonce, ok := c.Get(cspNonceContextKey); ok {
+	if nonce, ok := c.Get(ctxkeys.CSPNonce); ok {
 		if nonceValue, ok := nonce.(string); ok && nonceValue != "" {
 			data["CSPNonce"] = nonceValue
 		}
@@ -56,3 +55,4 @@ func WantsHTMLResponse(c *gin.Context) bool {
 	accept := c.GetHeader("Accept")
 	return strings.Contains(accept, "text/html")
 }
+

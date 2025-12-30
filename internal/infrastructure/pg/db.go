@@ -1,4 +1,4 @@
-package pg
+﻿package pg
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 )
 
 // NewPool creates a pgx connection pool with sane defaults.
-func NewPool(ctx context.Context, cfg platform.Config) (*pgxpool.Pool, error) {
+func NewPool(ctx context.Context, cfg config.Config) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		cfg.DBUser, cfg.DBPassword, cfg.DBHost, cfg.DBPort, cfg.DBName,
 	)
@@ -26,3 +26,4 @@ func NewPool(ctx context.Context, cfg platform.Config) (*pgxpool.Pool, error) {
 	poolCfg.MaxConns = 10
 	return pgxpool.NewWithConfig(ctx, poolCfg)
 }
+

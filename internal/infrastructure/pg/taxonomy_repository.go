@@ -1,9 +1,9 @@
-package pg
+﻿package pg
 
 import (
 	"context"
 
-	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
+	taxdomain "proto-gin-web/internal/contexts/blog/taxonomy/domain"
 )
 
 // TaxonomyRepository implements taxdomain.TaxonomyRepository backed by pgx queries.
@@ -49,3 +49,4 @@ func (r *TaxonomyRepository) CreateTag(ctx context.Context, input taxdomain.Crea
 func (r *TaxonomyRepository) DeleteTag(ctx context.Context, slug string) error {
 	return r.queries.DeleteTagBySlug(ctx, slug)
 }
+
