@@ -1,5 +1,7 @@
 package taxdomain
 
+import "context"
+
 // Category represents a taxonomy group assigned to posts.
 type Category struct {
 	ID   int64  `json:"id"`
