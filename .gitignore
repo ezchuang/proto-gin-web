@@ -47,5 +47,5 @@ web/static/uploads/*
 !web/static/uploads/.gitkeep
 
 # Local docs
-docs/ARCHITECTURE_AUDIT.md
+docs/comm/
 docs/interview/DEMO.md
