@@ -8,7 +8,7 @@ import (
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 	postusecase "proto-gin-web/internal/blog/post/app"
-	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
+	taxonomyusecase "proto-gin-web/internal/blog/taxonomy/app"
 )
 
 // Service coordinates admin REST content operations.
@@ -116,4 +116,5 @@ func normalizeTag(input *taxdomain.CreateTagInput) {
 	input.Name = strings.TrimSpace(input.Name)
 	input.Slug = strings.TrimSpace(strings.ToLower(input.Slug))
 }
+
 
