@@ -45,3 +45,7 @@ go.work.sum
 # Uploaded assets
 web/static/uploads/*
 !web/static/uploads/.gitkeep
+
+# Local docs
+docs/ARCHITECTURE_AUDIT.md
+docs/interview/DEMO.md
