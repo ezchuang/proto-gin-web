@@ -1,4 +1,4 @@
-﻿package post
+﻿package usecase
 
 import (
 	"context"

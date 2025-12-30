@@ -1,4 +1,4 @@
-﻿package admincontent
+﻿package usecase
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 )
 
 // Service coordinates admin REST content operations.
+// It intentionally depends on blog/post + taxonomy use cases to orchestrate cross-context changes.
 type Service struct {
 	posts    postusecase.PostService
 	taxonomy taxonomyusecase.TaxonomyService

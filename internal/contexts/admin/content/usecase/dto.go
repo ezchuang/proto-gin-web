@@ -1,4 +1,4 @@
-﻿package admincontent
+﻿package usecase
 
 import (
 	postdomain "proto-gin-web/internal/contexts/blog/post/domain"

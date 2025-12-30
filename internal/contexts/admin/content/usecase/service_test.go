@@ -1,4 +1,4 @@
-﻿package admincontent
+﻿package usecase
 
 import (
 	"context"
