@@ -5,7 +5,7 @@ import (
 
 	authhttp "proto-gin-web/internal/admin/auth/adapters/http"
 	authsession "proto-gin-web/internal/admin/auth/session"
-	adminusecase "proto-gin-web/internal/application/admin"
+	adminusecase "proto-gin-web/internal/admin/auth/app"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -16,4 +16,5 @@ func RegisterRoutes(r *gin.Engine, cfg config.Config, adminSvc adminusecase.Admi
 	registerDashboardRoutes(uiGroup, cfg)
 	registerProfileRoutes(uiGroup, cfg, adminSvc, sessionMgr)
 }
+
 

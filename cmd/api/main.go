@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	authsession "proto-gin-web/internal/admin/auth/session"
 	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminuiusecase "proto-gin-web/internal/admin/ui/app"
-	adminusecase "proto-gin-web/internal/application/admin"
+	adminusecase "proto-gin-web/internal/admin/auth/app"
 	postusecase "proto-gin-web/internal/application/post"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
@@ -101,3 +101,4 @@ func main() {
 	}
 	log.Info("server stopped")
 }
+

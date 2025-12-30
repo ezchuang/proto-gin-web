@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	adminusecase "proto-gin-web/internal/application/admin"
+	adminusecase "proto-gin-web/internal/admin/auth/app"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
@@ -299,4 +299,5 @@ func normalizeDeviceInfo(userAgent string) string {
 	}
 	return ua
 }
+
 

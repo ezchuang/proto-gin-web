@@ -18,7 +18,7 @@ import (
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	adminuisvc "proto-gin-web/internal/admin/ui/app"
-	adminusecase "proto-gin-web/internal/application/admin"
+	adminusecase "proto-gin-web/internal/admin/auth/app"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -262,4 +262,5 @@ func saveCoverUpload(c *gin.Context, file *multipart.FileHeader) (string, error)
 	}
 	return "/static/uploads/" + filename, nil
 }
+
 
