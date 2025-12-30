@@ -1,4 +1,4 @@
-package presenter
+﻿package presenter
 
 import (
 	"net/http"
@@ -6,12 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
 // AdminPostsPage renders the admin posts list.
-func AdminPostsPage(c *gin.Context, cfg platform.Config, posts []postdomain.Post) {
+func AdminPostsPage(c *gin.Context, cfg config.Config, posts []postdomain.Post) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_posts.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Admin · Posts · " + cfg.SiteName,
 		"Env":             cfg.Env,
@@ -25,7 +25,7 @@ func AdminPostsPage(c *gin.Context, cfg platform.Config, posts []postdomain.Post
 }
 
 // AdminPostFormNew renders the new post form.
-func AdminPostFormNew(c *gin.Context, cfg platform.Config) {
+func AdminPostFormNew(c *gin.Context, cfg config.Config) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Admin · New Post · " + cfg.SiteName,
 		"Env":             cfg.Env,
@@ -39,7 +39,7 @@ func AdminPostFormNew(c *gin.Context, cfg platform.Config) {
 }
 
 // AdminPostFormEdit renders the edit post form.
-func AdminPostFormEdit(c *gin.Context, cfg platform.Config, result postdomain.PostWithRelations) {
+func AdminPostFormEdit(c *gin.Context, cfg config.Config, result postdomain.PostWithRelations) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_post_form.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Admin · Edit Post · " + result.Post.Title + " · " + cfg.SiteName,
 		"Env":             cfg.Env,
@@ -54,3 +54,4 @@ func AdminPostFormEdit(c *gin.Context, cfg platform.Config, result postdomain.Po
 		"Success":         c.Query("success"),
 	}))
 }
+

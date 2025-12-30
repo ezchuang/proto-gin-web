@@ -1,4 +1,4 @@
-package adminuihttp
+﻿package adminuihttp
 
 import (
 	"errors"
@@ -12,11 +12,11 @@ import (
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager) {
+func registerProfileRoutes(group *gin.RouterGroup, cfg config.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager) {
 	group.GET("/profile", func(c *gin.Context) {
 		isForm := platformview.WantsHTMLResponse(c)
 		profile, ok := adminProfileFromContext(c)
@@ -146,7 +146,7 @@ func registerProfileRoutes(group *gin.RouterGroup, cfg platform.Config, adminSvc
 	})
 }
 
-func refreshAdminCookies(c *gin.Context, cfg platform.Config, admin authdomain.Admin) {
+func refreshAdminCookies(c *gin.Context, cfg config.Config, admin authdomain.Admin) {
 	secureCookie := cfg.Env == "production"
 	c.SetSameSite(http.SameSiteStrictMode)
 	maxAge := 30 * 60
@@ -154,3 +154,4 @@ func refreshAdminCookies(c *gin.Context, cfg platform.Config, admin authdomain.A
 	c.SetCookie("admin_user", admin.DisplayName, maxAge, "/", "", secureCookie, true)
 	c.SetCookie("admin_email", admin.Email, maxAge, "/", "", secureCookie, true)
 }
+

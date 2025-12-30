@@ -1,15 +1,15 @@
-package presenter
+﻿package presenter
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func AdminLoginPage(c *gin.Context, cfg platform.Config, errMsg string) {
+func AdminLoginPage(c *gin.Context, cfg config.Config, errMsg string) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_login.tmpl", platformview.WithAdminContext(c, gin.H{
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -19,7 +19,7 @@ func AdminLoginPage(c *gin.Context, cfg platform.Config, errMsg string) {
 	}))
 }
 
-func AdminRegisterPage(c *gin.Context, cfg platform.Config, errMsg string) {
+func AdminRegisterPage(c *gin.Context, cfg config.Config, errMsg string) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_register.tmpl", platformview.WithAdminContext(c, gin.H{
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -28,3 +28,4 @@ func AdminRegisterPage(c *gin.Context, cfg platform.Config, errMsg string) {
 		"Error":           errMsg,
 	}))
 }
+

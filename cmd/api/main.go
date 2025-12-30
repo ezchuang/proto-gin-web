@@ -20,8 +20,9 @@ import (
 	postusecase "proto-gin-web/internal/application/post"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
-	"proto-gin-web/internal/infrastructure/platform"
+	platformlog "proto-gin-web/internal/infrastructure/platform"
 	redisstore "proto-gin-web/internal/infrastructure/redis"
+	"proto-gin-web/internal/platform/config"
 	httpapp "proto-gin-web/internal/platform/http"
 )
 
@@ -33,9 +34,9 @@ import (
 func main() {
 	_ = godotenv.Load()
 
-	cfg := platform.Load()
+	cfg := config.Load()
 
-	log := platform.NewLogger(cfg.Env, cfg.LogFile)
+	log := platformlog.NewLogger(cfg.Env, cfg.LogFile)
 	slog.SetDefault(log)
 
 	pool, err := appdb.NewPool(context.Background(), cfg)

@@ -1,4 +1,4 @@
-package adminuihttp
+﻿package adminuihttp
 
 import (
 	"errors"
@@ -18,11 +18,11 @@ import (
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	adminuisvc "proto-gin-web/internal/admin/ui/app"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 )
 
 // RegisterUIRoutes mounts legacy SSR pages that still live inside the admin context.
-func RegisterUIRoutes(r *gin.Engine, cfg platform.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service, sessionMgr *authsession.Manager, sessionGuard gin.HandlerFunc) {
+func RegisterUIRoutes(r *gin.Engine, cfg config.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service, sessionMgr *authsession.Manager, sessionGuard gin.HandlerFunc) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")
@@ -261,3 +261,4 @@ func saveCoverUpload(c *gin.Context, file *multipart.FileHeader) (string, error)
 	}
 	return "/static/uploads/" + filename, nil
 }
+

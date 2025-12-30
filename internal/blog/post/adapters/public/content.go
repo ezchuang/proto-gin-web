@@ -1,4 +1,4 @@
-package public
+﻿package public
 
 import (
 	"html/template"
@@ -12,10 +12,10 @@ import (
 
 	postview "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 )
 
-func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomain.PostService) {
+func registerContentRoutes(r *gin.Engine, cfg config.Config, postSvc postdomain.PostService) {
 	r.GET("/", func(c *gin.Context) {
 		postview.PublicLanding(c, cfg)
 	})
@@ -71,3 +71,4 @@ func registerContentRoutes(r *gin.Engine, cfg platform.Config, postSvc postdomai
 		postview.PublicPostDetail(c, cfg, result, template.HTML(string(safe)))
 	})
 }
+

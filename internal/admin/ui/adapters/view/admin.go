@@ -1,4 +1,4 @@
-package presenter
+﻿package presenter
 
 import (
 	"net/http"
@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func AdminDashboard(c *gin.Context, cfg platform.Config, user string, registered bool) {
+func AdminDashboard(c *gin.Context, cfg config.Config, user string, registered bool) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_dashboard.tmpl", platformview.WithAdminContext(c, gin.H{
 		"SiteName":        cfg.SiteName,
 		"SiteDescription": cfg.SiteDescription,
@@ -21,7 +21,7 @@ func AdminDashboard(c *gin.Context, cfg platform.Config, user string, registered
 	}))
 }
 
-func AdminProfilePage(c *gin.Context, cfg platform.Config, profile authdomain.Admin, updated bool, errMsg string) {
+func AdminProfilePage(c *gin.Context, cfg config.Config, profile authdomain.Admin, updated bool, errMsg string) {
 	platformview.RenderHTML(c, http.StatusOK, "admin_profile.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Account Settings",
 		"SiteName":        cfg.SiteName,
@@ -34,7 +34,7 @@ func AdminProfilePage(c *gin.Context, cfg platform.Config, profile authdomain.Ad
 	}))
 }
 
-func AdminProfileError(c *gin.Context, cfg platform.Config, email, displayName, errMsg string, status int) {
+func AdminProfileError(c *gin.Context, cfg config.Config, email, displayName, errMsg string, status int) {
 	platformview.RenderHTML(c, status, "admin_profile.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Account Settings",
 		"SiteName":        cfg.SiteName,
@@ -48,3 +48,4 @@ func AdminProfileError(c *gin.Context, cfg platform.Config, email, displayName, 
 		"Error": errMsg,
 	}))
 }
+

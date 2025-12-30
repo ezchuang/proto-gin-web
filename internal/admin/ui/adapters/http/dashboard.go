@@ -1,13 +1,13 @@
-package adminuihttp
+﻿package adminuihttp
 
 import (
 	"github.com/gin-gonic/gin"
 
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 )
 
-func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
+func registerDashboardRoutes(group *gin.RouterGroup, cfg config.Config) {
 	group.GET("", func(c *gin.Context) {
 		userName := "Admin"
 		if profile, ok := adminProfileFromContext(c); ok && profile.DisplayName != "" {
@@ -16,3 +16,4 @@ func registerDashboardRoutes(group *gin.RouterGroup, cfg platform.Config) {
 		adminview.AdminDashboard(c, cfg, userName, c.Query("registered") == "1")
 	})
 }
+

@@ -1,4 +1,4 @@
-package presenter
+﻿package presenter
 
 import (
 	"html/template"
@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	"proto-gin-web/internal/infrastructure/platform"
+	"proto-gin-web/internal/platform/config"
 	platformview "proto-gin-web/internal/platform/http/view"
 	"proto-gin-web/internal/platform/seo"
 )
 
 // PublicLanding renders the site landing page.
-func PublicLanding(c *gin.Context, cfg platform.Config) {
+func PublicLanding(c *gin.Context, cfg config.Config) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL)
 	data := gin.H{
 		"Title":           "Index",
@@ -38,7 +38,7 @@ func PublicLanding(c *gin.Context, cfg platform.Config) {
 }
 
 // PublicPosts renders the paginated posts list.
-func PublicPosts(c *gin.Context, cfg platform.Config, posts []postdomain.Post, page, size int64) {
+func PublicPosts(c *gin.Context, cfg config.Config, posts []postdomain.Post, page, size int64) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).WithPage("Posts", cfg.SiteDescription, cfg.BaseURL+"/posts", "")
 	platformview.RenderHTML(c, http.StatusOK, "posts.tmpl", platformview.WithAdminContext(c, gin.H{
 		"Title":           "Posts",
@@ -54,7 +54,7 @@ func PublicPosts(c *gin.Context, cfg platform.Config, posts []postdomain.Post, p
 }
 
 // PublicPostDetail renders a single post detail page.
-func PublicPostDetail(c *gin.Context, cfg platform.Config, post postdomain.PostWithRelations, content template.HTML) {
+func PublicPostDetail(c *gin.Context, cfg config.Config, post postdomain.PostWithRelations, content template.HTML) {
 	m := seo.Default(cfg.SiteName, cfg.SiteDescription, cfg.BaseURL).
 		WithPage(post.Post.Title, post.Post.Summary, cfg.BaseURL+"/posts/"+post.Post.Slug, post.Post.CoverURL)
 	m.Type = "article"
@@ -72,3 +72,4 @@ func PublicPostDetail(c *gin.Context, cfg platform.Config, post postdomain.PostW
 		"MetaTags":        template.HTML(m.Tags()),
 	}))
 }
+
