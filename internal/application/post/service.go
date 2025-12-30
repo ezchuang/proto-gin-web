@@ -26,12 +26,25 @@ var allowedSorts = map[string]struct{}{
 	"":                  {},
 }
 
-// Service implements postdomain.PostService using a repository abstraction.
+// PostService exposes application-facing operations around posts.
+type PostService interface {
+	ListPublished(ctx context.Context, opts postdomain.ListPostsOptions) ([]postdomain.Post, error)
+	GetBySlug(ctx context.Context, slug string) (postdomain.PostWithRelations, error)
+	Create(ctx context.Context, input postdomain.CreatePostInput) (postdomain.Post, error)
+	Update(ctx context.Context, input postdomain.UpdatePostInput) (postdomain.Post, error)
+	Delete(ctx context.Context, slug string) error
+	AddCategory(ctx context.Context, slug, categorySlug string) error
+	RemoveCategory(ctx context.Context, slug, categorySlug string) error
+	AddTag(ctx context.Context, slug, tagSlug string) error
+	RemoveTag(ctx context.Context, slug, tagSlug string) error
+}
+
+// Service implements PostService using a repository abstraction.
 type Service struct {
 	repo postdomain.PostRepository
 }
 
-var _ postdomain.PostService = (*Service)(nil)
+var _ PostService = (*Service)(nil)
 
 // NewService wires a post repository into a use case implementation.
 func NewService(repo postdomain.PostRepository) *Service {

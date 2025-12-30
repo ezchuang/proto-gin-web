@@ -8,11 +8,12 @@ import (
 
 	presenters "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 	"proto-gin-web/internal/platform/http/responder"
 )
 
 // RegisterRoutes attaches JSON endpoints for posts.
-func RegisterRoutes(r *gin.Engine, postSvc postdomain.PostService) {
+func RegisterRoutes(r *gin.Engine, postSvc postusecase.PostService) {
 	api := r.Group("/api")
 	{
 		api.GET("/posts", listPostsHandler(postSvc))
@@ -30,7 +31,7 @@ func RegisterRoutes(r *gin.Engine, postSvc postdomain.PostService) {
 // @Success      200  {object}  postListResponse
 // @Failure      500  {object}  errorResponse
 // @Router       /api/posts [get]
-func listPostsHandler(postSvc postdomain.PostService) gin.HandlerFunc {
+func listPostsHandler(postSvc postusecase.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		limit := int32(10)
 		offset := int32(0)
@@ -65,7 +66,7 @@ func listPostsHandler(postSvc postdomain.PostService) gin.HandlerFunc {
 // @Success      200  {object}  postResponse
 // @Failure      404  {object}  errorResponse
 // @Router       /api/posts/{slug} [get]
-func getPostHandler(postSvc postdomain.PostService) gin.HandlerFunc {
+func getPostHandler(postSvc postusecase.PostService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		row, err := postSvc.GetBySlug(c.Request.Context(), c.Param("slug"))
 		if err != nil {

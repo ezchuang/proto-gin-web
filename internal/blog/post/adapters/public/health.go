@@ -8,9 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 )
 
-func registerHealthRoutes(r *gin.Engine, postSvc postdomain.PostService) {
+func registerHealthRoutes(r *gin.Engine, postSvc postusecase.PostService) {
 	r.GET("/livez", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "alive"})
 	})

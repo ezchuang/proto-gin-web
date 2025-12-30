@@ -6,15 +6,16 @@ import (
 	"strings"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 )
 
 // Service wraps post operations used by the admin UI forms.
 type Service struct {
-	posts postdomain.PostService
+	posts postusecase.PostService
 }
 
 // NewService creates an admin UI helper service.
-func NewService(posts postdomain.PostService) *Service {
+func NewService(posts postusecase.PostService) *Service {
 	return &Service{posts: posts}
 }
 

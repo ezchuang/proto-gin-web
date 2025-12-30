@@ -8,11 +8,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 	"proto-gin-web/internal/platform/config"
 	"proto-gin-web/internal/platform/seo"
 )
 
-func registerSEORoutes(r *gin.Engine, cfg config.Config, postSvc postdomain.PostService) {
+func registerSEORoutes(r *gin.Engine, cfg config.Config, postSvc postusecase.PostService) {
 	r.GET("/robots.txt", func(c *gin.Context) {
 		c.Header("Content-Type", "text/plain; charset=utf-8")
 		c.String(http.StatusOK, "User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n", cfg.BaseURL)

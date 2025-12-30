@@ -19,13 +19,13 @@ import (
 	adminusecase "proto-gin-web/internal/application/admin"
 	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
-	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 	"proto-gin-web/internal/platform/config"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
 
 // NewRouter wires middleware, templates, and routes.
-func NewRouter(cfg config.Config, postSvc postdomain.PostService, adminSvc adminusecase.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
+func NewRouter(cfg config.Config, postSvc postusecase.PostService, adminSvc adminusecase.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}

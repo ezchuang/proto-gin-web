@@ -12,10 +12,11 @@ import (
 
 	postview "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
+	postusecase "proto-gin-web/internal/application/post"
 	"proto-gin-web/internal/platform/config"
 )
 
-func registerContentRoutes(r *gin.Engine, cfg config.Config, postSvc postdomain.PostService) {
+func registerContentRoutes(r *gin.Engine, cfg config.Config, postSvc postusecase.PostService) {
 	r.GET("/", func(c *gin.Context) {
 		postview.PublicLanding(c, cfg)
 	})

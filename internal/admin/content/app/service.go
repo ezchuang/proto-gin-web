@@ -7,16 +7,17 @@ import (
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
+	postusecase "proto-gin-web/internal/application/post"
 )
 
 // Service coordinates admin REST content operations.
 type Service struct {
-	posts    postdomain.PostService
+	posts    postusecase.PostService
 	taxonomy taxdomain.TaxonomyService
 }
 
 // NewService constructs a Service.
-func NewService(posts postdomain.PostService, taxonomy taxdomain.TaxonomyService) *Service {
+func NewService(posts postusecase.PostService, taxonomy taxdomain.TaxonomyService) *Service {
 	return &Service{posts: posts, taxonomy: taxonomy}
 }
 

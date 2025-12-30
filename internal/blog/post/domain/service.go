@@ -1,25 +1,10 @@
 package postdomain
 
 import (
-	"context"
 	"time"
 
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
-
-// PostService exposes the application-facing operations around posts.
-// It orchestrates domain rules while delegating persistence to repository implementations.
-type PostService interface {
-	ListPublished(ctx context.Context, opts ListPostsOptions) ([]Post, error)
-	GetBySlug(ctx context.Context, slug string) (PostWithRelations, error)
-	Create(ctx context.Context, input CreatePostInput) (Post, error)
-	Update(ctx context.Context, input UpdatePostInput) (Post, error)
-	Delete(ctx context.Context, slug string) error
-	AddCategory(ctx context.Context, slug, categorySlug string) error
-	RemoveCategory(ctx context.Context, slug, categorySlug string) error
-	AddTag(ctx context.Context, slug, tagSlug string) error
-	RemoveTag(ctx context.Context, slug, tagSlug string) error
-}
 
 // ListPostsOptions describes pagination and filtering instructions.
 type ListPostsOptions struct {
