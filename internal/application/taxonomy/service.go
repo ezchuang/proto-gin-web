@@ -8,12 +8,20 @@ import (
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
 )
 
-// Service implements domain.TaxonomyService with validation and repository delegation.
+// TaxonomyService coordinates category and tag operations.
+type TaxonomyService interface {
+	CreateCategory(ctx context.Context, input taxdomain.CreateCategoryInput) (taxdomain.Category, error)
+	DeleteCategory(ctx context.Context, slug string) error
+	CreateTag(ctx context.Context, input taxdomain.CreateTagInput) (taxdomain.Tag, error)
+	DeleteTag(ctx context.Context, slug string) error
+}
+
+// Service implements TaxonomyService with validation and repository delegation.
 type Service struct {
 	repo taxdomain.TaxonomyRepository
 }
 
-var _ taxdomain.TaxonomyService = (*Service)(nil)
+var _ TaxonomyService = (*Service)(nil)
 
 // NewService creates a taxonomy service.
 func NewService(repo taxdomain.TaxonomyRepository) *Service {
