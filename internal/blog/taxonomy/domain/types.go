@@ -1,7 +1,5 @@
 package taxdomain
 
-import "context"
-
 // Category represents a taxonomy group assigned to posts.
 type Category struct {
 	ID   int64  `json:"id"`
@@ -28,10 +26,3 @@ type CreateTagInput struct {
 	Slug string
 }
 
-// TaxonomyRepository abstracts persistence of categories and tags.
-type TaxonomyRepository interface {
-	CreateCategory(ctx context.Context, input CreateCategoryInput) (Category, error)
-	DeleteCategory(ctx context.Context, slug string) error
-	CreateTag(ctx context.Context, input CreateTagInput) (Tag, error)
-	DeleteTag(ctx context.Context, slug string) error
-}

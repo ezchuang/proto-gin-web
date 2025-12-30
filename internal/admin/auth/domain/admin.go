@@ -1,7 +1,6 @@
 package authdomain
 
 import (
-	"context"
 	"errors"
 	"strings"
 	"time"
@@ -89,15 +88,6 @@ type AdminProfileInput struct {
 	ConfirmPassword string
 }
 
-// AdminRepository abstracts persistence concerns for admin accounts.
-type AdminRepository interface {
-	GetByEmail(ctx context.Context, email string) (StoredAdmin, error)
-	GetByID(ctx context.Context, id int64) (StoredAdmin, error)
-	Create(ctx context.Context, params AdminCreateParams) (StoredAdmin, error)
-	UpdateProfile(ctx context.Context, email string, params AdminProfileUpdateParams) (StoredAdmin, error)
-	FindRoleByName(ctx context.Context, role string) (AdminRole, error)
-}
-
 // NormalizeEmail lowercases and trims an email.
 func NormalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))
@@ -111,15 +101,6 @@ type AdminSession struct {
 	AbsoluteExpiry time.Time
 }
 
-// SessionStore persists admin sessions.
-type SessionStore interface {
-	Save(ctx context.Context, session AdminSession, ttl time.Duration) error
-	Get(ctx context.Context, id string) (AdminSession, error)
-	Touch(ctx context.Context, session AdminSession, ttl time.Duration) error
-	Delete(ctx context.Context, id string) error
-	DeleteByUser(ctx context.Context, userID int64) error
-}
-
 // RememberToken stores opaque split-token metadata.
 type RememberToken struct {
 	Selector      string
@@ -131,11 +112,3 @@ type RememberToken struct {
 	Revoked       bool
 }
 
-// RememberTokenRepository persists remember tokens.
-type RememberTokenRepository interface {
-	Insert(ctx context.Context, token RememberToken) error
-	GetBySelector(ctx context.Context, selector string) (RememberToken, error)
-	Update(ctx context.Context, token RememberToken) error
-	Delete(ctx context.Context, selector string) error
-	DeleteByUser(ctx context.Context, userID int64) error
-}
