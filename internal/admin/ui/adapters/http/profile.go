@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminusecase "proto-gin-web/internal/application/admin"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
@@ -16,7 +17,7 @@ import (
 	platformview "proto-gin-web/internal/platform/http/view"
 )
 
-func registerProfileRoutes(group *gin.RouterGroup, cfg config.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager) {
+func registerProfileRoutes(group *gin.RouterGroup, cfg config.Config, adminSvc adminusecase.AdminService, sessionMgr *authsession.Manager) {
 	group.GET("/profile", func(c *gin.Context) {
 		isForm := platformview.WantsHTMLResponse(c)
 		profile, ok := adminProfileFromContext(c)

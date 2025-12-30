@@ -16,6 +16,7 @@ import (
 
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
+	adminusecase "proto-gin-web/internal/application/admin"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -205,7 +206,7 @@ const (
 )
 
 // AdminAuth validates the admin session cookie and surfaces the admin profile in context.
-func AdminAuth(cfg config.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) gin.HandlerFunc {
+func AdminAuth(cfg config.Config, sessionMgr *authsession.Manager, adminSvc adminusecase.AdminService) gin.HandlerFunc {
 	logger := slog.Default()
 	return func(c *gin.Context) {
 		profile, err := resolveAdminSession(c, cfg, sessionMgr, adminSvc)
@@ -238,7 +239,7 @@ func AdminProfileFromContext(c *gin.Context) (authdomain.Admin, bool) {
 	return authdomain.Admin{}, false
 }
 
-func resolveAdminSession(c *gin.Context, cfg config.Config, sessionMgr *authsession.Manager, adminSvc authdomain.AdminService) (authdomain.Admin, error) {
+func resolveAdminSession(c *gin.Context, cfg config.Config, sessionMgr *authsession.Manager, adminSvc adminusecase.AdminService) (authdomain.Admin, error) {
 	ctx := c.Request.Context()
 	if sessionID, err := c.Cookie(cfg.SessionCookieName); err == nil && strings.TrimSpace(sessionID) != "" {
 		session, sessErr := sessionMgr.ValidateSession(ctx, strings.TrimSpace(sessionID))

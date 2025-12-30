@@ -18,11 +18,12 @@ import (
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
 	adminuisvc "proto-gin-web/internal/admin/ui/app"
+	adminusecase "proto-gin-web/internal/application/admin"
 	"proto-gin-web/internal/platform/config"
 )
 
 // RegisterUIRoutes mounts legacy SSR pages that still live inside the admin context.
-func RegisterUIRoutes(r *gin.Engine, cfg config.Config, adminSvc authdomain.AdminService, svc *adminuisvc.Service, sessionMgr *authsession.Manager, sessionGuard gin.HandlerFunc) {
+func RegisterUIRoutes(r *gin.Engine, cfg config.Config, adminSvc adminusecase.AdminService, svc *adminuisvc.Service, sessionMgr *authsession.Manager, sessionGuard gin.HandlerFunc) {
 	// Redirect root to posts list
 	r.GET("/admin/ui", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/admin/ui/posts")

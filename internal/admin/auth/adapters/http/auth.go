@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminusecase "proto-gin-web/internal/application/admin"
 	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminview "proto-gin-web/internal/admin/ui/adapters/view"
@@ -22,7 +23,7 @@ const (
 	rememberCookieMaxAge = 30 * 24 * 60 * 60
 )
 
-func RegisterRoutes(r *gin.Engine, cfg config.Config, adminSvc authdomain.AdminService, sessionMgr *authsession.Manager, loginLimiter, registerLimiter gin.HandlerFunc) {
+func RegisterRoutes(r *gin.Engine, cfg config.Config, adminSvc adminusecase.AdminService, sessionMgr *authsession.Manager, loginLimiter, registerLimiter gin.HandlerFunc) {
 	r.GET("/admin/login", func(c *gin.Context) {
 		adminview.AdminLoginPage(c, cfg, c.Query("error"))
 	})

@@ -11,12 +11,12 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	swaggerdocs "proto-gin-web/docs"
-	authdomain "proto-gin-web/internal/admin/auth/domain"
 	authsession "proto-gin-web/internal/admin/auth/session"
 	contenthttp "proto-gin-web/internal/admin/content/adapters/http"
 	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminroutes "proto-gin-web/internal/admin/ui/adapters/http"
 	adminuiusecase "proto-gin-web/internal/admin/ui/app"
+	adminusecase "proto-gin-web/internal/application/admin"
 	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
 	postdomain "proto-gin-web/internal/blog/post/domain"
@@ -25,7 +25,7 @@ import (
 )
 
 // NewRouter wires middleware, templates, and routes.
-func NewRouter(cfg config.Config, postSvc postdomain.PostService, adminSvc authdomain.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
+func NewRouter(cfg config.Config, postSvc postdomain.PostService, adminSvc adminusecase.AdminService, adminContentSvc *admincontentusecase.Service, adminUISvc *adminuiusecase.Service, sessionMgr *authsession.Manager) *gin.Engine {
 	if cfg.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}

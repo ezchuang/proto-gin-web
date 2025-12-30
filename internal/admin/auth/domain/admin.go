@@ -98,15 +98,6 @@ type AdminRepository interface {
 	FindRoleByName(ctx context.Context, role string) (AdminRole, error)
 }
 
-// AdminService exposes admin account use cases.
-type AdminService interface {
-	Login(ctx context.Context, input AdminLoginInput) (Admin, error)
-	Register(ctx context.Context, input AdminRegisterInput) (Admin, error)
-	GetProfile(ctx context.Context, email string) (Admin, error)
-	GetProfileByID(ctx context.Context, id int64) (Admin, error)
-	UpdateProfile(ctx context.Context, email string, input AdminProfileInput) (Admin, error)
-}
-
 // NormalizeEmail lowercases and trims an email.
 func NormalizeEmail(email string) string {
 	return strings.ToLower(strings.TrimSpace(email))

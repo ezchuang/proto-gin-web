@@ -26,13 +26,22 @@ type Config struct {
 	PasswordMinLength int
 }
 
+// AdminService exposes admin account use cases.
+type AdminService interface {
+	Login(ctx context.Context, input authdomain.AdminLoginInput) (authdomain.Admin, error)
+	Register(ctx context.Context, input authdomain.AdminRegisterInput) (authdomain.Admin, error)
+	GetProfile(ctx context.Context, email string) (authdomain.Admin, error)
+	GetProfileByID(ctx context.Context, id int64) (authdomain.Admin, error)
+	UpdateProfile(ctx context.Context, email string, input authdomain.AdminProfileInput) (authdomain.Admin, error)
+}
+
 // Service implements admin use cases.
 type Service struct {
 	repo authdomain.AdminRepository
 	cfg  Config
 }
 
-var _ authdomain.AdminService = (*Service)(nil)
+var _ AdminService = (*Service)(nil)
 
 // NewService creates an admin service backed by a repository.
 func NewService(repo authdomain.AdminRepository, cfg Config) *Service {
