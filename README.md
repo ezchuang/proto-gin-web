@@ -26,6 +26,12 @@ Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragm
 
 Note: `admin/content` use cases intentionally orchestrate `blog/post` + `blog/taxonomy` use cases for cross-context admin workflows.
 
+### Adapters Conventions
+
+- `adapters/api`: JSON API handlers (public).
+- `adapters/public`: SSR/SEO handlers (public HTML).
+- `adapters/http`: admin-facing handlers (authenticated).
+
 ### Directory Layout (excerpt)
 
 ```
