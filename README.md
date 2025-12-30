@@ -19,11 +19,12 @@ Prototype blog/admin backend built with Go + Gin. The goal is to provide a pragm
 
 | Context | Responsibilities | Key Paths |
 |---------|------------------|-----------|
-| `internal/contexts/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI (demo) | `internal/contexts/admin/auth`, `internal/contexts/admin/content`, `internal/contexts/admin/ui` |
-| `internal/application` | Use cases/interfaces for admin, post, taxonomy domains | `internal/application/{admin,post,taxonomy}` |
-| `internal/contexts/blog` | Public pages + API + SEO + taxonomy models | `internal/contexts/blog/post`, `internal/contexts/blog/taxonomy` |
+| `internal/contexts/admin` | Auth (login/register/profile), content CRUD (posts/categories/tags), legacy admin UI (demo) | `internal/contexts/admin/{auth,content,ui}` |
+| `internal/contexts/blog` | Public pages + API + SEO + taxonomy models | `internal/contexts/blog/{post,taxonomy}` |
 | `internal/infrastructure` | pgx repositories, Redis session store, platform config/logger/feed helpers | `internal/infrastructure/{pg,redis,platform,feed}` |
-| `internal/platform/http` | Router, middleware, template loader, responder, SEO helpers | `internal/platform/http` |
+| `internal/platform` | Router, middleware, templates, responder, SEO helpers, shared config | `internal/platform/{http,config,seo}` |
+
+Note: `admin/content` use cases intentionally orchestrate `blog/post` + `blog/taxonomy` use cases for cross-context admin workflows.
 
 ### Directory Layout (excerpt)
 
@@ -32,11 +33,11 @@ proto-gin-web/
 ├─ cmd/api/main.go
 ├─ db/{migrations,queries}
 ├─ internal/
-│  ├─ admin/{auth,content,ui}
-│  ├─ application/{admin,post,taxonomy}
-│  ├─ blog/post/{domain,adapters}
+│  ├─ contexts/
+│  │  ├─ admin/{auth,content,ui}
+│  │  └─ blog/{post,taxonomy}
 │  ├─ infrastructure/{pg,redis,platform}
-│  └─ platform/http/{middleware,templates,view,seo}
+│  └─ platform/{config,http/{middleware,templates,view},seo}
 ├─ docs/          # swag output
 ├─ web/static/    # css + demo assets + uploads
 ├─ Dockerfile
