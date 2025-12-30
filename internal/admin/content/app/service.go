@@ -1,4 +1,4 @@
-package admincontent
+﻿package admincontent
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
 	taxdomain "proto-gin-web/internal/blog/taxonomy/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 )
 
@@ -116,3 +116,4 @@ func normalizeTag(input *taxdomain.CreateTagInput) {
 	input.Name = strings.TrimSpace(input.Name)
 	input.Slug = strings.TrimSpace(strings.ToLower(input.Slug))
 }
+

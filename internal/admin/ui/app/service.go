@@ -1,4 +1,4 @@
-package adminui
+﻿package adminui
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 )
 
 // Service wraps post operations used by the admin UI forms.
@@ -111,3 +111,4 @@ func (s *Service) AddTag(ctx context.Context, slug, tagSlug string) error {
 func (s *Service) RemoveTag(ctx context.Context, slug, tagSlug string) error {
 	return s.posts.RemoveTag(ctx, slug, tagSlug)
 }
+

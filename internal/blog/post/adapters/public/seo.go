@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	"proto-gin-web/internal/platform/config"
 	"proto-gin-web/internal/platform/seo"
 )
@@ -87,4 +87,5 @@ func registerSEORoutes(r *gin.Engine, cfg config.Config, postSvc postusecase.Pos
 		c.Writer.Write(xmlBytes)
 	})
 }
+
 

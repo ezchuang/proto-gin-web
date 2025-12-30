@@ -1,4 +1,4 @@
-package api
+﻿package api
 
 import (
 	"net/http"
@@ -8,7 +8,7 @@ import (
 
 	presenters "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	"proto-gin-web/internal/platform/http/responder"
 )
 
@@ -76,3 +76,4 @@ func getPostHandler(postSvc postusecase.PostService) gin.HandlerFunc {
 		responder.JSONSuccess(c, http.StatusOK, presenters.BuildPublicPostWithRelations(row))
 	}
 }
+

@@ -1,4 +1,4 @@
-package public
+﻿package public
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 )
 
 func registerHealthRoutes(r *gin.Engine, postSvc postusecase.PostService) {
@@ -26,3 +26,4 @@ func registerHealthRoutes(r *gin.Engine, postSvc postusecase.PostService) {
 		c.JSON(http.StatusOK, gin.H{"status": "ready"})
 	})
 }
+

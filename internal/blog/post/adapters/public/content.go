@@ -12,7 +12,7 @@ import (
 
 	postview "proto-gin-web/internal/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/blog/post/domain"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -72,4 +72,5 @@ func registerContentRoutes(r *gin.Engine, cfg config.Config, postSvc postusecase
 		postview.PublicPostDetail(c, cfg, result, template.HTML(string(safe)))
 	})
 }
+
 

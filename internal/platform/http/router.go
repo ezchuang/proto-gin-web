@@ -19,7 +19,7 @@ import (
 	adminusecase "proto-gin-web/internal/admin/auth/app"
 	apiroutes "proto-gin-web/internal/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/blog/post/adapters/public"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	"proto-gin-web/internal/platform/config"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
@@ -92,5 +92,6 @@ func hostFromBaseURL(base string) string {
 	}
 	return trimmed
 }
+
 
 

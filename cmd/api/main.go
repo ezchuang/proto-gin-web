@@ -17,7 +17,7 @@ import (
 	admincontentusecase "proto-gin-web/internal/admin/content/app"
 	adminuiusecase "proto-gin-web/internal/admin/ui/app"
 	adminusecase "proto-gin-web/internal/admin/auth/app"
-	postusecase "proto-gin-web/internal/application/post"
+	postusecase "proto-gin-web/internal/blog/post/app"
 	taxonomyusecase "proto-gin-web/internal/application/taxonomy"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	platformlog "proto-gin-web/internal/infrastructure/platform"
@@ -101,4 +101,5 @@ func main() {
 	}
 	log.Info("server stopped")
 }
+
 
