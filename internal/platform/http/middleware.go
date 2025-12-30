@@ -18,12 +18,12 @@ import (
 	authsession "proto-gin-web/internal/admin/auth/session"
 	adminusecase "proto-gin-web/internal/application/admin"
 	"proto-gin-web/internal/platform/config"
+	"proto-gin-web/internal/platform/http/ctxkeys"
 )
 
 type requestIDKey struct{}
 
 const requestIDContextKey = "request_id"
-const cspNonceContextKey = "csp_nonce"
 
 // RequestID assigns/propagates a request identifier for tracing across logs and responses.
 func RequestID() gin.HandlerFunc {
@@ -136,7 +136,7 @@ func SecurityHeaders() gin.HandlerFunc {
 		h := c.Writer.Header()
 		nonce := generateCSPNonce()
 		if nonce != "" {
-			c.Set(cspNonceContextKey, nonce)
+			c.Set(ctxkeys.CSPNonce, nonce)
 		}
 		if nonce != "" && !strings.HasPrefix(c.Request.URL.Path, "/swagger") {
 			if _, ok := h["Content-Security-Policy"]; !ok {
