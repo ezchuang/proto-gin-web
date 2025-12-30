@@ -72,6 +72,7 @@ proto-gin-web/
 - Argon2id hashing, input normalization, remember-me split tokens stored in Postgres.
 - Redis session store with per-user session sets, TTL refresh (`Touch`), and device revocation.
 - Middleware stack: security headers, Request-ID, slog-based logger, panic recovery, rate limiter.
+- Logging uses the global `slog` default configured in `cmd/api/main.go`; keep logger config centralized (avoid per-usecase reconfiguration).
 - IP rate limiter is in-memory (single instance) and resets on restart; use Redis for distributed limits.
 - Swagger docs available under `/swagger/index.html` in non-production envs.
 
