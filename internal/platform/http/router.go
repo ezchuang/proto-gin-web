@@ -13,13 +13,13 @@ import (
 	swaggerdocs "proto-gin-web/docs"
 	authsession "proto-gin-web/internal/contexts/admin/auth/session"
 	contenthttp "proto-gin-web/internal/contexts/admin/content/adapters/http"
-	admincontentusecase "proto-gin-web/internal/contexts/admin/content/app"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/usecase"
 	adminroutes "proto-gin-web/internal/contexts/admin/ui/adapters/http"
-	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/app"
-	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
+	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/usecase"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
 	apiroutes "proto-gin-web/internal/contexts/blog/post/adapters/api"
 	publicroutes "proto-gin-web/internal/contexts/blog/post/adapters/public"
-	postusecase "proto-gin-web/internal/contexts/blog/post/app"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
 	"proto-gin-web/internal/platform/config"
 	helper "proto-gin-web/internal/platform/http/templates"
 )
@@ -92,6 +92,7 @@ func hostFromBaseURL(base string) string {
 	}
 	return trimmed
 }
+
 
 
 

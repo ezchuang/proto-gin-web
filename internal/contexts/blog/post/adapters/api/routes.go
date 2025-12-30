@@ -8,7 +8,7 @@ import (
 
 	presenters "proto-gin-web/internal/contexts/blog/post/adapters/view"
 	postdomain "proto-gin-web/internal/contexts/blog/post/domain"
-	postusecase "proto-gin-web/internal/contexts/blog/post/app"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
 	"proto-gin-web/internal/platform/http/responder"
 )
 
@@ -76,5 +76,6 @@ func getPostHandler(postSvc postusecase.PostService) gin.HandlerFunc {
 		responder.JSONSuccess(c, http.StatusOK, presenters.BuildPublicPostWithRelations(row))
 	}
 }
+
 
 

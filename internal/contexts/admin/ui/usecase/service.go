@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	postdomain "proto-gin-web/internal/contexts/blog/post/domain"
-	postusecase "proto-gin-web/internal/contexts/blog/post/app"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
 )
 
 // Service wraps post operations used by the admin UI forms.
@@ -111,5 +111,6 @@ func (s *Service) AddTag(ctx context.Context, slug, tagSlug string) error {
 func (s *Service) RemoveTag(ctx context.Context, slug, tagSlug string) error {
 	return s.posts.RemoveTag(ctx, slug, tagSlug)
 }
+
 
 

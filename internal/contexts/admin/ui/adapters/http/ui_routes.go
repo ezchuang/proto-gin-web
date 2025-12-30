@@ -17,8 +17,8 @@ import (
 	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 	authsession "proto-gin-web/internal/contexts/admin/auth/session"
 	adminview "proto-gin-web/internal/contexts/admin/ui/adapters/view"
-	adminuisvc "proto-gin-web/internal/contexts/admin/ui/app"
-	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
+	adminuisvc "proto-gin-web/internal/contexts/admin/ui/usecase"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -262,6 +262,7 @@ func saveCoverUpload(c *gin.Context, file *multipart.FileHeader) (string, error)
 	}
 	return "/static/uploads/" + filename, nil
 }
+
 
 
 

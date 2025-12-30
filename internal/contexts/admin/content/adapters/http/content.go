@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	admincontentusecase "proto-gin-web/internal/contexts/admin/content/app"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/usecase"
 	postdomain "proto-gin-web/internal/contexts/blog/post/domain"
 	taxdomain "proto-gin-web/internal/contexts/blog/taxonomy/domain"
 	"proto-gin-web/internal/platform/http/responder"
@@ -323,4 +323,5 @@ func deleteTagHandler(contentSvc *admincontentusecase.Service) gin.HandlerFunc {
 		c.Status(http.StatusNoContent)
 	}
 }
+
 

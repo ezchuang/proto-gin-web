@@ -14,11 +14,11 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	authsession "proto-gin-web/internal/contexts/admin/auth/session"
-	admincontentusecase "proto-gin-web/internal/contexts/admin/content/app"
-	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/app"
-	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
-	postusecase "proto-gin-web/internal/contexts/blog/post/app"
-	taxonomyusecase "proto-gin-web/internal/contexts/blog/taxonomy/app"
+	admincontentusecase "proto-gin-web/internal/contexts/admin/content/usecase"
+	adminuiusecase "proto-gin-web/internal/contexts/admin/ui/usecase"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
+	taxonomyusecase "proto-gin-web/internal/contexts/blog/taxonomy/usecase"
 	appdb "proto-gin-web/internal/infrastructure/pg"
 	platformlog "proto-gin-web/internal/infrastructure/platform"
 	redisstore "proto-gin-web/internal/infrastructure/redis"
@@ -101,6 +101,7 @@ func main() {
 	}
 	log.Info("server stopped")
 }
+
 
 
 

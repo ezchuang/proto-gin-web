@@ -3,7 +3,7 @@
 import (
 	"github.com/gin-gonic/gin"
 
-	postusecase "proto-gin-web/internal/contexts/blog/post/app"
+	postusecase "proto-gin-web/internal/contexts/blog/post/usecase"
 	"proto-gin-web/internal/platform/config"
 )
 
@@ -13,6 +13,7 @@ func RegisterRoutes(r *gin.Engine, cfg config.Config, postSvc postusecase.PostSe
 	registerSEORoutes(r, cfg, postSvc)
 	registerContentRoutes(r, cfg, postSvc)
 }
+
 
 
 

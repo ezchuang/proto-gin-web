@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	adminusecase "proto-gin-web/internal/contexts/admin/auth/app"
+	adminusecase "proto-gin-web/internal/contexts/admin/auth/usecase"
 	authdomain "proto-gin-web/internal/contexts/admin/auth/domain"
 	authsession "proto-gin-web/internal/contexts/admin/auth/session"
 	adminview "proto-gin-web/internal/contexts/admin/ui/adapters/view"
@@ -155,6 +155,7 @@ func refreshAdminCookies(c *gin.Context, cfg config.Config, admin authdomain.Adm
 	c.SetCookie("admin_user", admin.DisplayName, maxAge, "/", "", secureCookie, true)
 	c.SetCookie("admin_email", admin.Email, maxAge, "/", "", secureCookie, true)
 }
+
 
 
 
